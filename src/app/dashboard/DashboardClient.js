@@ -12,7 +12,30 @@ export default function DashboardClient({ user }) {
   const [uploadMessage, setUploadMessage] = useState("");
   const [uploadError, setUploadError] = useState("");
 
-  // Edit state
+  // =========================================================
+  // MANUAL ADD STATE
+  // =========================================================
+
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addingData, setAddingData] = useState(false);
+
+  const [addTitle, setAddTitle] = useState("");
+  const [addDescription, setAddDescription] = useState("");
+
+  const [addData, setAddData] = useState({
+    "Funding Name": "",
+    Provider: "",
+    Amount: "",
+    Deadline: "",
+  });
+
+  const [addMessage, setAddMessage] = useState("");
+  const [addError, setAddError] = useState("");
+
+  // =========================================================
+  // EDIT STATE
+  // =========================================================
+
   const [editingService, setEditingService] = useState(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -21,18 +44,30 @@ export default function DashboardClient({ user }) {
   const [editMessage, setEditMessage] = useState("");
   const [editError, setEditError] = useState("");
 
-  // Delete state
+  // =========================================================
+  // DELETE STATE
+  // =========================================================
+
   const [deletingService, setDeletingService] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
-  // Logout state
+  // =========================================================
+  // LOGOUT STATE
+  // =========================================================
+
   const [loggingOut, setLoggingOut] = useState(false);
 
-  // Search
+  // =========================================================
+  // SEARCH
+  // =========================================================
+
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch funding services
+  // =========================================================
+  // FETCH FUNDING SERVICES
+  // =========================================================
+
   const fetchFundingServices = async () => {
     try {
       setLoadingServices(true);
@@ -66,7 +101,10 @@ export default function DashboardClient({ user }) {
     fetchFundingServices();
   }, []);
 
-  // Logout
+  // =========================================================
+  // LOGOUT
+  // =========================================================
+
   const handleLogout = async () => {
     if (loggingOut) {
       return;
@@ -101,7 +139,10 @@ export default function DashboardClient({ user }) {
     }
   };
 
-  // File selection
+  // =========================================================
+  // FILE SELECTION
+  // =========================================================
+
   const handleFileChange = (event) => {
     const file = event.target.files?.[0];
 
@@ -131,7 +172,10 @@ export default function DashboardClient({ user }) {
     setSelectedFile(file);
   };
 
-  // Upload Excel
+  // =========================================================
+  // UPLOAD EXCEL
+  // =========================================================
+
   const handleExcelUpload = async () => {
     if (!selectedFile) {
       setUploadError(
@@ -196,9 +240,10 @@ export default function DashboardClient({ user }) {
     }
   };
 
-  /*
-   * Create dynamic columns from ALL Excel fields.
-   */
+  // =========================================================
+  // DYNAMIC COLUMNS
+  // =========================================================
+
   const dynamicColumns = useMemo(() => {
     const columns = [];
 
@@ -220,7 +265,10 @@ export default function DashboardClient({ user }) {
     return columns;
   }, [fundingServices]);
 
-  // Filter services
+  // =========================================================
+  // FILTER SERVICES
+  // =========================================================
+
   const filteredServices = useMemo(() => {
     if (!searchTerm.trim()) {
       return fundingServices;
@@ -245,7 +293,10 @@ export default function DashboardClient({ user }) {
     });
   }, [fundingServices, searchTerm]);
 
-  // Format values
+  // =========================================================
+  // FORMAT VALUES
+  // =========================================================
+
   const formatValue = (value) => {
     if (
       value === null ||
@@ -262,7 +313,173 @@ export default function DashboardClient({ user }) {
     return String(value);
   };
 
-  // Open edit modal
+  // =========================================================
+  // MANUAL ADD
+  // =========================================================
+
+  const handleOpenAddModal = () => {
+    setShowAddModal(true);
+
+    setAddTitle("");
+    setAddDescription("");
+
+    setAddData({
+      "Funding Name": "",
+      Provider: "",
+      Amount: "",
+      Deadline: "",
+    });
+
+    setAddMessage("");
+    setAddError("");
+  };
+
+  const handleCloseAddModal = () => {
+    if (addingData) {
+      return;
+    }
+
+    setShowAddModal(false);
+
+    setAddTitle("");
+    setAddDescription("");
+    setAddData({});
+    setAddMessage("");
+    setAddError("");
+  };
+
+  const handleAddFieldChange = (
+    field,
+    value
+  ) => {
+    setAddData((previousData) => ({
+      ...previousData,
+      [field]: value,
+    }));
+  };
+
+  const handleAddNewField = () => {
+    const newField = window.prompt(
+      "Enter the field name:"
+    );
+
+    if (!newField || !newField.trim()) {
+      return;
+    }
+
+    const fieldName = newField.trim();
+
+    const fieldExists =
+      Object.keys(addData).some(
+        (field) =>
+          field.toLowerCase() ===
+          fieldName.toLowerCase()
+      );
+
+    if (fieldExists) {
+      setAddError(
+        "This field already exists."
+      );
+
+      return;
+    }
+
+    setAddData((previousData) => ({
+      ...previousData,
+      [fieldName]: "",
+    }));
+
+    setAddError("");
+  };
+
+  const handleRemoveAddField = (field) => {
+    setAddData((previousData) => {
+      const updatedData = {
+        ...previousData,
+      };
+
+      delete updatedData[field];
+
+      return updatedData;
+    });
+  };
+
+  const handleSaveManualData = async () => {
+    if (!addTitle.trim()) {
+      setAddError(
+        "Funding service title is required."
+      );
+
+      return;
+    }
+
+    setAddingData(true);
+    setAddMessage("");
+    setAddError("");
+
+    try {
+      const response = await fetch(
+        "/api/funding-services",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            title: addTitle.trim(),
+            description:
+              addDescription.trim() || null,
+            data: addData,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setAddError(
+          result.message ||
+            "Failed to add funding data."
+        );
+
+        return;
+      }
+
+      setAddMessage(
+        result.message ||
+          "Funding data added successfully."
+      );
+
+      await fetchFundingServices();
+
+      setTimeout(() => {
+        setShowAddModal(false);
+
+        setAddTitle("");
+        setAddDescription("");
+        setAddData({});
+        setAddMessage("");
+        setAddError("");
+      }, 700);
+    } catch (error) {
+      console.error(
+        "Add funding data error:",
+        error
+      );
+
+      setAddError(
+        "Something went wrong while adding funding data."
+      );
+    } finally {
+      setAddingData(false);
+    }
+  };
+
+  // =========================================================
+  // EDIT
+  // =========================================================
+
   const handleEdit = (service) => {
     setEditingService(service);
 
@@ -280,7 +497,6 @@ export default function DashboardClient({ user }) {
     setEditError("");
   };
 
-  // Close edit modal
   const handleCloseEdit = () => {
     if (savingEdit) {
       return;
@@ -294,7 +510,6 @@ export default function DashboardClient({ user }) {
     setEditError("");
   };
 
-  // Change dynamic field
   const handleEditFieldChange = (
     field,
     value
@@ -305,7 +520,6 @@ export default function DashboardClient({ user }) {
     }));
   };
 
-  // Save edited funding service
   const handleSaveEdit = async () => {
     if (!editingService) {
       return;
@@ -376,13 +590,15 @@ export default function DashboardClient({ user }) {
     }
   };
 
-  // Open delete confirmation
+  // =========================================================
+  // DELETE
+  // =========================================================
+
   const handleOpenDelete = (service) => {
     setDeletingService(service);
     setDeleteError("");
   };
 
-  // Close delete confirmation
   const handleCloseDelete = () => {
     if (deleting) {
       return;
@@ -392,7 +608,6 @@ export default function DashboardClient({ user }) {
     setDeleteError("");
   };
 
-  // Delete funding service
   const handleDelete = async () => {
     if (!deletingService) {
       return;
@@ -441,20 +656,32 @@ export default function DashboardClient({ user }) {
   const isSuperAdmin =
     user?.role === "SUPER_ADMIN";
 
+  // =========================================================
+  // UI
+  // =========================================================
+
   return (
     <main className="min-h-screen bg-[#f5f7fb] text-slate-900">
+
       {/* Decorative background */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-indigo-200/30 blur-3xl" />
+
         <div className="absolute right-0 top-40 h-96 w-96 rounded-full bg-cyan-200/20 blur-3xl" />
+
         <div className="absolute bottom-0 left-1/3 h-96 w-96 rounded-full bg-violet-200/20 blur-3xl" />
       </div>
 
-      {/* Header */}
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
+
       <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1600px] items-center justify-between px-5 py-4 lg:px-8">
+
           {/* Brand */}
           <div className="flex items-center gap-3">
+
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 via-violet-600 to-cyan-500 shadow-lg shadow-indigo-200">
               <svg
                 width="22"
@@ -483,10 +710,12 @@ export default function DashboardClient({ user }) {
                 Funding services administration
               </p>
             </div>
+
           </div>
 
           {/* User area */}
           <div className="flex items-center gap-2 sm:gap-3">
+
             <div className="hidden rounded-xl border border-slate-200 bg-white/70 px-4 py-2.5 sm:block">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                 Signed in as
@@ -504,7 +733,7 @@ export default function DashboardClient({ user }) {
                   : "bg-indigo-100 text-indigo-700"
               }`}
             >
-              {user?.role === "SUPER_ADMIN"
+              {isSuperAdmin
                 ? "SUPER ADMIN"
                 : "EMPLOYEE"}
             </div>
@@ -541,19 +770,26 @@ export default function DashboardClient({ user }) {
                   : "Logout"}
               </span>
             </button>
+
           </div>
         </div>
       </header>
 
-      {/* Main */}
+      {/* =====================================================
+          MAIN
+      ===================================================== */}
+
       <section className="mx-auto max-w-[1600px] px-5 py-7 lg:px-8 lg:py-10">
+
         {/* Hero */}
         <div className="relative mb-7 overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-6 shadow-2xl shadow-slate-200 sm:p-8 lg:p-10">
+
           <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
 
           <div className="absolute -bottom-28 right-1/3 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
 
           <div className="relative z-10 max-w-3xl">
+
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-indigo-100 backdrop-blur-md">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-lg shadow-emerald-400/50" />
               Administration Portal
@@ -567,18 +803,22 @@ export default function DashboardClient({ user }) {
             </h2>
 
             <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-              Import, manage and maintain funding
-              opportunities from one centralized
-              dashboard.
+              Import, manually add, manage and maintain funding opportunities from one centralized dashboard.
             </p>
+
           </div>
         </div>
 
-        {/* Stats */}
+        {/* =====================================================
+            STATS
+        ===================================================== */}
+
         <div className="mb-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
           {/* Total programs */}
           <div className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/60">
             <div className="flex items-start justify-between">
+
               <div>
                 <p className="text-sm font-medium text-slate-500">
                   Total Programs
@@ -612,6 +852,7 @@ export default function DashboardClient({ user }) {
                   <path d="M7 16h6" />
                 </svg>
               </div>
+
             </div>
 
             <div className="mt-4 h-1 overflow-hidden rounded-full bg-slate-100">
@@ -619,9 +860,10 @@ export default function DashboardClient({ user }) {
             </div>
           </div>
 
-          {/* Excel columns */}
+          {/* Data fields */}
           <div className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/60">
             <div className="flex items-start justify-between">
+
               <div>
                 <p className="text-sm font-medium text-slate-500">
                   Data Fields
@@ -651,16 +893,18 @@ export default function DashboardClient({ user }) {
                   <circle cx="10" cy="19" r="1" />
                 </svg>
               </div>
+
             </div>
 
             <p className="mt-4 text-xs text-slate-400">
-              Imported Excel columns
+              Imported and manually entered fields
             </p>
           </div>
 
           {/* Role */}
           <div className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/60">
             <div className="flex items-start justify-between">
+
               <div>
                 <p className="text-sm font-medium text-slate-500">
                   Access Level
@@ -688,6 +932,7 @@ export default function DashboardClient({ user }) {
                   <path d="m9 12 2 2 4-4" />
                 </svg>
               </div>
+
             </div>
 
             <p className="mt-4 text-xs text-slate-400">
@@ -700,6 +945,7 @@ export default function DashboardClient({ user }) {
           {/* Status */}
           <div className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/60">
             <div className="flex items-start justify-between">
+
               <div>
                 <p className="text-sm font-medium text-slate-500">
                   System Status
@@ -713,20 +959,30 @@ export default function DashboardClient({ user }) {
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
                 <span className="h-3 w-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-300" />
               </div>
+
             </div>
 
             <p className="mt-4 text-xs text-slate-400">
               Database connection active
             </p>
           </div>
+
         </div>
 
-        {/* Upload Card */}
+        {/* =====================================================
+            IMPORT / MANUAL ENTRY CARD
+        ===================================================== */}
+
         <div className="mb-7 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+
           <div className="border-b border-slate-100 px-6 py-5 sm:px-7">
+
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+
               <div>
+
                 <div className="flex items-center gap-3">
+
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
                     <svg
                       width="20"
@@ -747,34 +1003,40 @@ export default function DashboardClient({ user }) {
 
                   <div>
                     <h3 className="text-lg font-bold text-slate-950">
-                      Import Funding Opportunities
+                      Add Funding Data
                     </h3>
 
                     <p className="text-sm text-slate-500">
-                      Upload your Excel data directly
-                      into the system.
+                      Import from Excel or enter a funding opportunity manually.
                     </p>
                   </div>
+
                 </div>
+
               </div>
 
               <div className="rounded-full bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500">
-                .XLS / .XLSX
+                EMPLOYEE DATA ENTRY
               </div>
+
             </div>
+
           </div>
 
           <div className="p-6 sm:p-7">
-            <div className="grid gap-5 lg:grid-cols-[1fr_auto]">
-              {/* File drop style area */}
+
+            <div className="grid gap-4 lg:grid-cols-2">
+
+              {/* Excel */}
               <label
                 htmlFor="excel-upload"
-                className={`group relative flex cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed p-5 transition ${
+                className={`group relative flex min-h-[125px] cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed p-5 transition ${
                   selectedFile
                     ? "border-indigo-300 bg-indigo-50/50"
                     : "border-slate-200 bg-slate-50/70 hover:border-indigo-300 hover:bg-indigo-50/40"
                 }`}
               >
+
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-sm">
                   <svg
                     width="22"
@@ -807,7 +1069,7 @@ export default function DashboardClient({ user }) {
                   <p className="mt-1 text-xs text-slate-500">
                     {selectedFile
                       ? "Ready to upload"
-                      : "Click here to browse your computer"}
+                      : "Upload .xls or .xlsx data"}
                   </p>
                 </div>
 
@@ -818,14 +1080,67 @@ export default function DashboardClient({ user }) {
                   onChange={handleFileChange}
                   className="hidden"
                 />
+
               </label>
+
+              {/* Manual entry */}
+              <button
+                type="button"
+                onClick={handleOpenAddModal}
+                className="group relative flex min-h-[125px] items-center gap-4 rounded-2xl border-2 border-dashed border-cyan-200 bg-gradient-to-br from-cyan-50/70 to-indigo-50/60 p-5 text-left transition hover:-translate-y-0.5 hover:border-indigo-300 hover:from-indigo-50 hover:to-cyan-50"
+              >
+
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-sm transition group-hover:scale-105">
+
+                  <svg
+                    width="23"
+                    height="23"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="9"
+                    />
+                    <path d="M12 8v8" />
+                    <path d="M8 12h8" />
+                  </svg>
+
+                </div>
+
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    Add Data Manually
+                  </p>
+
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    Enter a new funding opportunity directly into the system.
+                  </p>
+                </div>
+
+                <div className="ml-auto hidden rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-indigo-600 shadow-sm sm:block">
+                  + ADD
+                </div>
+
+              </button>
+
+            </div>
+
+            {/* Upload button */}
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
 
               <button
                 type="button"
                 onClick={handleExcelUpload}
                 disabled={!selectedFile || uploading}
-                className="flex min-h-[64px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-7 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition hover:-translate-y-0.5 hover:from-indigo-700 hover:to-violet-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+                className="flex min-h-[56px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-7 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition hover:-translate-y-0.5 hover:from-indigo-700 hover:to-violet-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
               >
+
                 {uploading ? (
                   <>
                     <svg
@@ -843,6 +1158,7 @@ export default function DashboardClient({ user }) {
                         strokeWidth="3"
                         opacity="0.3"
                       />
+
                       <path
                         d="M21 12a9 9 0 0 0-9-9"
                         stroke="currentColor"
@@ -850,6 +1166,7 @@ export default function DashboardClient({ user }) {
                         strokeLinecap="round"
                       />
                     </svg>
+
                     Uploading...
                   </>
                 ) : (
@@ -868,14 +1185,23 @@ export default function DashboardClient({ user }) {
                       <path d="m7 8 5-5 5 5" />
                       <path d="M5 21h14" />
                     </svg>
+
                     Upload Excel
                   </>
                 )}
+
               </button>
+
+              <p className="text-xs text-slate-400">
+                Employees and Super Admins can add and edit funding data.
+              </p>
+
             </div>
 
+            {/* Upload success */}
             {uploadMessage && (
               <div className="mt-5 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3.5">
+
                 <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
                   ✓
                 </div>
@@ -883,11 +1209,14 @@ export default function DashboardClient({ user }) {
                 <p className="text-sm font-semibold text-emerald-700">
                   {uploadMessage}
                 </p>
+
               </div>
             )}
 
+            {/* Upload error */}
             {uploadError && (
               <div className="mt-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5">
+
                 <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                   !
                 </div>
@@ -895,18 +1224,28 @@ export default function DashboardClient({ user }) {
                 <p className="text-sm font-semibold text-red-700">
                   {uploadError}
                 </p>
+
               </div>
             )}
+
           </div>
         </div>
 
-        {/* Funding Table */}
+        {/* =====================================================
+            FUNDING TABLE
+        ===================================================== */}
+
         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+
           {/* Table top */}
           <div className="border-b border-slate-100 px-6 py-5 sm:px-7">
+
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+
               <div>
+
                 <div className="flex items-center gap-3">
+
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white">
                     <svg
                       width="19"
@@ -925,6 +1264,7 @@ export default function DashboardClient({ user }) {
                         height="18"
                         rx="2"
                       />
+
                       <path d="M3 9h18" />
                       <path d="M9 21V9" />
                     </svg>
@@ -940,11 +1280,14 @@ export default function DashboardClient({ user }) {
                       {fundingServices.length} opportunities
                     </p>
                   </div>
+
                 </div>
+
               </div>
 
               {/* Search */}
               <div className="relative w-full lg:max-w-sm">
+
                 <svg
                   className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
                   width="18"
@@ -961,6 +1304,7 @@ export default function DashboardClient({ user }) {
                     cy="11"
                     r="7"
                   />
+
                   <path d="m20 20-4-4" />
                 </svg>
 
@@ -975,13 +1319,16 @@ export default function DashboardClient({ user }) {
                   placeholder="Search funding programs..."
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
                 />
+
               </div>
+
             </div>
           </div>
 
           {/* Loading */}
           {loadingServices ? (
             <div className="flex min-h-[350px] flex-col items-center justify-center px-6">
+
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50">
                 <svg
                   className="animate-spin text-indigo-600"
@@ -1015,9 +1362,13 @@ export default function DashboardClient({ user }) {
               <p className="mt-1 text-xs text-slate-400">
                 Please wait a moment
               </p>
+
             </div>
+
           ) : fundingServices.length === 0 ? (
+
             <div className="flex min-h-[350px] flex-col items-center justify-center px-6 text-center">
+
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
                 <svg
                   width="28"
@@ -1036,6 +1387,7 @@ export default function DashboardClient({ user }) {
                     height="18"
                     rx="2"
                   />
+
                   <path d="M8 8h8" />
                   <path d="M8 12h8" />
                   <path d="M8 16h5" />
@@ -1047,12 +1399,15 @@ export default function DashboardClient({ user }) {
               </h4>
 
               <p className="mt-1 max-w-sm text-sm text-slate-500">
-                Upload an Excel file above to add
-                your first funding opportunity.
+                Upload an Excel file or use Add Data Manually above to create your first funding opportunity.
               </p>
+
             </div>
+
           ) : filteredServices.length === 0 ? (
+
             <div className="flex min-h-[300px] flex-col items-center justify-center px-6 text-center">
+
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
                 <svg
                   width="25"
@@ -1069,6 +1424,7 @@ export default function DashboardClient({ user }) {
                     cy="11"
                     r="7"
                   />
+
                   <path d="m20 20-4-4" />
                 </svg>
               </div>
@@ -1080,12 +1436,19 @@ export default function DashboardClient({ user }) {
               <p className="mt-1 text-sm text-slate-400">
                 Try a different search term.
               </p>
+
             </div>
+
           ) : (
+
             <div className="overflow-x-auto">
+
               <table className="w-full min-w-max text-left text-sm">
+
                 <thead>
+
                   <tr className="border-b border-slate-100 bg-slate-50/80">
+
                     <th className="sticky left-0 z-20 border-r border-slate-200 bg-slate-50 px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
                       ID
                     </th>
@@ -1112,41 +1475,48 @@ export default function DashboardClient({ user }) {
                     <th className="sticky right-0 z-20 border-l border-slate-200 bg-slate-50 px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
                       Actions
                     </th>
+
                   </tr>
+
                 </thead>
 
                 <tbody className="divide-y divide-slate-100">
+
                   {filteredServices.map(
                     (service) => (
+
                       <tr
                         key={service.id}
                         className="group transition hover:bg-indigo-50/30"
                       >
+
                         <td className="sticky left-0 z-10 border-r border-slate-100 bg-white px-5 py-4 group-hover:bg-indigo-50/30">
+
                           <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg bg-slate-100 px-2 text-xs font-bold text-slate-700">
                             #{service.id}
                           </span>
+
                         </td>
 
                         {dynamicColumns.map(
                           (column) => (
+
                             <td
                               key={`${service.id}-${column}`}
                               className="max-w-[320px] whitespace-nowrap px-5 py-4 text-slate-600"
                               title={formatValue(
-                                service.data?.[
-                                  column
-                                ]
+                                service.data?.[column]
                               )}
                             >
+
                               <div className="max-w-[320px] truncate">
                                 {formatValue(
-                                  service.data?.[
-                                    column
-                                  ]
+                                  service.data?.[column]
                                 )}
                               </div>
+
                             </td>
+
                           )
                         )}
 
@@ -1167,7 +1537,9 @@ export default function DashboardClient({ user }) {
                         </td>
 
                         <td className="sticky right-0 z-10 border-l border-slate-100 bg-white px-5 py-4 group-hover:bg-indigo-50/30">
+
                           <div className="flex items-center gap-2">
+
                             {/* Edit */}
                             <button
                               type="button"
@@ -1178,6 +1550,7 @@ export default function DashboardClient({ user }) {
                               }
                               className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-indigo-600"
                             >
+
                               <svg
                                 width="14"
                                 height="14"
@@ -1191,7 +1564,9 @@ export default function DashboardClient({ user }) {
                                 <path d="M12 20h9" />
                                 <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
                               </svg>
+
                               Edit
+
                             </button>
 
                             {/* Delete */}
@@ -1205,6 +1580,7 @@ export default function DashboardClient({ user }) {
                                 }
                                 className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-600 transition hover:bg-red-600 hover:text-white"
                               >
+
                                 <svg
                                   width="14"
                                   height="14"
@@ -1221,23 +1597,407 @@ export default function DashboardClient({ user }) {
                                   <path d="M14 11v6" />
                                   <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
                                 </svg>
+
                                 Delete
+
                               </button>
                             )}
+
                           </div>
+
                         </td>
+
                       </tr>
+
                     )
                   )}
+
                 </tbody>
+
               </table>
+
             </div>
           )}
+
         </div>
+
       </section>
 
-      {/* EDIT MODAL */}
+      {/* =====================================================
+          ADD DATA MODAL
+      ===================================================== */}
+
+      {showAddModal && (
+
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (
+              event.target ===
+                event.currentTarget &&
+              !addingData
+            ) {
+              handleCloseAddModal();
+            }
+          }}
+        >
+
+          <div className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+
+            {/* Header */}
+            <div className="relative overflow-hidden border-b border-white/10 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 px-6 py-6 text-white sm:px-8">
+
+              <div className="absolute -right-10 -top-20 h-56 w-56 rounded-full bg-cyan-500/10 blur-3xl" />
+
+              <div className="absolute -bottom-20 left-1/3 h-48 w-48 rounded-full bg-indigo-500/20 blur-3xl" />
+
+              <div className="relative flex items-center justify-between">
+
+                <div>
+
+                  <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-200">
+                    <span className="h-1.5 w-1.5 rounded-full bg-cyan-300" />
+                    Manual Data Entry
+                  </div>
+
+                  <h2 className="text-2xl font-bold">
+                    Add Funding Data
+                  </h2>
+
+                  <p className="mt-1 text-sm text-slate-300">
+                    Create a new funding opportunity manually.
+                  </p>
+
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleCloseAddModal}
+                  disabled={addingData}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-xl text-white transition hover:bg-white/20 disabled:opacity-50"
+                >
+                  ×
+                </button>
+
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="overflow-y-auto px-6 py-7 sm:px-8">
+
+              {/* Basic information */}
+              <div className="mb-8">
+
+                <div className="mb-5">
+
+                  <h3 className="text-lg font-bold text-slate-950">
+                    Basic Information
+                  </h3>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Enter the main details of the funding opportunity.
+                  </p>
+
+                </div>
+
+                <div className="grid gap-5 md:grid-cols-2">
+
+                  <div className="md:col-span-2">
+
+                    <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Funding Title{" "}
+                      <span className="text-red-500">
+                        *
+                      </span>
+                    </label>
+
+                    <input
+                      type="text"
+                      value={addTitle}
+                      onChange={(event) =>
+                        setAddTitle(
+                          event.target.value
+                        )
+                      }
+                      placeholder="Enter funding title"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                    />
+
+                  </div>
+
+                  <div className="md:col-span-2">
+
+                    <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Description
+                    </label>
+
+                    <textarea
+                      value={addDescription}
+                      onChange={(event) =>
+                        setAddDescription(
+                          event.target.value
+                        )
+                      }
+                      rows={4}
+                      placeholder="Enter a description of the funding opportunity..."
+                      className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                    />
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* Funding information */}
+              <div>
+
+                <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+
+                  <div>
+
+                    <h3 className="text-lg font-bold text-slate-950">
+                      Funding Information
+                    </h3>
+
+                    <p className="mt-1 text-sm text-slate-500">
+                      Add the fields that should appear in the funding table.
+                    </p>
+
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddNewField}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-xs font-bold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"
+                  >
+
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="9"
+                      />
+
+                      <path d="M12 8v8" />
+                      <path d="M8 12h8" />
+                    </svg>
+
+                    Add Another Field
+
+                  </button>
+
+                </div>
+
+                <div className="space-y-4">
+
+                  {Object.entries(addData).map(
+                    ([field, value], index) => (
+
+                      <div
+                        key={field}
+                        className="group rounded-2xl border border-slate-200 bg-slate-50/70 p-4 transition hover:border-indigo-200 hover:bg-indigo-50/20"
+                      >
+
+                        <div className="flex flex-col gap-3 md:flex-row md:items-end">
+
+                          <div className="md:w-[34%]">
+
+                            <label className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                              Field Name
+                            </label>
+
+                            <div className="flex items-center gap-2">
+
+                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-xs font-bold text-slate-400 shadow-sm">
+                                {index + 1}
+                              </span>
+
+                              <input
+                                type="text"
+                                value={field}
+                                readOnly
+                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none"
+                              />
+
+                            </div>
+
+                          </div>
+
+                          <div className="flex-1">
+
+                            <label className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                              Value
+                            </label>
+
+                            <input
+                              type="text"
+                              value={
+                                value ?? ""
+                              }
+                              onChange={(event) =>
+                                handleAddFieldChange(
+                                  field,
+                                  event.target.value
+                                )
+                              }
+                              placeholder={`Enter ${field}`}
+                              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50"
+                            />
+
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleRemoveAddField(
+                                field
+                              )
+                            }
+                            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 md:w-auto"
+                            title="Remove field"
+                          >
+
+                            <svg
+                              width="17"
+                              height="17"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                              <path d="M10 11v6" />
+                              <path d="M14 11v6" />
+                            </svg>
+
+                            <span className="md:hidden">
+                              Remove
+                            </span>
+
+                          </button>
+
+                        </div>
+
+                      </div>
+
+                    )
+                  )}
+
+                </div>
+
+              </div>
+
+              {/* Errors */}
+              {addError && (
+
+                <div className="mt-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5">
+
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                    !
+                  </div>
+
+                  <p className="text-sm font-semibold text-red-700">
+                    {addError}
+                  </p>
+
+                </div>
+              )}
+
+              {/* Success */}
+              {addMessage && (
+
+                <div className="mt-6 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3.5">
+
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+                    ✓
+                  </div>
+
+                  <p className="text-sm font-semibold text-emerald-700">
+                    {addMessage}
+                  </p>
+
+                </div>
+              )}
+
+            </div>
+
+            {/* Footer */}
+            <div className="flex flex-col-reverse gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-8">
+
+              <button
+                type="button"
+                onClick={handleCloseAddModal}
+                disabled={addingData}
+                className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveManualData}
+                disabled={addingData}
+                className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition hover:from-indigo-700 hover:to-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+
+                {addingData && (
+                  <svg
+                    className="animate-spin"
+                    width="17"
+                    height="17"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="9"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      opacity="0.3"
+                    />
+
+                    <path
+                      d="M21 12a9 9 0 0 0-9-9"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                )}
+
+                {addingData
+                  ? "Saving..."
+                  : "Save Funding Data"}
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* =====================================================
+          EDIT MODAL
+      ===================================================== */}
+
       {editingService && (
+
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm"
           onMouseDown={(event) => {
@@ -1249,13 +2009,18 @@ export default function DashboardClient({ user }) {
             }
           }}
         >
+
           <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+
             {/* Modal header */}
             <div className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 px-6 py-6 text-white sm:px-8">
+
               <div className="absolute -right-10 -top-20 h-48 w-48 rounded-full bg-indigo-500/20 blur-3xl" />
 
               <div className="relative flex items-center justify-between">
+
                 <div>
+
                   <div className="mb-2 inline-flex rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-indigo-200">
                     Funding Program
                   </div>
@@ -1267,6 +2032,7 @@ export default function DashboardClient({ user }) {
                   <p className="mt-1 text-sm text-slate-300">
                     Funding ID #{editingService.id}
                   </p>
+
                 </div>
 
                 <button
@@ -1277,13 +2043,17 @@ export default function DashboardClient({ user }) {
                 >
                   ×
                 </button>
+
               </div>
             </div>
 
             {/* Modal body */}
             <div className="overflow-y-auto px-6 py-7 sm:px-8">
+
               <div className="mb-8">
+
                 <div className="mb-5">
+
                   <h3 className="text-lg font-bold text-slate-950">
                     Basic Information
                   </h3>
@@ -1291,10 +2061,13 @@ export default function DashboardClient({ user }) {
                   <p className="mt-1 text-sm text-slate-500">
                     Update the main program information.
                   </p>
+
                 </div>
 
                 <div className="grid gap-5 md:grid-cols-2">
+
                   <div>
+
                     <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
                       Title
                     </label>
@@ -1309,9 +2082,11 @@ export default function DashboardClient({ user }) {
                       }
                       className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
                     />
+
                   </div>
 
                   <div>
+
                     <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
                       Description
                     </label>
@@ -1326,76 +2101,96 @@ export default function DashboardClient({ user }) {
                       }
                       className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
                     />
+
                   </div>
+
                 </div>
               </div>
 
               <div>
+
                 <div className="mb-5">
+
                   <h3 className="text-lg font-bold text-slate-950">
                     Funding Information
                   </h3>
 
                   <p className="mt-1 text-sm text-slate-500">
-                    Edit the fields imported from
-                    your Excel file.
+                    Edit the fields imported from your Excel file or manually added.
                   </p>
+
                 </div>
 
                 <div className="grid gap-5 md:grid-cols-2">
+
                   {Object.entries(
                     editData
-                  ).map(([field, value]) => (
-                    <div key={field}>
-                      <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
-                        {field}
-                      </label>
+                  ).map(
+                    ([field, value]) => (
 
-                      <textarea
-                        value={
-                          value === null ||
-                          value === undefined
-                            ? ""
-                            : typeof value ===
-                                "object"
-                              ? JSON.stringify(
-                                  value
-                                )
-                              : String(value)
-                        }
-                        onChange={(event) =>
-                          handleEditFieldChange(
-                            field,
-                            event.target.value
-                          )
-                        }
-                        rows={3}
-                        className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
-                      />
-                    </div>
-                  ))}
+                      <div key={field}>
+
+                        <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                          {field}
+                        </label>
+
+                        <textarea
+                          value={
+                            value === null ||
+                            value === undefined
+                              ? ""
+                              : typeof value ===
+                                  "object"
+                                ? JSON.stringify(
+                                    value
+                                  )
+                                : String(value)
+                          }
+                          onChange={(event) =>
+                            handleEditFieldChange(
+                              field,
+                              event.target.value
+                            )
+                          }
+                          rows={3}
+                          className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        />
+
+                      </div>
+                    )
+                  )}
+
                 </div>
+
               </div>
 
               {editMessage && (
+
                 <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+
                   <p className="text-sm font-semibold text-emerald-700">
                     ✓ {editMessage}
                   </p>
+
                 </div>
               )}
 
               {editError && (
+
                 <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+
                   <p className="text-sm font-semibold text-red-700">
                     {editError}
                   </p>
+
                 </div>
               )}
+
             </div>
 
             {/* Modal footer */}
             <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4 sm:px-8">
+
               <button
                 type="button"
                 onClick={handleCloseEdit}
@@ -1411,6 +2206,7 @@ export default function DashboardClient({ user }) {
                 disabled={savingEdit}
                 className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition hover:from-indigo-700 hover:to-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
+
                 {savingEdit && (
                   <svg
                     className="animate-spin"
@@ -1427,6 +2223,7 @@ export default function DashboardClient({ user }) {
                       strokeWidth="3"
                       opacity="0.3"
                     />
+
                     <path
                       d="M21 12a9 9 0 0 0-9-9"
                       stroke="currentColor"
@@ -1439,14 +2236,22 @@ export default function DashboardClient({ user }) {
                 {savingEdit
                   ? "Saving..."
                   : "Save Changes"}
+
               </button>
+
             </div>
+
           </div>
+
         </div>
       )}
 
-      {/* DELETE MODAL */}
+      {/* =====================================================
+          DELETE MODAL
+      ===================================================== */}
+
       {deletingService && (
+
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
           onMouseDown={(event) => {
@@ -1459,9 +2264,13 @@ export default function DashboardClient({ user }) {
             }
           }}
         >
+
           <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
+
             <div className="flex justify-center pt-7">
+
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+
                 <svg
                   width="27"
                   height="27"
@@ -1478,21 +2287,23 @@ export default function DashboardClient({ user }) {
                   <path d="M14 11v6" />
                   <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
                 </svg>
+
               </div>
+
             </div>
 
             <div className="px-7 pb-7 pt-5 text-center">
+
               <h2 className="text-xl font-bold text-slate-950">
                 Delete Funding Program?
               </h2>
 
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                This action cannot be undone. The
-                selected funding program will be
-                permanently removed.
+                This action cannot be undone. The selected funding program will be permanently removed.
               </p>
 
               <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-left">
+
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
                   Selected Program
                 </p>
@@ -1506,17 +2317,22 @@ export default function DashboardClient({ user }) {
                   Funding ID #
                   {deletingService.id}
                 </p>
+
               </div>
 
               {deleteError && (
+
                 <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left">
+
                   <p className="text-sm font-semibold text-red-700">
                     {deleteError}
                   </p>
+
                 </div>
               )}
 
               <div className="mt-6 grid grid-cols-2 gap-3">
+
                 <button
                   type="button"
                   onClick={handleCloseDelete}
@@ -1532,6 +2348,7 @@ export default function DashboardClient({ user }) {
                   disabled={deleting}
                   className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-red-100 transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
+
                   {deleting && (
                     <svg
                       className="animate-spin"
@@ -1548,6 +2365,7 @@ export default function DashboardClient({ user }) {
                         strokeWidth="3"
                         opacity="0.3"
                       />
+
                       <path
                         d="M21 12a9 9 0 0 0-9-9"
                         stroke="currentColor"
@@ -1560,12 +2378,18 @@ export default function DashboardClient({ user }) {
                   {deleting
                     ? "Deleting..."
                     : "Yes, Delete"}
+
                 </button>
+
               </div>
+
             </div>
+
           </div>
+
         </div>
       )}
+
     </main>
   );
 }
