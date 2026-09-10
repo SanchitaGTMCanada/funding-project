@@ -1,12 +1,15 @@
+import "dotenv/config";
+
 import { PrismaClient } from "@prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 
-const adapter = new PrismaMariaDb({
-  host: "localhost",
-  user: "root",
-  database: "funding_management",
-  connectionLimit: 5,
-});
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL is not configured");
+}
+
+const adapter = new PrismaMariaDb(databaseUrl);
 
 const globalForPrisma = globalThis;
 
