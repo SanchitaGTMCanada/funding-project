@@ -7,12 +7,16 @@ export async function requireAuth() {
     return {
       authorized: false,
       user: null,
+      status: 401,
+      message: "Authentication required",
     };
   }
 
   return {
     authorized: true,
     user,
+    status: 200,
+    message: null,
   };
 }
 
@@ -28,7 +32,10 @@ export async function requireModifyPermission() {
     };
   }
 
-  if (user.role !== "EMPLOYEE" && user.role !== "SUPER_ADMIN") {
+  if (
+    user.role !== "EMPLOYEE" &&
+    user.role !== "SUPER_ADMIN"
+  ) {
     return {
       authorized: false,
       user,
@@ -40,6 +47,8 @@ export async function requireModifyPermission() {
   return {
     authorized: true,
     user,
+    status: 200,
+    message: null,
   };
 }
 
@@ -67,5 +76,7 @@ export async function requireDeletePermission() {
   return {
     authorized: true,
     user,
+    status: 200,
+    message: null,
   };
 }

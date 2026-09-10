@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import bcrypt from "bcryptjs";
@@ -14,9 +15,11 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  const passwordHash = await bcrypt.hash("Admin@123", 12);
+  const adminPassword = await bcrypt.hash("Admin@123", 12);
+  const employeePassword = await bcrypt.hash("Employee@123", 12);
 
-  const admin = await prisma.user.upsert({
+  // Super Admin
+  await prisma.user.upsert({
     where: {
       email: "admin@funding.com",
     },
@@ -24,18 +27,34 @@ async function main() {
     create: {
       name: "Super Admin",
       email: "admin@funding.com",
-      passwordHash,
+      passwordHash: adminPassword,
       role: "SUPER_ADMIN",
     },
   });
 
-  console.log("Super Admin created:");
-  console.log({
-    id: admin.id,
-    name: admin.name,
-    email: admin.email,
-    role: admin.role,
+  // Normal Employee
+  await prisma.user.upsert({
+    where: {
+      email: "employee@funding.com",
+    },
+    update: {},
+    create: {
+      name: "Normal Employee",
+      email: "employee@funding.com",
+      passwordHash: employeePassword,
+      role: "EMPLOYEE",
+    },
   });
+
+  console.log("Users seeded successfully.");
+  console.log("");
+  console.log("Super Admin:");
+  console.log("Email: admin@funding.com");
+  console.log("Password: Admin@123");
+  console.log("");
+  console.log("Employee:");
+  console.log("Email: employee@funding.com");
+  console.log("Password: Employee@123");
 }
 
 main()
