@@ -2,32 +2,124 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+/* =========================================================
+   CUSTOMER VISIBLE COLUMNS
+   ========================================================= */
+
+const CUSTOMER_COLUMNS = [
+  "Program Name",
+  "Status",
+  "Category",
+  "Purpose",
+  "Eligibility",
+  "Eligibility Details",
+  "Deadline",
+  "Amount Max",
+];
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
+const normalizeKey = (value) =>
+  String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
+const formatValue = (value) => {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return "-";
+  }
+
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return "-";
+    }
+  }
+
+  return String(value);
+};
+
+const getValue = (service, possibleKeys) => {
+  if (!service?.data) return "";
+
+  const data = service.data;
+
+  for (const possibleKey of possibleKeys) {
+    if (
+      data[possibleKey] !== undefined &&
+      data[possibleKey] !== null &&
+      String(data[possibleKey]).trim() !== ""
+    ) {
+      return data[possibleKey];
+    }
+  }
+
+  const normalizedPossibleKeys =
+    possibleKeys.map(normalizeKey);
+
+  const matchingKey = Object.keys(data).find(
+    (key) =>
+      normalizedPossibleKeys.includes(
+        normalizeKey(key)
+      )
+  );
+
+  if (matchingKey) {
+    return data[matchingKey];
+  }
+
+  return "";
+};
+
+/* =========================================================
+   COMPONENT
+   ========================================================= */
+
 export default function Home() {
-  const [fundingServices, setFundingServices] = useState([]);
+  const [fundingServices, setFundingServices] =
+    useState([]);
+
   const [loading, setLoading] = useState(true);
 
-  const [selectedService, setSelectedService] = useState(null);
-  const [showApplication, setShowApplication] = useState(false);
+  const [selectedService, setSelectedService] =
+    useState(null);
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [showApplication, setShowApplication] =
+    useState(false);
 
-  // =========================================================
-  // PAGINATION
-  // =========================================================
+  const [searchTerm, setSearchTerm] =
+    useState("");
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [selectedCategory, setSelectedCategory] =
+    useState("All");
 
-  // =========================================================
-  // EXPANDED TABLE CELLS
-  // =========================================================
+  /* =======================================================
+     PAGINATION
+     ======================================================= */
 
-  const [expandedCells, setExpandedCells] = useState({});
+  const [currentPage, setCurrentPage] =
+    useState(1);
 
-  // =========================================================
-  // APPLICATION FORM
-  // =========================================================
+  const [itemsPerPage, setItemsPerPage] =
+    useState(10);
+
+  /* =======================================================
+     EXPANDED CELLS
+     ======================================================= */
+
+  const [expandedCells, setExpandedCells] =
+    useState({});
+
+  /* =======================================================
+     APPLICATION FORM
+     ======================================================= */
 
   const [formData, setFormData] = useState({
     name: "",
@@ -39,15 +131,18 @@ export default function Home() {
     message: "",
   });
 
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] =
+    useState(false);
+
   const [applicationMessage, setApplicationMessage] =
     useState("");
+
   const [applicationError, setApplicationError] =
     useState("");
 
-  // =========================================================
-  // FETCH FUNDING SERVICES
-  // =========================================================
+  /* =======================================================
+     FETCH FUNDING SERVICES
+     ======================================================= */
 
   useEffect(() => {
     const fetchFundingServices = async () => {
@@ -78,6 +173,8 @@ export default function Home() {
           "Funding services error:",
           error
         );
+
+        setFundingServices([]);
       } finally {
         setLoading(false);
       }
@@ -86,89 +183,17 @@ export default function Home() {
     fetchFundingServices();
   }, []);
 
-  // =========================================================
-  // GET ALL DYNAMIC COLUMNS
-  // =========================================================
+  /* =======================================================
+     FIXED CUSTOMER COLUMNS
+     ======================================================= */
 
   const columns = useMemo(() => {
-    const allColumns = [];
+    return CUSTOMER_COLUMNS;
+  }, []);
 
-    fundingServices.forEach((service) => {
-      if (
-        !service.data ||
-        typeof service.data !== "object"
-      ) {
-        return;
-      }
-
-      Object.keys(service.data).forEach((key) => {
-        if (!allColumns.includes(key)) {
-          allColumns.push(key);
-        }
-      });
-    });
-
-    return allColumns;
-  }, [fundingServices]);
-
-  // =========================================================
-  // FORMAT VALUE
-  // =========================================================
-
-  const formatValue = (value) => {
-    if (
-      value === null ||
-      value === undefined ||
-      value === ""
-    ) {
-      return "-";
-    }
-
-    if (typeof value === "object") {
-      return JSON.stringify(value);
-    }
-
-    return String(value);
-  };
-
-  // =========================================================
-  // GET VALUE
-  // =========================================================
-
-  const getValue = (service, possibleKeys) => {
-    if (!service?.data) return "";
-
-    const data = service.data;
-
-    for (const possibleKey of possibleKeys) {
-      if (
-        data[possibleKey] !== undefined &&
-        data[possibleKey] !== null &&
-        String(data[possibleKey]).trim() !== ""
-      ) {
-        return data[possibleKey];
-      }
-    }
-
-    const matchingKey = Object.keys(data).find(
-      (key) =>
-        possibleKeys.some(
-          (possibleKey) =>
-            key.toLowerCase().trim() ===
-            possibleKey.toLowerCase().trim()
-        )
-    );
-
-    if (matchingKey) {
-      return data[matchingKey];
-    }
-
-    return "";
-  };
-
-  // =========================================================
-  // COMMON FIELDS
-  // =========================================================
+  /* =======================================================
+     COMMON FIELDS
+     ======================================================= */
 
   const getProgramName = (service) => {
     return (
@@ -179,7 +204,7 @@ export default function Home() {
         "Program",
         "Name",
       ]) ||
-      service.title ||
+      service?.title ||
       "Funding Opportunity"
     );
   };
@@ -191,7 +216,7 @@ export default function Home() {
         "program id",
         "ProgramID",
         "ID",
-      ]) || `FM-${service.id}`
+      ]) || `FM-${service?.id || ""}`
     );
   };
 
@@ -215,9 +240,9 @@ export default function Home() {
     );
   };
 
-  // =========================================================
-  // CATEGORIES
-  // =========================================================
+  /* =======================================================
+     CATEGORIES
+     ======================================================= */
 
   const categories = useMemo(() => {
     const categoryValues = fundingServices
@@ -231,9 +256,9 @@ export default function Home() {
     ];
   }, [fundingServices]);
 
-  // =========================================================
-  // FILTER DATA
-  // =========================================================
+  /* =======================================================
+     FILTER DATA
+     ======================================================= */
 
   const filteredServices = useMemo(() => {
     const search = searchTerm
@@ -258,19 +283,22 @@ export default function Home() {
         return true;
       }
 
-      const searchableData = [
-        service.title,
-        service.description,
+      /*
+       * Search only customer-visible fields.
+       * Internal/hidden database fields are not searched.
+       */
 
-        ...Object.entries(
-          service.data || {}
-        ).flatMap(([key, value]) => [
-          key,
-          formatValue(value),
-        ]),
-      ]
-        .join(" ")
-        .toLowerCase();
+      const searchableData =
+        CUSTOMER_COLUMNS.map((column) => {
+          if (column === "Program Name") {
+            return getProgramName(service);
+          }
+
+          return getValue(service, [column]);
+        })
+          .map(formatValue)
+          .join(" ")
+          .toLowerCase();
 
       return searchableData.includes(search);
     });
@@ -280,28 +308,30 @@ export default function Home() {
     selectedCategory,
   ]);
 
-  // =========================================================
-  // RESET PAGE WHEN SEARCH/FILTER CHANGES
-  // =========================================================
+  /* =======================================================
+     RESET PAGE
+     ======================================================= */
 
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedCategory]);
 
-  // =========================================================
-  // PAGINATION
-  // =========================================================
+  /* =======================================================
+     PAGINATION
+     ======================================================= */
 
   const totalPages = Math.max(
     1,
     Math.ceil(
-      filteredServices.length / itemsPerPage
+      filteredServices.length /
+        itemsPerPage
     )
   );
 
   const paginatedServices = useMemo(() => {
     const startIndex =
-      (currentPage - 1) * itemsPerPage;
+      (currentPage - 1) *
+      itemsPerPage;
 
     const endIndex =
       startIndex + itemsPerPage;
@@ -316,9 +346,9 @@ export default function Home() {
     itemsPerPage,
   ]);
 
-  // =========================================================
-  // PAGE NUMBERS
-  // =========================================================
+  /* =======================================================
+     PAGE NUMBERS
+     ======================================================= */
 
   const pageNumbers = useMemo(() => {
     const pages = [];
@@ -359,18 +389,24 @@ export default function Home() {
       pages.push(i);
     }
 
-    if (currentPage < totalPages - 3) {
+    if (
+      currentPage <
+      totalPages - 3
+    ) {
       pages.push("...");
     }
 
     pages.push(totalPages);
 
     return pages;
-  }, [currentPage, totalPages]);
+  }, [
+    currentPage,
+    totalPages,
+  ]);
 
-  // =========================================================
-  // STATISTICS
-  // =========================================================
+  /* =======================================================
+     STATISTICS
+     ======================================================= */
 
   const statistics = useMemo(() => {
     const openCount =
@@ -385,29 +421,34 @@ export default function Home() {
         );
       }).length;
 
-    const categoryCount = new Set(
-      fundingServices
-        .map((service) =>
-          getCategory(service)
-        )
-        .filter(Boolean)
-        .map((value) => String(value))
-    ).size;
+    const categoryCount =
+      new Set(
+        fundingServices
+          .map((service) =>
+            getCategory(service)
+          )
+          .filter(Boolean)
+          .map((value) =>
+            String(value)
+          )
+      ).size;
 
     return {
       total: fundingServices.length,
       open: openCount,
       categories: categoryCount,
-      columns: columns.length,
+      columns: CUSTOMER_COLUMNS.length,
     };
-  }, [fundingServices, columns]);
+  }, [fundingServices]);
 
-  // =========================================================
-  // STATUS STYLE
-  // =========================================================
+  /* =======================================================
+     STATUS STYLE
+     ======================================================= */
 
   const getStatusStyle = (status) => {
-    const value = String(status || "")
+    const value = String(
+      status || ""
+    )
       .toLowerCase()
       .trim();
 
@@ -444,15 +485,21 @@ export default function Home() {
     };
   };
 
-  // =========================================================
-  // CELL EXPANSION
-  // =========================================================
+  /* =======================================================
+     CELL EXPANSION
+     ======================================================= */
 
-  const getCellKey = (serviceId, column) => {
+  const getCellKey = (
+    serviceId,
+    column
+  ) => {
     return `${serviceId}-${column}`;
   };
 
-  const toggleCell = (serviceId, column) => {
+  const toggleCell = (
+    serviceId,
+    column
+  ) => {
     const key = getCellKey(
       serviceId,
       column
@@ -469,9 +516,20 @@ export default function Home() {
     column,
     columnIndex
   ) => {
-    const value = formatValue(
-      service.data?.[column]
-    );
+    let rawValue;
+
+    if (column === "Program Name") {
+      rawValue =
+        getProgramName(service);
+    } else {
+      rawValue = getValue(
+        service,
+        [column]
+      );
+    }
+
+    const value =
+      formatValue(rawValue);
 
     const cellKey = getCellKey(
       service.id,
@@ -482,16 +540,19 @@ export default function Home() {
       expandedCells[cellKey];
 
     const isStatusColumn =
-      column
-        .toLowerCase()
-        .includes("status");
+      column.toLowerCase() ===
+      "status";
 
     const shouldShowMore =
       value.length > 100;
 
-    const status = getStatusStyle(value);
+    const status =
+      getStatusStyle(value);
 
-    if (isStatusColumn && value !== "-") {
+    if (
+      isStatusColumn &&
+      value !== "-"
+    ) {
       return (
         <span
           className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-bold"
@@ -499,13 +560,15 @@ export default function Home() {
             backgroundColor:
               status.background,
             color: status.color,
-            borderColor: status.border,
+            borderColor:
+              status.border,
           }}
         >
           <span
             className="h-1.5 w-1.5 rounded-full"
             style={{
-              backgroundColor: status.dot,
+              backgroundColor:
+                status.dot,
             }}
           />
 
@@ -528,13 +591,16 @@ export default function Home() {
       );
     }
 
-    const visibleValue = isExpanded
-      ? value
-      : `${value.slice(0, 100)}...`;
+    const visibleValue =
+      isExpanded
+        ? value
+        : `${value.slice(
+            0,
+            100
+          )}...`;
 
     return (
       <div className="max-w-[340px]">
-
         <span
           className={
             columnIndex === 0
@@ -559,14 +625,13 @@ export default function Home() {
             ? "See Less"
             : "See More"}
         </button>
-
       </div>
     );
   };
 
-  // =========================================================
-  // VIEW
-  // =========================================================
+  /* =======================================================
+     VIEW MODAL
+     ======================================================= */
 
   const handleView = (service) => {
     setSelectedService(service);
@@ -579,9 +644,9 @@ export default function Home() {
       "hidden";
   };
 
-  // =========================================================
-  // APPLY
-  // =========================================================
+  /* =======================================================
+     APPLY MODAL
+     ======================================================= */
 
   const handleApply = (service) => {
     setSelectedService(service);
@@ -605,9 +670,9 @@ export default function Home() {
       "hidden";
   };
 
-  // =========================================================
-  // CLOSE MODAL
-  // =========================================================
+  /* =======================================================
+     CLOSE MODAL
+     ======================================================= */
 
   const closeModal = () => {
     setSelectedService(null);
@@ -616,14 +681,17 @@ export default function Home() {
     setApplicationMessage("");
     setApplicationError("");
 
-    document.body.style.overflow = "";
+    document.body.style.overflow =
+      "";
   };
 
-  // =========================================================
-  // FORM INPUT
-  // =========================================================
+  /* =======================================================
+     FORM INPUT
+     ======================================================= */
 
-  const handleInputChange = (event) => {
+  const handleInputChange = (
+    event
+  ) => {
     const {
       name,
       value,
@@ -635,11 +703,13 @@ export default function Home() {
     }));
   };
 
-  // =========================================================
-  // SUBMIT APPLICATION
-  // =========================================================
+  /* =======================================================
+     SUBMIT APPLICATION
+     ======================================================= */
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (
+    event
+  ) => {
     event.preventDefault();
 
     if (!selectedService) {
@@ -710,9 +780,9 @@ export default function Home() {
     }
   };
 
-  // =========================================================
-  // SCROLL
-  // =========================================================
+  /* =======================================================
+     SCROLL
+     ======================================================= */
 
   const scrollToOpportunities = () => {
     document
@@ -724,9 +794,9 @@ export default function Home() {
       });
   };
 
-  // =========================================================
-  // PAGE
-  // =========================================================
+  /* =======================================================
+     PAGE
+     ======================================================= */
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#f5f8fb] text-slate-900">
@@ -736,7 +806,6 @@ export default function Home() {
       ===================================================== */}
 
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#071a2d]/95 shadow-lg backdrop-blur-xl">
-
         <div className="mx-auto flex h-[74px] max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
 
           <button
@@ -756,7 +825,6 @@ export default function Home() {
             </div>
 
             <div className="text-left">
-
               <div className="text-base font-black text-white sm:text-lg">
                 Funding Management
               </div>
@@ -764,7 +832,6 @@ export default function Home() {
               <div className="hidden text-[10px] font-bold uppercase tracking-[0.16em] text-teal-300 sm:block">
                 Funding Opportunities Portal
               </div>
-
             </div>
           </button>
 
@@ -795,7 +862,6 @@ export default function Home() {
             </a>
 
           </nav>
-
         </div>
       </header>
 
@@ -853,7 +919,6 @@ export default function Home() {
             </button>
 
           </div>
-
         </div>
       </section>
 
@@ -867,12 +932,16 @@ export default function Home() {
 
           {[
             {
-              value: statistics.total,
-              label: "Total Opportunities",
+              value:
+                statistics.total,
+              label:
+                "Total Opportunities",
             },
             {
-              value: statistics.open,
-              label: "Open Programs",
+              value:
+                statistics.open,
+              label:
+                "Open Programs",
             },
             {
               value:
@@ -883,14 +952,14 @@ export default function Home() {
             {
               value:
                 statistics.columns,
-              label: "Data Fields",
+              label:
+                "Customer Fields",
             },
           ].map((stat) => (
             <div
               key={stat.label}
               className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-900/[0.04] transition hover:-translate-y-1"
             >
-
               <p className="text-3xl font-black text-slate-950">
                 {loading
                   ? "—"
@@ -900,7 +969,6 @@ export default function Home() {
               <p className="mt-1 text-sm font-bold text-slate-800">
                 {stat.label}
               </p>
-
             </div>
           ))}
 
@@ -925,22 +993,18 @@ export default function Home() {
           <div className="mt-3 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
 
             <div>
-
               <h2 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
                 Funding Opportunities
               </h2>
 
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500 sm:text-base">
-                Browse every available funding
-                opportunity and view all the
-                information imported from your
-                Excel data.
+                Browse available funding opportunities
+                and explore the key information you
+                need before applying.
               </p>
-
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-
               <p className="text-xs font-semibold text-slate-400">
                 Results
               </p>
@@ -948,11 +1012,9 @@ export default function Home() {
               <p className="mt-1 text-2xl font-black text-teal-600">
                 {filteredServices.length}
               </p>
-
             </div>
 
           </div>
-
         </div>
 
         {/* ===================================================
@@ -977,7 +1039,7 @@ export default function Home() {
                     event.target.value
                   )
                 }
-                placeholder="Search across all funding information..."
+                placeholder="Search funding opportunities..."
                 className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
               />
 
@@ -986,7 +1048,9 @@ export default function Home() {
             <div className="relative lg:w-64">
 
               <select
-                value={selectedCategory}
+                value={
+                  selectedCategory
+                }
                 onChange={(event) =>
                   setSelectedCategory(
                     event.target.value
@@ -994,7 +1058,6 @@ export default function Home() {
                 }
                 className="h-12 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 pr-10 text-sm font-semibold text-slate-700 outline-none transition focus:border-teal-400 focus:bg-white"
               >
-
                 {categories.map(
                   (category) => (
                     <option
@@ -1005,7 +1068,6 @@ export default function Home() {
                     </option>
                   )
                 )}
-
               </select>
 
               <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
@@ -1043,28 +1105,22 @@ export default function Home() {
             0 && (
             <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-900/[0.04]">
 
-              {/* Table header */}
-
               <div className="flex flex-col justify-between gap-3 bg-[#071a2d] px-5 py-4 sm:flex-row sm:items-center">
 
                 <div>
-
                   <h3 className="text-sm font-black text-white">
-                    Available Funding
-                    Programs
+                    Available Funding Programs
                   </h3>
 
                   <p className="mt-1 text-xs text-slate-400">
-                    All Excel columns are
-                    displayed below
+                    Customer-approved funding information
                   </p>
-
                 </div>
 
                 <div className="flex gap-2">
 
                   <span className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-teal-300">
-                    {columns.length} columns
+                    {CUSTOMER_COLUMNS.length} columns
                   </span>
 
                   <span className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300">
@@ -1072,32 +1128,21 @@ export default function Home() {
                   </span>
 
                 </div>
-
               </div>
-
-              {/* Table */}
 
               <div className="w-full overflow-x-auto">
 
                 <table className="min-w-max w-full border-collapse">
 
                   <thead>
-
                     <tr className="border-b border-slate-200 bg-slate-50">
-
-                      {/* Number */}
 
                       <th className="sticky left-0 z-30 w-16 whitespace-nowrap border-r border-slate-200 bg-slate-50 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-slate-500">
                         #
                       </th>
 
-                      {/* Dynamic columns */}
-
                       {columns.map(
-                        (
-                          column,
-                          index
-                        ) => (
+                        (column) => (
                           <th
                             key={column}
                             className="whitespace-nowrap border-r border-slate-100 px-5 py-4 text-left text-[11px] font-black uppercase tracking-wider text-slate-500"
@@ -1107,14 +1152,11 @@ export default function Home() {
                         )
                       )}
 
-                      {/* Actions */}
-
                       <th className="sticky right-0 z-30 whitespace-nowrap border-l border-slate-200 bg-slate-50 px-5 py-4 text-center text-[11px] font-black uppercase tracking-wider text-slate-500">
                         Actions
                       </th>
 
                     </tr>
-
                   </thead>
 
                   <tbody>
@@ -1124,7 +1166,6 @@ export default function Home() {
                         service,
                         serviceIndex
                       ) => {
-
                         const globalIndex =
                           (currentPage - 1) *
                             itemsPerPage +
@@ -1132,7 +1173,9 @@ export default function Home() {
 
                         return (
                           <tr
-                            key={service.id}
+                            key={
+                              service.id
+                            }
                             className={`group border-b border-slate-100 transition hover:bg-teal-50/50 ${
                               serviceIndex %
                                 2 ===
@@ -1141,8 +1184,6 @@ export default function Home() {
                                 : "bg-slate-50/40"
                             }`}
                           >
-
-                            {/* NUMBER */}
 
                             <td className="sticky left-0 z-20 border-r border-slate-100 bg-inherit px-4 py-4 text-center align-top">
 
@@ -1153,8 +1194,6 @@ export default function Home() {
 
                             </td>
 
-                            {/* ALL COLUMNS */}
-
                             {columns.map(
                               (
                                 column,
@@ -1164,18 +1203,14 @@ export default function Home() {
                                   key={`${service.id}-${column}`}
                                   className="max-w-[360px] whitespace-normal border-r border-slate-100 px-5 py-4 align-top text-sm"
                                 >
-
                                   {renderTableValue(
                                     service,
                                     column,
                                     columnIndex
                                   )}
-
                                 </td>
                               )
                             )}
-
-                            {/* ACTIONS */}
 
                             <td className="sticky right-0 z-20 border-l border-slate-200 bg-white px-5 py-4 align-top">
 
@@ -1206,7 +1241,6 @@ export default function Home() {
                                 </button>
 
                               </div>
-
                             </td>
 
                           </tr>
@@ -1215,18 +1249,14 @@ export default function Home() {
                     )}
 
                   </tbody>
-
                 </table>
-
               </div>
 
               {/* =================================================
-                  PAGINATION FOOTER
+                  PAGINATION
               ================================================= */}
 
               <div className="flex flex-col gap-5 border-t border-slate-200 bg-slate-50 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
-
-                {/* Showing */}
 
                 <div className="flex flex-wrap items-center gap-3">
 
@@ -1266,8 +1296,6 @@ export default function Home() {
 
                   </p>
 
-                  {/* Items per page */}
-
                   <div className="flex items-center gap-2">
 
                     <span className="text-xs text-slate-400">
@@ -1287,6 +1315,7 @@ export default function Home() {
                               .value
                           )
                         );
+
                         setCurrentPage(
                           1
                         );
@@ -1311,15 +1340,10 @@ export default function Home() {
                     </select>
 
                   </div>
-
                 </div>
-
-                {/* Pagination */}
 
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-1.5">
-
-                    {/* Previous */}
 
                     <button
                       type="button"
@@ -1341,8 +1365,6 @@ export default function Home() {
                       ← Prev
                     </button>
 
-                    {/* Page numbers */}
-
                     <div className="flex items-center gap-1">
 
                       {pageNumbers.map(
@@ -1350,7 +1372,6 @@ export default function Home() {
                           page,
                           index
                         ) => {
-
                           if (
                             page ===
                             "..."
@@ -1389,8 +1410,6 @@ export default function Home() {
 
                     </div>
 
-                    {/* Next */}
-
                     <button
                       type="button"
                       disabled={
@@ -1415,7 +1434,6 @@ export default function Home() {
                 )}
 
               </div>
-
             </div>
           )}
 
@@ -1525,12 +1543,12 @@ export default function Home() {
               {
                 number: "01",
                 title: "Explore",
-                text: "Browse all available funding opportunities and search across the complete dataset.",
+                text: "Browse available funding opportunities and search across the customer-visible funding information.",
               },
               {
                 number: "02",
                 title: "Review",
-                text: "Open any opportunity to review the complete information imported from the funding database.",
+                text: "Open an opportunity to review its approved program information before applying.",
               },
               {
                 number: "03",
@@ -1539,7 +1557,9 @@ export default function Home() {
               },
             ].map((step) => (
               <div
-                key={step.number}
+                key={
+                  step.number
+                }
                 className="rounded-3xl border border-slate-200 bg-slate-50 p-7 transition hover:-translate-y-1 hover:bg-white hover:shadow-xl"
               >
 
@@ -1590,7 +1610,6 @@ export default function Home() {
                 </div>
 
                 <div>
-
                   <p className="font-black text-white">
                     Funding Management
                   </p>
@@ -1599,7 +1618,6 @@ export default function Home() {
                     Funding Opportunities
                     Portal
                   </p>
-
                 </div>
 
               </div>
@@ -1643,7 +1661,9 @@ export default function Home() {
           </div>
 
           <div className="mt-10 border-t border-white/10 pt-6 text-xs text-slate-500">
-            © {new Date().getFullYear()} Funding Management.
+            ©{" "}
+            {new Date().getFullYear()}{" "}
+            Funding Management.
             All rights reserved.
           </div>
 
@@ -1652,6 +1672,7 @@ export default function Home() {
 
       {/* =====================================================
           VIEW DETAILS MODAL
+          ONLY CUSTOMER_COLUMNS ARE SHOWN
       ===================================================== */}
 
       {selectedService &&
@@ -1697,22 +1718,23 @@ export default function Home() {
                     </h2>
 
                     <p className="mt-2 text-sm text-slate-300">
-                      Complete funding
-                      opportunity information
+                      Key funding opportunity
+                      information
                     </p>
 
                   </div>
 
                   <button
                     type="button"
-                    onClick={closeModal}
+                    onClick={
+                      closeModal
+                    }
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-xl text-white transition hover:bg-white/20"
                   >
                     ×
                   </button>
 
                 </div>
-
               </div>
 
               <div className="flex-1 overflow-y-auto p-5 sm:p-8">
@@ -1736,8 +1758,6 @@ export default function Home() {
 
                 </div>
 
-                {/* ALL DATA */}
-
                 <div className="overflow-hidden rounded-2xl border border-slate-200">
 
                   <div className="overflow-x-auto">
@@ -1745,7 +1765,6 @@ export default function Home() {
                     <table className="min-w-full border-collapse">
 
                       <thead>
-
                         <tr className="bg-slate-50">
 
                           <th className="w-16 border-b border-slate-200 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-slate-500">
@@ -1761,30 +1780,38 @@ export default function Home() {
                           </th>
 
                         </tr>
-
                       </thead>
 
                       <tbody>
 
-                        {Object.entries(
-                          selectedService.data ||
-                            {}
-                        ).map(
+                        {CUSTOMER_COLUMNS.map(
                           (
-                            [key, value],
+                            key,
                             index
                           ) => {
+                            const value =
+                              key ===
+                              "Program Name"
+                                ? getProgramName(
+                                    selectedService
+                                  )
+                                : getValue(
+                                    selectedService,
+                                    [key]
+                                  );
+
+                            const formattedValue =
+                              formatValue(
+                                value
+                              );
 
                             const isStatus =
-                              key
-                                .toLowerCase()
-                                .includes(
-                                  "status"
-                                );
+                              key.toLowerCase() ===
+                              "status";
 
                             const status =
                               getStatusStyle(
-                                value
+                                formattedValue
                               );
 
                             return (
@@ -1805,7 +1832,8 @@ export default function Home() {
                                 <td className="break-words px-5 py-4 text-sm leading-6 text-slate-700">
 
                                   {isStatus &&
-                                  value ? (
+                                  formattedValue !==
+                                    "-" ? (
                                     <span
                                       className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold"
                                       style={{
@@ -1825,14 +1853,12 @@ export default function Home() {
                                         }}
                                       />
 
-                                      {formatValue(
-                                        value
-                                      )}
+                                      {
+                                        formattedValue
+                                      }
                                     </span>
                                   ) : (
-                                    formatValue(
-                                      value
-                                    )
+                                    formattedValue
                                   )}
 
                                 </td>
@@ -1845,9 +1871,7 @@ export default function Home() {
                       </tbody>
 
                     </table>
-
                   </div>
-
                 </div>
 
               </div>
@@ -1856,7 +1880,9 @@ export default function Home() {
 
                 <button
                   type="button"
-                  onClick={closeModal}
+                  onClick={
+                    closeModal
+                  }
                   className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
                 >
                   Close
@@ -1877,7 +1903,6 @@ export default function Home() {
               </div>
 
             </div>
-
           </div>
         )}
 
@@ -1923,7 +1948,9 @@ export default function Home() {
 
                   <button
                     type="button"
-                    onClick={closeModal}
+                    onClick={
+                      closeModal
+                    }
                     disabled={
                       submitting
                     }
@@ -1933,7 +1960,6 @@ export default function Home() {
                   </button>
 
                 </div>
-
               </div>
 
               <form
@@ -1964,12 +1990,23 @@ export default function Home() {
 
                 </div>
 
+                {applicationMessage && (
+                  <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+                    {applicationMessage}
+                  </div>
+                )}
+
+                {applicationError && (
+                  <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                    {applicationError}
+                  </div>
+                )}
+
                 <div className="grid gap-5 sm:grid-cols-2">
 
-                  {/* Name */}
+                  {/* NAME */}
 
                   <div>
-
                     <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
                       Full Name *
                     </label>
@@ -1987,13 +2024,11 @@ export default function Home() {
                       placeholder="Enter your full name"
                       className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
                     />
-
                   </div>
 
-                  {/* Phone */}
+                  {/* PHONE */}
 
                   <div>
-
                     <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
                       Phone Number *
                     </label>
@@ -2011,13 +2046,11 @@ export default function Home() {
                       placeholder="Enter phone number"
                       className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
                     />
-
                   </div>
 
-                  {/* Email */}
+                  {/* EMAIL */}
 
                   <div>
-
                     <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
                       Email Address *
                     </label>
@@ -2035,13 +2068,11 @@ export default function Home() {
                       placeholder="Enter email address"
                       className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
                     />
-
                   </div>
 
-                  {/* Company */}
+                  {/* COMPANY */}
 
                   <div>
-
                     <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
                       Company / Organization
                     </label>
@@ -2058,13 +2089,11 @@ export default function Home() {
                       placeholder="Company or organization"
                       className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
                     />
-
                   </div>
 
-                  {/* City */}
+                  {/* CITY */}
 
                   <div>
-
                     <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
                       City
                     </label>
@@ -2081,13 +2110,11 @@ export default function Home() {
                       placeholder="City"
                       className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
                     />
-
                   </div>
 
-                  {/* Address */}
+                  {/* ADDRESS */}
 
                   <div>
-
                     <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
                       Address
                     </label>
@@ -2104,16 +2131,14 @@ export default function Home() {
                       placeholder="Address"
                       className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
                     />
-
                   </div>
 
-                  {/* Message */}
+                  {/* MESSAGE */}
 
                   <div className="sm:col-span-2">
 
                     <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                      Message / Reason
-                      for Applying
+                      Message / Reason for Applying
                     </label>
 
                     <textarea
@@ -2133,56 +2158,17 @@ export default function Home() {
 
                 </div>
 
-                {/* Success */}
-
-                {applicationMessage && (
-                  <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-
-                    <p className="text-sm font-bold text-emerald-800">
-                      ✓ Application
-                      submitted
-                      successfully
-                    </p>
-
-                    <p className="mt-1 text-xs text-emerald-700">
-                      {
-                        applicationMessage
-                      }
-                    </p>
-
-                  </div>
-                )}
-
-                {/* Error */}
-
-                {applicationError && (
-                  <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4">
-
-                    <p className="text-sm font-bold text-rose-800">
-                      Application could
-                      not be submitted
-                    </p>
-
-                    <p className="mt-1 text-xs text-rose-700">
-                      {
-                        applicationError
-                      }
-                    </p>
-
-                  </div>
-                )}
-
-                {/* Buttons */}
-
-                <div className="mt-7 flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-end">
+                <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
 
                   <button
                     type="button"
-                    onClick={closeModal}
+                    onClick={
+                      closeModal
+                    }
                     disabled={
                       submitting
                     }
-                    className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                    className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
                   >
                     Cancel
                   </button>
@@ -2192,7 +2178,7 @@ export default function Home() {
                     disabled={
                       submitting
                     }
-                    className="rounded-xl bg-[#071a2d] px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-xl bg-[#071a2d] px-7 py-3 text-sm font-black text-white shadow-lg transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {submitting
                       ? "Submitting..."
@@ -2202,9 +2188,7 @@ export default function Home() {
                 </div>
 
               </form>
-
             </div>
-
           </div>
         )}
 
