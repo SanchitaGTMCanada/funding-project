@@ -51,13 +51,17 @@ export async function GET() {
       } catch {}
     }
 
-    return Response.json(
-      {
-        success: false,
-        message: "Direct MariaDB connection failed",
-        error: error?.message || String(error),
-      },
-      { status: 500 }
-    );
+const result = await connection.query("SELECT 1 AS test");
+
+await connection.release();
+await pool.end();
+
+return Response.json({
+  success: true,
+  message: "Direct MariaDB connection successful",
+  result: result.map((row) => ({
+    test: Number(row.test),
+  })),
+});
   }
 }
