@@ -1030,60 +1030,151 @@ export default function Home() {
       {/* =====================================================
           STATS
       ===================================================== */}
+<section className="relative z-10 -mt-8 px-5 sm:px-6 lg:px-10 xl:px-12">
 
-      <section className="relative z-10 -mt-8 px-5 sm:px-6 lg:px-10 xl:px-12">
+  <div className="mx-auto grid max-w-[1800px] gap-4 sm:grid-cols-2 lg:grid-cols-3">
 
-        <div className="mx-auto grid max-w-[1800px] gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    {[
+      {
+        value: statistics.total,
+        label: "Total Opportunities",
+        description: "Available funding programs",
+        icon: (
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="3" />
+            <path d="M8 8h8" />
+            <path d="M8 12h8" />
+            <path d="M8 16h5" />
+          </svg>
+        ),
+        iconBg: "bg-indigo-100",
+        iconColor: "text-indigo-600",
+        accent: "from-indigo-500 to-violet-500",
+      },
 
-          {[
-            {
-              value:
-                statistics.total,
-              label:
-                "Total Opportunities",
-            },
-            {
-              value:
-                statistics.open,
-              label:
-                "Open Programs",
-            },
-            {
-              value:
-                statistics.categories,
-              label:
-                "Funding Categories",
-            },
-            {
-              value:
-                statistics.columns,
-              label:
-                "Customer Fields",
-            },
-          ].map((stat) => (
+      {
+        value: statistics.open,
+        label: "Open Programs",
+        description: "Currently accepting applications",
+        icon: (
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="m8 12 2.5 2.5L16 9" />
+          </svg>
+        ),
+        iconBg: "bg-emerald-100",
+        iconColor: "text-emerald-600",
+        accent: "from-emerald-500 to-teal-500",
+      },
 
-            <div
-              key={stat.label}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-900/[0.04] transition hover:-translate-y-1"
-            >
+      {
+        value: statistics.categories,
+        label: "Funding Categories",
+        description: "Distinct funding classifications",
+        icon: (
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M4 5h16" />
+            <path d="M4 12h16" />
+            <path d="M4 19h16" />
+            <circle cx="8" cy="5" r="1" />
+            <circle cx="16" cy="12" r="1" />
+            <circle cx="10" cy="19" r="1" />
+          </svg>
+        ),
+        iconBg: "bg-cyan-100",
+        iconColor: "text-cyan-600",
+        accent: "from-cyan-500 to-blue-500",
+      },
+    ].map((stat) => (
 
-              <p className="text-3xl font-black text-slate-950">
-                {loading
-                  ? "—"
-                  : stat.value}
-              </p>
+      <div
+        key={stat.label}
+        className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-br from-slate-100 via-slate-50 to-white px-5 py-4 shadow-[0_4px_18px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_8px_25px_rgba(15,23,42,0.08)]"
+      >
 
-              <p className="mt-1 text-sm font-bold text-slate-800">
-                {stat.label}
+        {/* Subtle gradient accent */}
+        <div
+          className={`absolute left-0 top-0 h-full w-1 bg-gradient-to-b ${stat.accent}`}
+        />
+
+        {/* Very subtle background glow */}
+        <div
+          className={`pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-gradient-to-br ${stat.accent} opacity-[0.07] blur-2xl transition-opacity duration-300 group-hover:opacity-[0.12]`}
+        />
+
+        <div className="relative flex items-center gap-4">
+
+          {/* Icon */}
+          <div
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${stat.iconBg} ${stat.iconColor} border border-white shadow-sm transition-transform duration-300 group-hover:scale-105`}
+          >
+            {stat.icon}
+          </div>
+
+          {/* Main information */}
+          <div className="min-w-0">
+
+            <div className="flex items-center gap-3">
+
+              <p className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
+                {loading ? "—" : stat.value}
               </p>
 
             </div>
 
-          ))}
+            <p className="mt-0.5 truncate text-sm font-semibold text-slate-800">
+              {stat.label}
+            </p>
+
+            <p className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
+              {stat.description}
+            </p>
+
+          </div>
 
         </div>
 
-      </section>
+        {/* Bottom progress accent */}
+        <div className="relative mt-4 h-[2px] overflow-hidden rounded-full bg-slate-200">
+          <div
+            className={`h-full w-1/3 rounded-full bg-gradient-to-r ${stat.accent} transition-all duration-500 group-hover:w-2/3`}
+          />
+        </div>
+
+      </div>
+
+    ))}
+
+  </div>
+
+</section>
 
       {/* =====================================================
           FUNDING OPPORTUNITIES

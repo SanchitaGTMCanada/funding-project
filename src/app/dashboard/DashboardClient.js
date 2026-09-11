@@ -1591,142 +1591,161 @@ const renderValue = (value) => {
 
                 </thead>
 
-                <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-200/80">
 
-                  {filteredServices.map(
-                    (service) => (
+  {filteredServices.map(
+    (service, index) => (
 
-                      <tr
-                        key={service.id}
-                        className="group transition hover:bg-indigo-50/30"
-                      >
+      <tr
+        key={service.id}
+        className={`group transition ${
+          index % 2 === 0
+            ? "bg-white hover:bg-slate-100/80"
+            : "bg-slate-50/70 hover:bg-slate-100"
+        }`}
+      >
 
-                        <td className="sticky left-0 z-10 border-r border-slate-100 bg-white px-5 py-4 group-hover:bg-indigo-50/30">
+        {/* ID */}
+        <td
+          className={`sticky left-0 z-10 border-r border-slate-200 px-5 py-4 ${
+            index % 2 === 0
+              ? "bg-white group-hover:bg-slate-100/80"
+              : "bg-slate-50/70 group-hover:bg-slate-100"
+          }`}
+        >
 
-                          <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg bg-slate-100 px-2 text-xs font-bold text-slate-700">
-                            #{service.id}
-                          </span>
+          <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg bg-slate-100 px-2 text-xs font-bold text-slate-700">
+            #{service.id}
+          </span>
 
-                        </td>
-                      <td className="px-5 py-4 text-sm font-semibold text-slate-800">
-  {service.title || "-"}
-</td>
+        </td>
 
-                        {dynamicColumns.map(
-                          (column) => (
+        {/* Funding Service Title */}
+        <td className="px-5 py-4 text-sm font-semibold text-slate-800">
+          {service.title || "-"}
+        </td>
 
-                            <td
-                              key={`${service.id}-${column}`}
-                              className="max-w-[320px] whitespace-nowrap px-5 py-4 text-slate-600"
-                              title={renderValue(
-  service.data?.[column]
-)}
-                            >
+        {/* Dynamic Fields */}
+        {dynamicColumns.map(
+          (column) => (
 
-                              <div className="max-w-[320px] truncate">
-                              {renderValue(
-  service.data?.[column]
-)}
-                              </div>
+            <td
+              key={`${service.id}-${column}`}
+              className="max-w-[320px] whitespace-nowrap px-5 py-4 text-slate-600"
+              title={formatValue(
+                service.data?.[column]
+              )}
+            >
 
-                            </td>
+              <div className="max-w-[320px] truncate">
+                {renderValue(
+                  service.data?.[column]
+                )}
+              </div>
 
-                          )
-                        )}
+            </td>
 
-                        <td className="whitespace-nowrap px-5 py-4 text-xs text-slate-500">
-                          {service.createdAt
-                            ? new Date(
-                                service.createdAt
-                              ).toLocaleString()
-                            : "-"}
-                        </td>
+          )
+        )}
 
-                        <td className="whitespace-nowrap px-5 py-4 text-xs text-slate-500">
-                          {service.updatedAt
-                            ? new Date(
-                                service.updatedAt
-                              ).toLocaleString()
-                            : "-"}
-                        </td>
+        {/* Created */}
+        <td className="whitespace-nowrap px-5 py-4 text-xs text-slate-500">
+          {service.createdAt
+            ? new Date(
+                service.createdAt
+              ).toLocaleString()
+            : "-"}
+        </td>
 
-                        <td className="sticky right-0 z-10 border-l border-slate-100 bg-white px-5 py-4 group-hover:bg-indigo-50/30">
+        {/* Updated */}
+        <td className="whitespace-nowrap px-5 py-4 text-xs text-slate-500">
+          {service.updatedAt
+            ? new Date(
+                service.updatedAt
+              ).toLocaleString()
+            : "-"}
+        </td>
 
-                          <div className="flex items-center gap-2">
+        {/* Actions */}
+        <td
+          className={`sticky right-0 z-10 border-l border-slate-200 px-5 py-4 ${
+            index % 2 === 0
+              ? "bg-white group-hover:bg-slate-100/80"
+              : "bg-slate-50/70 group-hover:bg-slate-100"
+          }`}
+        >
 
-                            {/* Edit */}
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleEdit(
-                                  service
-                                )
-                              }
-                              className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-indigo-600"
-                            >
+          <div className="flex items-center gap-2">
 
-                              <svg
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M12 20h9" />
-                                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
-                              </svg>
+            {/* Edit */}
+            <button
+              type="button"
+              onClick={() =>
+                handleEdit(service)
+              }
+              className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-indigo-600"
+            >
 
-                              Edit
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
+              </svg>
 
-                            </button>
+              Edit
 
-                            {/* Delete */}
-                            {isSuperAdmin && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleOpenDelete(
-                                    service
-                                  )
-                                }
-                                className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-600 transition hover:bg-red-600 hover:text-white"
-                              >
+            </button>
 
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <polyline points="3 6 5 6 21 6" />
-                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                                  <path d="M10 11v6" />
-                                  <path d="M14 11v6" />
-                                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                </svg>
+            {/* Delete */}
+            {isSuperAdmin && (
+              <button
+                type="button"
+                onClick={() =>
+                  handleOpenDelete(service)
+                }
+                className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-600 transition hover:bg-red-600 hover:text-white"
+              >
 
-                                Delete
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                  <path d="M10 11v6" />
+                  <path d="M14 11v6" />
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                </svg>
 
-                              </button>
-                            )}
+                Delete
 
-                          </div>
+              </button>
+            )}
 
-                        </td>
+          </div>
 
-                      </tr>
+        </td>
 
-                    )
-                  )}
+      </tr>
 
-                </tbody>
+    )
+  )}
+
+</tbody>
 
               </table>
 
