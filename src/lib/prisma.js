@@ -20,8 +20,12 @@ const adapterOptions = {
   connectionLimit: 5,
 };
 
-if (parsedUrl.searchParams.get("ssl-mode") === "REQUIRED") {
-  adapterOptions.ssl = true;
+const sslMode = parsedUrl.searchParams.get("ssl-mode");
+
+if (sslMode?.toUpperCase() === "REQUIRED") {
+  adapterOptions.ssl = {
+    rejectUnauthorized: false,
+  };
 }
 
 const adapter = new PrismaMariaDb(adapterOptions);
