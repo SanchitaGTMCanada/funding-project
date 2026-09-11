@@ -19,14 +19,25 @@ export default function DashboardClient({ user }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addingData, setAddingData] = useState(false);
 
-  const [addTitle, setAddTitle] = useState("");
-  const [addDescription, setAddDescription] = useState("");
-
   const [addData, setAddData] = useState({
-    "Funding Name": "",
-    Provider: "",
-    Amount: "",
-    Deadline: "",
+    "Program ID": "",
+    "Program Name": "",
+    "Status": "",
+    "Category": "",
+    "Locations": "",
+    "Jurisdiction": "",
+    "Funding Agency": "",
+    "Purpose": "",
+    "Eligibility": "",
+    "Eligibility Details": "",
+    "Amount Min": "",
+    "Amount Max": "",
+    "Funding Type": "",
+    "Amount Notes": "",
+    "Documents Needed": "",
+    "Contact Information": "",
+    "Official Source URL": "",
+    "Source Category": ""
   });
 
   const [addMessage, setAddMessage] = useState("");
@@ -320,15 +331,26 @@ export default function DashboardClient({ user }) {
   const handleOpenAddModal = () => {
     setShowAddModal(true);
 
-    setAddTitle("");
-    setAddDescription("");
-
     setAddData({
-      "Funding Name": "",
-      Provider: "",
-      Amount: "",
-      Deadline: "",
-    });
+    "Program ID": "",
+    "Program Name": "",
+    "Status": "",
+    "Category": "",
+    "Locations": "",
+    "Jurisdiction": "",
+    "Funding Agency": "",
+    "Purpose": "",
+    "Eligibility": "",
+    "Eligibility Details": "",
+    "Amount Min": "",
+    "Amount Max": "",
+    "Funding Type": "",
+    "Amount Notes": "",
+    "Documents Needed": "",
+    "Contact Information": "",
+    "Official Source URL": "",
+    "Source Category": ""
+  });
 
     setAddMessage("");
     setAddError("");
@@ -341,8 +363,6 @@ export default function DashboardClient({ user }) {
 
     setShowAddModal(false);
 
-    setAddTitle("");
-    setAddDescription("");
     setAddData({});
     setAddMessage("");
     setAddError("");
@@ -405,9 +425,13 @@ export default function DashboardClient({ user }) {
   };
 
   const handleSaveManualData = async () => {
-    if (!addTitle.trim()) {
+    const hasData = Object.values(addData).some(
+      (value) => String(value ?? "").trim() !== ""
+    );
+
+    if (!hasData) {
       setAddError(
-        "Funding service title is required."
+        "Please enter at least one funding detail before submitting."
       );
 
       return;
@@ -427,9 +451,9 @@ export default function DashboardClient({ user }) {
           },
           credentials: "include",
           body: JSON.stringify({
-            title: addTitle.trim(),
+            title: String(addData["Program Name"] || "").trim(),
             description:
-              addDescription.trim() || null,
+              String(addData["Purpose"] || "").trim() || null,
             data: addData,
           }),
         }
@@ -453,15 +477,13 @@ export default function DashboardClient({ user }) {
 
       await fetchFundingServices();
 
-      setTimeout(() => {
-        setShowAddModal(false);
+   setTimeout(() => {
+  setShowAddModal(false);
 
-        setAddTitle("");
-        setAddDescription("");
-        setAddData({});
-        setAddMessage("");
-        setAddError("");
-      }, 700);
+  setAddData({});
+  setAddMessage("");
+  setAddError("");
+}, 700);
     } catch (error) {
       console.error(
         "Add funding data error:",
@@ -1628,367 +1650,244 @@ export default function DashboardClient({ user }) {
       ===================================================== */}
 
       {showAddModal && (
-
         <div
           className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
           onMouseDown={(event) => {
             if (
-              event.target ===
-                event.currentTarget &&
+              event.target === event.currentTarget &&
               !addingData
             ) {
               handleCloseAddModal();
             }
           }}
         >
+          <div className="flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_30px_100px_rgba(15,23,42,0.25)]">
 
-          <div className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+            {/* HEADER */}
+            <div className="relative shrink-0 overflow-hidden bg-[#071a2d] px-6 py-6 text-white sm:px-8">
+              <div className="absolute -right-16 -top-24 h-64 w-64 rounded-full bg-teal-400/10 blur-3xl" />
+              <div className="absolute bottom-[-100px] left-1/3 h-64 w-64 rounded-full bg-cyan-400/10 blur-3xl" />
 
-            {/* Header */}
-            <div className="relative overflow-hidden border-b border-white/10 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 px-6 py-6 text-white sm:px-8">
-
-              <div className="absolute -right-10 -top-20 h-56 w-56 rounded-full bg-cyan-500/10 blur-3xl" />
-
-              <div className="absolute -bottom-20 left-1/3 h-48 w-48 rounded-full bg-indigo-500/20 blur-3xl" />
-
-              <div className="relative flex items-center justify-between">
-
+              <div className="relative flex items-center justify-between gap-4">
                 <div>
-
-                  <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-200">
-                    <span className="h-1.5 w-1.5 rounded-full bg-cyan-300" />
-                    Manual Data Entry
+                  <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-teal-200">
+                    <span className="h-1.5 w-1.5 rounded-full bg-teal-300" />
+                    Funding Data
                   </div>
 
-                  <h2 className="text-2xl font-bold">
-                    Add Funding Data
+                  <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                    Add Funding Opportunity
                   </h2>
 
-                  <p className="mt-1 text-sm text-slate-300">
-                    Create a new funding opportunity manually.
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+                    Enter the funding information using the standard
+                    fields from the funding database.
                   </p>
-
                 </div>
 
                 <button
                   type="button"
                   onClick={handleCloseAddModal}
                   disabled={addingData}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-xl text-white transition hover:bg-white/20 disabled:opacity-50"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-xl text-white transition hover:bg-white/20 disabled:opacity-50"
+                  aria-label="Close"
                 >
                   ×
                 </button>
-
               </div>
             </div>
 
-            {/* Body */}
-            <div className="overflow-y-auto px-6 py-7 sm:px-8">
+            {/* BODY */}
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 sm:px-8 sm:py-8">
 
-              {/* Basic information */}
-              <div className="mb-8">
+             
+             
 
-                <div className="mb-5">
+              {/* FUNDING FIELDS */}
+              <div className="grid gap-5 md:grid-cols-2">
 
-                  <h3 className="text-lg font-bold text-slate-950">
-                    Basic Information
-                  </h3>
+                {Object.entries(addData).map(
+                  ([field, value], index) => {
+                    const isLongField = [
+                      "Purpose",
+                      "Eligibility",
+                      "Eligibility Details",
+                      "Amount Notes",
+                      "Documents Needed",
+                      "Contact Information",
+                    ].includes(field);
 
-                  <p className="mt-1 text-sm text-slate-500">
-                    Enter the main details of the funding opportunity.
-                  </p>
+                    const isUrl = field === "Official Source URL";
 
-                </div>
-
-                <div className="grid gap-5 md:grid-cols-2">
-
-                  <div className="md:col-span-2">
-
-                    <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Funding Title{" "}
-                      <span className="text-red-500">
-                        *
-                      </span>
-                    </label>
-
-                    <input
-                      type="text"
-                      value={addTitle}
-                      onChange={(event) =>
-                        setAddTitle(
-                          event.target.value
-                        )
-                      }
-                      placeholder="Enter funding title"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
-                    />
-
-                  </div>
-
-                  <div className="md:col-span-2">
-
-                    <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Description
-                    </label>
-
-                    <textarea
-                      value={addDescription}
-                      onChange={(event) =>
-                        setAddDescription(
-                          event.target.value
-                        )
-                      }
-                      rows={4}
-                      placeholder="Enter a description of the funding opportunity..."
-                      className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
-                    />
-
-                  </div>
-
-                </div>
-
-              </div>
-
-              {/* Funding information */}
-              <div>
-
-                <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-
-                  <div>
-
-                    <h3 className="text-lg font-bold text-slate-950">
-                      Funding Information
-                    </h3>
-
-                    <p className="mt-1 text-sm text-slate-500">
-                      Add the fields that should appear in the funding table.
-                    </p>
-
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleAddNewField}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-xs font-bold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"
-                  >
-
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="9"
-                      />
-
-                      <path d="M12 8v8" />
-                      <path d="M8 12h8" />
-                    </svg>
-
-                    Add Another Field
-
-                  </button>
-
-                </div>
-
-                <div className="space-y-4">
-
-                  {Object.entries(addData).map(
-                    ([field, value], index) => (
-
+                    return (
                       <div
                         key={field}
-                        className="group rounded-2xl border border-slate-200 bg-slate-50/70 p-4 transition hover:border-indigo-200 hover:bg-indigo-50/20"
+                        className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_3px_15px_rgba(15,23,42,0.04)] transition hover:border-teal-200 hover:shadow-[0_8px_25px_rgba(15,23,42,0.07)] ${
+                          isLongField
+                            ? "md:col-span-2"
+                            : ""
+                        }`}
                       >
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <label className="text-xs font-bold uppercase tracking-[0.12em] text-slate-600">
+                            {field}
+                          </label>
 
-                        <div className="flex flex-col gap-3 md:flex-row md:items-end">
-
-                          <div className="md:w-[34%]">
-
-                            <label className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                              Field Name
-                            </label>
-
-                            <div className="flex items-center gap-2">
-
-                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-xs font-bold text-slate-400 shadow-sm">
-                                {index + 1}
-                              </span>
-
-                              <input
-                                type="text"
-                                value={field}
-                                readOnly
-                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none"
-                              />
-
-                            </div>
-
-                          </div>
-
-                          <div className="flex-1">
-
-                            <label className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                              Value
-                            </label>
-
-                            <input
-                              type="text"
-                              value={
-                                value ?? ""
-                              }
-                              onChange={(event) =>
-                                handleAddFieldChange(
-                                  field,
-                                  event.target.value
-                                )
-                              }
-                              placeholder={`Enter ${field}`}
-                              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50"
-                            />
-
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleRemoveAddField(
-                                field
-                              )
-                            }
-                            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 md:w-auto"
-                            title="Remove field"
-                          >
-
-                            <svg
-                              width="17"
-                              height="17"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                              <path d="M10 11v6" />
-                              <path d="M14 11v6" />
-                            </svg>
-
-                            <span className="md:hidden">
-                              Remove
-                            </span>
-
-                          </button>
-
+                          <span className="rounded-full bg-slate-100 px-2 py-1 text-[9px] font-bold text-slate-400">
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
                         </div>
 
+                        {isLongField ? (
+                          <textarea
+                            value={value ?? ""}
+                            onChange={(event) =>
+                              handleAddFieldChange(
+                                field,
+                                event.target.value
+                              )
+                            }
+                            rows={
+                              field === "Eligibility Details"
+                                ? 5
+                                : 4
+                            }
+                            placeholder={`Enter ${field.toLowerCase()}`}
+                            className="w-full resize-y rounded-xl border border-slate-200 bg-[#f8fafb] px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                          />
+                        ) : (
+                          <input
+                            type={isUrl ? "url" : "text"}
+                            value={value ?? ""}
+                            onChange={(event) =>
+                              handleAddFieldChange(
+                                field,
+                                event.target.value
+                              )
+                            }
+                            placeholder={`Enter ${field.toLowerCase()}`}
+                            className="h-12 w-full rounded-xl border border-slate-200 bg-[#f8fafb] px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                          />
+                        )}
+
+                        {field === "Program ID" && (
+                          <p className="mt-2 text-[11px] text-slate-400">
+                            Optional. Leave blank if the system should
+                            not receive a manually assigned program ID.
+                          </p>
+                        )}
+
+                        {field === "Official Source URL" && (
+                          <p className="mt-2 text-[11px] text-slate-400">
+                            Add the official source webpage for this
+                            funding opportunity.
+                          </p>
+                        )}
                       </div>
-
-                    )
-                  )}
-
-                </div>
+                    );
+                  }
+                )}
 
               </div>
 
-              {/* Errors */}
+              {/* ERROR */}
               {addError && (
-
-                <div className="mt-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5">
-
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                <div className="mt-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-4">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                     !
                   </div>
 
-                  <p className="text-sm font-semibold text-red-700">
+                  <p className="pt-1 text-sm font-semibold text-red-700">
                     {addError}
                   </p>
-
                 </div>
               )}
 
-              {/* Success */}
+              {/* SUCCESS */}
               {addMessage && (
-
-                <div className="mt-6 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3.5">
-
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+                <div className="mt-6 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-xs font-bold text-white">
                     ✓
                   </div>
 
-                  <p className="text-sm font-semibold text-emerald-700">
+                  <p className="pt-1 text-sm font-semibold text-emerald-700">
                     {addMessage}
                   </p>
-
                 </div>
               )}
-
             </div>
 
-            {/* Footer */}
-            <div className="flex flex-col-reverse gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-8">
+            {/* FOOTER */}
+            <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
 
-              <button
-                type="button"
-                onClick={handleCloseAddModal}
-                disabled={addingData}
-                className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50"
-              >
-                Cancel
-              </button>
+              <p className="text-xs leading-5 text-slate-400">
+                At least one funding field must contain information.
+              </p>
 
-              <button
-                type="button"
-                onClick={handleSaveManualData}
-                disabled={addingData}
-                className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition hover:from-indigo-700 hover:to-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
+              <div className="flex flex-col-reverse gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={handleCloseAddModal}
+                  disabled={addingData}
+                  className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
 
-                {addingData && (
-                  <svg
-                    className="animate-spin"
-                    width="17"
-                    height="17"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="9"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      opacity="0.3"
-                    />
-
-                    <path
-                      d="M21 12a9 9 0 0 0-9-9"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                )}
-
-                {addingData
-                  ? "Saving..."
-                  : "Save Funding Data"}
-
-              </button>
-
+                <button
+                  type="button"
+                  onClick={handleSaveManualData}
+                  disabled={addingData}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#071a2d] px-7 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {addingData ? (
+                    <>
+                      <svg
+                        className="animate-spin"
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="9"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          opacity="0.25"
+                        />
+                        <path
+                          d="M21 12a9 9 0 0 0-9-9"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      Save Funding Data
+                      <svg
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M5 12h14" />
+                        <path d="m13 6 6 6-6 6" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
-
           </div>
-
         </div>
       )}
 
