@@ -67,6 +67,17 @@ export default function DashboardClient({ user }) {
   const [deleteError, setDeleteError] = useState("");
 
   // =========================================================
+  // STATUS STATE
+  // =========================================================
+
+  const [statusConfirmingService, setStatusConfirmingService] =
+    useState(null);
+
+  const [statusUpdatingId, setStatusUpdatingId] = useState(null);
+
+  const [statusError, setStatusError] = useState("");
+
+  // =========================================================
   // LOGOUT STATE
   // =========================================================
 
@@ -79,6 +90,12 @@ export default function DashboardClient({ user }) {
   const [searchTerm, setSearchTerm] = useState("");
 
   // =========================================================
+  // ROLE
+  // =========================================================
+
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
+
+  // =========================================================
   // FETCH FUNDING SERVICES
   // =========================================================
 
@@ -89,6 +106,7 @@ export default function DashboardClient({ user }) {
 
       const response = await fetch("/api/funding-services", {
         cache: "no-store",
+        credentials: "include",
       });
 
       const result = await response.json();
@@ -621,82 +639,176 @@ export default function DashboardClient({ user }) {
     }
   };
 
+  // =========================================================
+  // URL HELPERS
+  // =========================================================
 
-const isUrlValue = (value) => {
-  if (
-    value === null ||
-    value === undefined ||
-    typeof value === "object"
-  ) {
-    return false;
-  }
+  const isUrlValue = (value) => {
+    if (
+      value === null ||
+      value === undefined ||
+      typeof value === "object"
+    ) {
+      return false;
+    }
 
-  const text = String(value).trim();
+    const text = String(value).trim();
 
-  if (!text) {
-    return false;
-  }
+    if (!text) {
+      return false;
+    }
 
-  return /^(https?:\/\/|www\.)\S+$/i.test(text);
-};
-const getUrlHref = (value) => {
-  const text = String(value).trim();
+    return /^(https?:\/\/|www\.)\S+$/i.test(text);
+  };
 
-  if (/^www\./i.test(text)) {
-    return `https://${text}`;
-  }
+  const getUrlHref = (value) => {
+    const text = String(value).trim();
 
-  return text;
-};
+    if (/^www\./i.test(text)) {
+      return `https://${text}`;
+    }
 
-const renderValue = (value) => {
-  const formattedValue = formatValue(value);
+    return text;
+  };
 
-  if (!isUrlValue(value)) {
-    return formattedValue;
-  }
+  const renderValue = (value) => {
+    const formattedValue = formatValue(value);
 
-  return (
-    <a
-      href={getUrlHref(value)}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={(event) => event.stopPropagation()}
-      className="inline-flex max-w-full items-center gap-1.5 truncate font-semibold text-indigo-600 underline decoration-indigo-300 underline-offset-2 transition hover:text-indigo-800 hover:decoration-indigo-500"
-      title={formattedValue}
-    >
-      <span className="truncate">
-        {formattedValue}
-      </span>
+    if (!isUrlValue(value)) {
+      return formattedValue;
+    }
 
-      <svg
-        className="shrink-0"
-        width="13"
-        height="13"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
+    return (
+      <a
+        href={getUrlHref(value)}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(event) =>
+          event.stopPropagation()
+        }
+        className="inline-flex max-w-full items-center gap-1.5 truncate font-semibold text-indigo-600 underline decoration-indigo-300 underline-offset-2 transition hover:text-indigo-800 hover:decoration-indigo-500"
+        title={formattedValue}
       >
-        <path d="M14 3h7v7" />
-        <path d="M10 14 21 3" />
-        <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
-      </svg>
-    </a>
-  );
-};
+        <span className="truncate">
+          {formattedValue}
+        </span>
 
+        <svg
+          className="shrink-0"
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M14 3h7v7" />
+          <path d="M10 14 21 3" />
+          <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
+        </svg>
+      </a>
+    );
+  };
 
+  // =========================================================
+  // STATUS / ACTIVE-INACTIVE
+  // =========================================================
 
+  const handleOpenStatusConfirmation = (service) => {
+    if (!isSuperAdmin) {
+      return;
+    }
 
+    setStatusConfirmingService(service);
+    setStatusError("");
+  };
 
+  const handleCloseStatusConfirmation = () => {
+    if (statusUpdatingId !== null) {
+      return;
+    }
 
+    setStatusConfirmingService(null);
+    setStatusError("");
+  };
 
+  const handleToggleStatus = async () => {
+    if (
+      !statusConfirmingService ||
+      !isSuperAdmin
+    ) {
+      return;
+    }
 
+    const service = statusConfirmingService;
 
+    const nextIsActive = !service.isActive;
+
+    setStatusUpdatingId(service.id);
+    setStatusError("");
+    setUploadError("");
+
+    try {
+      const response = await fetch(
+        `/api/funding-services/${service.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            isActive: nextIsActive,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.message ||
+            "Failed to update funding program status."
+        );
+      }
+
+      setFundingServices(
+        (currentServices) =>
+          currentServices.map((item) =>
+            item.id === service.id
+              ? {
+                  ...item,
+                  isActive:
+                    result.fundingService
+                      ?.isActive ??
+                    nextIsActive,
+                  updatedAt:
+                    result.fundingService
+                      ?.updatedAt ??
+                    item.updatedAt,
+                }
+              : item
+          )
+      );
+
+      setStatusConfirmingService(null);
+    } catch (error) {
+      console.error(
+        "Toggle funding service status error:",
+        error
+      );
+
+      setStatusError(
+        error.message ||
+          "Failed to update funding program status."
+      );
+    } finally {
+      setStatusUpdatingId(null);
+    }
+  };
 
   // =========================================================
   // DELETE
@@ -760,9 +872,6 @@ const renderValue = (value) => {
       setDeleting(false);
     }
   };
-
-  const isSuperAdmin =
-    user?.role === "SUPER_ADMIN";
 
   // =========================================================
   // UI
@@ -1045,7 +1154,7 @@ const renderValue = (value) => {
 
             <p className="mt-4 text-xs text-slate-400">
               {isSuperAdmin
-                ? "Create, edit and delete"
+                ? "Create, edit, activate, deactivate and delete"
                 : "Create and edit"}
             </p>
           </div>
@@ -1168,6 +1277,7 @@ const renderValue = (value) => {
                 </div>
 
                 <div className="min-w-0">
+
                   <p className="font-semibold text-slate-800">
                     {selectedFile
                       ? selectedFile.name
@@ -1179,6 +1289,7 @@ const renderValue = (value) => {
                       ? "Ready to upload"
                       : "Upload .xls or .xlsx data"}
                   </p>
+
                 </div>
 
                 <input
@@ -1222,6 +1333,7 @@ const renderValue = (value) => {
                 </div>
 
                 <div>
+
                   <p className="font-semibold text-slate-900">
                     Add Data Manually
                   </p>
@@ -1229,6 +1341,7 @@ const renderValue = (value) => {
                   <p className="mt-1 text-xs leading-5 text-slate-500">
                     Enter a new funding opportunity directly into the system.
                   </p>
+
                 </div>
 
                 <div className="ml-auto hidden rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-indigo-600 shadow-sm sm:block">
@@ -1338,8 +1451,7 @@ const renderValue = (value) => {
 
           </div>
         </div>
-
-        {/* =====================================================
+                {/* =====================================================
             FUNDING TABLE
         ===================================================== */}
 
@@ -1374,6 +1486,7 @@ const renderValue = (value) => {
                       />
 
                       <path d="M3 9h18" />
+
                       <path d="M9 21V9" />
                     </svg>
                   </div>
@@ -1431,6 +1544,7 @@ const renderValue = (value) => {
               </div>
 
             </div>
+
           </div>
 
           {/* Loading */}
@@ -1438,6 +1552,7 @@ const renderValue = (value) => {
             <div className="flex min-h-[350px] flex-col items-center justify-center px-6">
 
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50">
+
                 <svg
                   className="animate-spin text-indigo-600"
                   width="26"
@@ -1461,6 +1576,7 @@ const renderValue = (value) => {
                     strokeLinecap="round"
                   />
                 </svg>
+
               </div>
 
               <p className="mt-4 text-sm font-semibold text-slate-600">
@@ -1478,6 +1594,7 @@ const renderValue = (value) => {
             <div className="flex min-h-[350px] flex-col items-center justify-center px-6 text-center">
 
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+
                 <svg
                   width="28"
                   height="28"
@@ -1500,6 +1617,7 @@ const renderValue = (value) => {
                   <path d="M8 12h8" />
                   <path d="M8 16h5" />
                 </svg>
+
               </div>
 
               <h4 className="mt-5 font-bold text-slate-800">
@@ -1517,6 +1635,7 @@ const renderValue = (value) => {
             <div className="flex min-h-[300px] flex-col items-center justify-center px-6 text-center">
 
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+
                 <svg
                   width="25"
                   height="25"
@@ -1535,6 +1654,7 @@ const renderValue = (value) => {
 
                   <path d="m20 20-4-4" />
                 </svg>
+
               </div>
 
               <p className="mt-4 font-semibold text-slate-700">
@@ -1557,13 +1677,17 @@ const renderValue = (value) => {
 
                   <tr className="border-b border-slate-100 bg-slate-50/80">
 
+                    {/* ID */}
                     <th className="sticky left-0 z-20 border-r border-slate-200 bg-slate-50 px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
                       ID
                     </th>
-               <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600">
-  Funding Service Title
-</th>
 
+                    {/* Funding Service */}
+                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600">
+                      Funding Service Title
+                    </th>
+
+                    {/* Dynamic columns */}
                     {dynamicColumns.map(
                       (column) => (
                         <th
@@ -1575,14 +1699,22 @@ const renderValue = (value) => {
                       )
                     )}
 
+                    {/* Status */}
+                    <th className="whitespace-nowrap px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Status
+                    </th>
+
+                    {/* Created */}
                     <th className="whitespace-nowrap px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
                       Created
                     </th>
 
+                    {/* Updated */}
                     <th className="whitespace-nowrap px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
                       Updated
                     </th>
 
+                    {/* Actions */}
                     <th className="sticky right-0 z-20 border-l border-slate-200 bg-slate-50 px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
                       Actions
                     </th>
@@ -1591,165 +1723,310 @@ const renderValue = (value) => {
 
                 </thead>
 
-          <tbody className="divide-y divide-slate-200/80">
+                <tbody className="divide-y divide-slate-200/80">
 
-  {filteredServices.map(
-    (service, index) => (
+                  {filteredServices.map(
+                    (service, index) => (
 
-      <tr
-        key={service.id}
-        className={`group transition ${
-          index % 2 === 0
-            ? "bg-white hover:bg-slate-100/80"
-            : "bg-slate-50/70 hover:bg-slate-100"
-        }`}
-      >
+                      <tr
+                        key={service.id}
+                        className={`group transition ${
+                          index % 2 === 0
+                            ? "bg-white hover:bg-slate-100/80"
+                            : "bg-slate-50/70 hover:bg-slate-100"
+                        }`}
+                      >
 
-        {/* ID */}
-        <td
-          className={`sticky left-0 z-10 border-r border-slate-200 px-5 py-4 ${
-            index % 2 === 0
-              ? "bg-white group-hover:bg-slate-100/80"
-              : "bg-slate-50/70 group-hover:bg-slate-100"
-          }`}
-        >
+                        {/* =================================================
+                            ID
+                        ================================================= */}
 
-          <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg bg-slate-100 px-2 text-xs font-bold text-slate-700">
-            #{service.id}
-          </span>
+                        <td
+                          className={`sticky left-0 z-10 border-r border-slate-200 px-5 py-4 ${
+                            index % 2 === 0
+                              ? "bg-white group-hover:bg-slate-100/80"
+                              : "bg-slate-50/70 group-hover:bg-slate-100"
+                          }`}
+                        >
 
-        </td>
+                          <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg bg-slate-100 px-2 text-xs font-bold text-slate-700">
+                            #{service.id}
+                          </span>
 
-        {/* Funding Service Title */}
-        <td className="px-5 py-4 text-sm font-semibold text-slate-800">
-          {service.title || "-"}
-        </td>
+                        </td>
 
-        {/* Dynamic Fields */}
-        {dynamicColumns.map(
-          (column) => (
+                        {/* =================================================
+                            FUNDING SERVICE TITLE
+                        ================================================= */}
 
-            <td
-              key={`${service.id}-${column}`}
-              className="max-w-[320px] whitespace-nowrap px-5 py-4 text-slate-600"
-              title={formatValue(
-                service.data?.[column]
-              )}
-            >
+                        <td className="px-5 py-4 text-sm font-semibold text-slate-800">
+                          {service.title || "-"}
+                        </td>
 
-              <div className="max-w-[320px] truncate">
-                {renderValue(
-                  service.data?.[column]
-                )}
-              </div>
+                        {/* =================================================
+                            DYNAMIC FIELDS
+                        ================================================= */}
 
-            </td>
+                        {dynamicColumns.map(
+                          (column) => (
 
-          )
-        )}
+                            <td
+                              key={`${service.id}-${column}`}
+                              className="max-w-[320px] whitespace-nowrap px-5 py-4 text-slate-600"
+                              title={formatValue(
+                                service.data?.[column]
+                              )}
+                            >
 
-        {/* Created */}
-        <td className="whitespace-nowrap px-5 py-4 text-xs text-slate-500">
-          {service.createdAt
-            ? new Date(
-                service.createdAt
-              ).toLocaleString()
-            : "-"}
-        </td>
+                              <div className="max-w-[320px] truncate">
+                                {renderValue(
+                                  service.data?.[column]
+                                )}
+                              </div>
 
-        {/* Updated */}
-        <td className="whitespace-nowrap px-5 py-4 text-xs text-slate-500">
-          {service.updatedAt
-            ? new Date(
-                service.updatedAt
-              ).toLocaleString()
-            : "-"}
-        </td>
+                            </td>
 
-        {/* Actions */}
-        <td
-          className={`sticky right-0 z-10 border-l border-slate-200 px-5 py-4 ${
-            index % 2 === 0
-              ? "bg-white group-hover:bg-slate-100/80"
-              : "bg-slate-50/70 group-hover:bg-slate-100"
-          }`}
-        >
+                          )
+                        )}
 
-          <div className="flex items-center gap-2">
+                        {/* =================================================
+                            STATUS
+                        ================================================= */}
 
-            {/* Edit */}
-            <button
-              type="button"
-              onClick={() =>
-                handleEdit(service)
-              }
-              className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-indigo-600"
-            >
+                        <td className="whitespace-nowrap px-5 py-4">
 
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 20h9" />
-                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
-              </svg>
+                          <span
+                            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold ${
+                              service.isActive
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                : "border-slate-200 bg-slate-100 text-slate-600"
+                            }`}
+                          >
 
-              Edit
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${
+                                service.isActive
+                                  ? "bg-emerald-500"
+                                  : "bg-slate-400"
+                              }`}
+                            />
 
-            </button>
+                            {service.isActive
+                              ? "Active"
+                              : "Inactive"}
 
-            {/* Delete */}
-            {isSuperAdmin && (
-              <button
-                type="button"
-                onClick={() =>
-                  handleOpenDelete(service)
-                }
-                className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-600 transition hover:bg-red-600 hover:text-white"
-              >
+                          </span>
 
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                  <path d="M10 11v6" />
-                  <path d="M14 11v6" />
-                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                </svg>
+                        </td>
 
-                Delete
+                        {/* =================================================
+                            CREATED
+                        ================================================= */}
 
-              </button>
-            )}
+                        <td className="whitespace-nowrap px-5 py-4 text-xs text-slate-500">
 
-          </div>
+                          {service.createdAt
+                            ? new Date(
+                                service.createdAt
+                              ).toLocaleString()
+                            : "-"}
 
-        </td>
+                        </td>
 
-      </tr>
+                        {/* =================================================
+                            UPDATED
+                        ================================================= */}
 
-    )
-  )}
+                        <td className="whitespace-nowrap px-5 py-4 text-xs text-slate-500">
 
-</tbody>
+                          {service.updatedAt
+                            ? new Date(
+                                service.updatedAt
+                              ).toLocaleString()
+                            : "-"}
+
+                        </td>
+
+                        {/* =================================================
+                            ACTIONS
+                        ================================================= */}
+
+                        <td
+                          className={`sticky right-0 z-10 border-l border-slate-200 px-5 py-4 ${
+                            index % 2 === 0
+                              ? "bg-white group-hover:bg-slate-100/80"
+                              : "bg-slate-50/70 group-hover:bg-slate-100"
+                          }`}
+                        >
+
+                          <div className="flex items-center gap-2">
+
+                            {/* =================================================
+                                EDIT
+                            ================================================= */}
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleEdit(service)
+                              }
+                              className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-indigo-600"
+                            >
+
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M12 20h9" />
+                                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
+                              </svg>
+
+                              Edit
+
+                            </button>
+
+                            {/* =================================================
+                                ACTIVATE / DEACTIVATE
+                                SUPER ADMIN ONLY
+                            ================================================= */}
+
+                            {isSuperAdmin && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleOpenStatusConfirmation(
+                                    service
+                                  )
+                                }
+                                disabled={
+                                  statusUpdatingId ===
+                                  service.id
+                                }
+                                className={`flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                                  service.isActive
+                                    ? "border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-300 hover:bg-amber-100"
+                                    : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100"
+                                }`}
+                              >
+
+                                {statusUpdatingId ===
+                                service.id ? (
+                                  <>
+                                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+
+                                    Updating...
+                                  </>
+                                ) : service.isActive ? (
+                                  <>
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <rect
+                                        width="18"
+                                        height="18"
+                                        x="3"
+                                        y="3"
+                                        rx="2"
+                                      />
+
+                                      <path d="M9 9l6 6" />
+                                      <path d="m15 9-6 6" />
+                                    </svg>
+
+                                    Deactivate
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <path d="M20 6 9 17l-5-5" />
+                                    </svg>
+
+                                    Activate
+                                  </>
+                                )}
+
+                              </button>
+                            )}
+
+                            {/* =================================================
+                                DELETE
+                                SUPER ADMIN ONLY
+                            ================================================= */}
+
+                            {isSuperAdmin && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleOpenDelete(
+                                    service
+                                  )
+                                }
+                                className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-600 transition hover:bg-red-600 hover:text-white"
+                              >
+
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <polyline points="3 6 5 6 21 6" />
+
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+
+                                  <path d="M10 11v6" />
+
+                                  <path d="M14 11v6" />
+
+                                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                </svg>
+
+                                Delete
+
+                              </button>
+                            )}
+
+                          </div>
+
+                        </td>
+
+                      </tr>
+
+                    )
+                  )}
+
+                </tbody>
 
               </table>
 
             </div>
+
           )}
 
         </div>
@@ -1777,14 +2054,21 @@ const renderValue = (value) => {
 
             {/* HEADER */}
             <div className="relative shrink-0 overflow-hidden bg-[#071a2d] px-6 py-6 text-white sm:px-8">
+
               <div className="absolute -right-16 -top-24 h-64 w-64 rounded-full bg-teal-400/10 blur-3xl" />
+
               <div className="absolute bottom-[-100px] left-1/3 h-64 w-64 rounded-full bg-cyan-400/10 blur-3xl" />
 
               <div className="relative flex items-center justify-between gap-4">
+
                 <div>
+
                   <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-teal-200">
+
                     <span className="h-1.5 w-1.5 rounded-full bg-teal-300" />
+
                     Funding Data
+
                   </div>
 
                   <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
@@ -1792,174 +2076,659 @@ const renderValue = (value) => {
                   </h2>
 
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                    Enter the funding information using the standard
-                    fields from the funding database.
+                    Enter the funding information using the standard fields from the funding database.
                   </p>
+
                 </div>
 
                 <button
                   type="button"
                   onClick={handleCloseAddModal}
                   disabled={addingData}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-xl text-white transition hover:bg-white/20 disabled:opacity-50"
-                  aria-label="Close"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-slate-300 transition hover:bg-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  ×
+
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
+                  </svg>
+
                 </button>
+
               </div>
+
             </div>
 
             {/* BODY */}
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 sm:px-8 sm:py-8">
+            <div className="flex-1 overflow-y-auto">
 
-              {/* FUNDING FIELDS */}
-              <div className="grid gap-5 md:grid-cols-2">
+              <div className="p-6 sm:p-8">
 
-                {Object.entries(addData).map(
-                  ([field, value], index) => {
-                    const isLongField = [
-                      "Purpose",
-                      "Eligibility",
-                      "Eligibility Details",
-                      "Amount Notes",
-                      "Documents Needed",
-                      "Contact Information",
-                    ].includes(field);
+                {/* Basic information */}
+                <div className="mb-8">
 
-                    const isUrl =
-                      field === "Official Source URL";
+                  <div className="mb-5">
 
-                    const isRequired =
-                      field === "Program Name";
+                    <h3 className="text-base font-bold text-slate-950">
+                      Basic Information
+                    </h3>
 
-                    return (
-                      <div
-                        key={field}
-                        className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_3px_15px_rgba(15,23,42,0.04)] transition hover:border-teal-200 hover:shadow-[0_8px_25px_rgba(15,23,42,0.07)] ${
-                          isLongField
-                            ? "md:col-span-2"
-                            : ""
-                        }`}
+                    <p className="mt-1 text-xs text-slate-500">
+                      Provide the primary details for this funding opportunity.
+                    </p>
+
+                  </div>
+
+                  <div className="grid gap-5 md:grid-cols-2">
+
+                    {/* Program ID */}
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Program ID
+                      </label>
+
+                      <input
+                        type="text"
+                        value={addData["Program ID"] || ""}
+                        onChange={(event) =>
+                          handleAddFieldChange(
+                            "Program ID",
+                            event.target.value
+                          )
+                        }
+                        placeholder="Enter program ID"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                      />
+
+                    </div>
+
+                    {/* Program Name */}
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Program Name
+                        <span className="ml-1 text-red-500">
+                          *
+                        </span>
+                      </label>
+
+                      <input
+                        type="text"
+                        value={addData["Program Name"] || ""}
+                        onChange={(event) =>
+                          handleAddFieldChange(
+                            "Program Name",
+                            event.target.value
+                          )
+                        }
+                        placeholder="Enter program name"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                      />
+
+                    </div>
+
+                    {/* Status */}
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Status
+                      </label>
+
+                      <input
+                        type="text"
+                        value={addData.Status || ""}
+                        onChange={(event) =>
+                          handleAddFieldChange(
+                            "Status",
+                            event.target.value
+                          )
+                        }
+                        placeholder="Enter status"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                      />
+
+                    </div>
+
+                    {/* Category */}
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Category
+                      </label>
+
+                      <input
+                        type="text"
+                        value={addData.Category || ""}
+                        onChange={(event) =>
+                          handleAddFieldChange(
+                            "Category",
+                            event.target.value
+                          )
+                        }
+                        placeholder="Enter category"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                      />
+
+                    </div>
+
+                    {/* Locations */}
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Locations
+                      </label>
+
+                      <input
+                        type="text"
+                        value={addData.Locations || ""}
+                        onChange={(event) =>
+                          handleAddFieldChange(
+                            "Locations",
+                            event.target.value
+                          )
+                        }
+                        placeholder="Enter locations"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                      />
+
+                    </div>
+
+                    {/* Jurisdiction */}
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Jurisdiction
+                      </label>
+
+                      <input
+                        type="text"
+                        value={addData.Jurisdiction || ""}
+                        onChange={(event) =>
+                          handleAddFieldChange(
+                            "Jurisdiction",
+                            event.target.value
+                          )
+                        }
+                        placeholder="Enter jurisdiction"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                      />
+
+                    </div>
+
+                    {/* Funding Agency */}
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Funding Agency
+                      </label>
+
+                      <input
+                        type="text"
+                        value={
+                          addData["Funding Agency"] || ""
+                        }
+                        onChange={(event) =>
+                          handleAddFieldChange(
+                            "Funding Agency",
+                            event.target.value
+                          )
+                        }
+                        placeholder="Enter funding agency"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                      />
+
+                    </div>
+
+                    {/* Source Category */}
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Source Category
+                      </label>
+
+                      <input
+                        type="text"
+                        value={
+                          addData["Source Category"] || ""
+                        }
+                        onChange={(event) =>
+                          handleAddFieldChange(
+                            "Source Category",
+                            event.target.value
+                          )
+                        }
+                        placeholder="Enter source category"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                      />
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+                {/* Funding details */}
+                <div className="mb-8">
+
+                  <div className="mb-5">
+
+                    <h3 className="text-base font-bold text-slate-950">
+                      Funding Details
+                    </h3>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      Add information about the funding amount, purpose and type.
+                    </p>
+
+                  </div>
+
+                  <div className="grid gap-5 md:grid-cols-2">
+
+                    {/* Purpose */}
+                    <div className="md:col-span-2">
+
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Purpose
+                      </label>
+
+                      <textarea
+                        value={addData.Purpose || ""}
+                        onChange={(event) =>
+                          handleAddFieldChange(
+                            "Purpose",
+                            event.target.value
+                          )
+                        }
+                        rows={4}
+                        placeholder="Describe the purpose of this funding program"
+                        className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                      />
+
+                    </div>
+
+                    {/* Funding Type */}
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Funding Type
+                      </label>
+
+                      <input
+                        type="text"
+                        value={
+                          addData["Funding Type"] || ""
+                        }
+                        onChange={(event) =>
+                          handleAddFieldChange(
+                            "Funding Type",
+                            event.target.value
+                          )
+                        }
+                        placeholder="Grant, loan, subsidy..."
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                      />
+
+                    </div>
+
+                    {/* Amount Notes */}
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Amount Notes
+                      </label>
+
+                      <input
+                        type="text"
+                        value={
+                          addData["Amount Notes"] || ""
+                        }
+                        onChange={(event) =>
+                          handleAddFieldChange(
+                            "Amount Notes",
+                            event.target.value
+                          )
+                        }
+                        placeholder="Additional amount information"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                      />
+
+                    </div>
+
+                    {/* Amount Min */}
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Amount Min
+                      </label>
+
+                      <input
+                        type="text"
+                        value={
+                          addData["Amount Min"] || ""
+                        }
+                        onChange={(event) =>
+                          handleAddFieldChange(
+                            "Amount Min",
+                            event.target.value
+                          )
+                        }
+                        placeholder="Minimum funding amount"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                      />
+
+                    </div>
+
+                    {/* Amount Max */}
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Amount Max
+                      </label>
+
+                      <input
+                        type="text"
+                        value={
+                          addData["Amount Max"] || ""
+                        }
+                        onChange={(event) =>
+                          handleAddFieldChange(
+                            "Amount Max",
+                            event.target.value
+                          )
+                        }
+                        placeholder="Maximum funding amount"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                      />
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+                {/* Eligibility */}
+                <div className="mb-8">
+
+                  <div className="mb-5">
+
+                    <h3 className="text-base font-bold text-slate-950">
+                      Eligibility
+                    </h3>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      Specify who can qualify and any additional requirements.
+                    </p>
+
+                  </div>
+
+                  <div className="grid gap-5">
+
+                    {/* Eligibility */}
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Eligibility
+                      </label>
+
+                      <textarea
+                        value={
+                          addData.Eligibility || ""
+                        }
+                        onChange={(event) =>
+                          handleAddFieldChange(
+                            "Eligibility",
+                            event.target.value
+                          )
+                        }
+                        rows={3}
+                        placeholder="Who is eligible for this program?"
+                        className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                      />
+
+                    </div>
+
+                    {/* Eligibility Details */}
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Eligibility Details
+                      </label>
+
+                      <textarea
+                        value={
+                          addData[
+                            "Eligibility Details"
+                          ] || ""
+                        }
+                        onChange={(event) =>
+                          handleAddFieldChange(
+                            "Eligibility Details",
+                            event.target.value
+                          )
+                        }
+                        rows={4}
+                        placeholder="Add detailed eligibility requirements"
+                        className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                      />
+
+                    </div>
+
+                    {/* Documents */}
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Documents Needed
+                      </label>
+
+                      <textarea
+                        value={
+                          addData[
+                            "Documents Needed"
+                          ] || ""
+                        }
+                        onChange={(event) =>
+                          handleAddFieldChange(
+                            "Documents Needed",
+                            event.target.value
+                          )
+                        }
+                        rows={4}
+                        placeholder="List required documents"
+                        className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                      />
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+                {/* Contact and source */}
+                <div>
+
+                  <div className="mb-5">
+
+                    <h3 className="text-base font-bold text-slate-950">
+                      Contact & Source
+                    </h3>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      Add contact information and the official source.
+                    </p>
+
+                  </div>
+
+                  <div className="grid gap-5 md:grid-cols-2">
+
+                    {/* Contact */}
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Contact Information
+                      </label>
+
+                      <textarea
+                        value={
+                          addData[
+                            "Contact Information"
+                          ] || ""
+                        }
+                        onChange={(event) =>
+                          handleAddFieldChange(
+                            "Contact Information",
+                            event.target.value
+                          )
+                        }
+                        rows={4}
+                        placeholder="Phone, email, office..."
+                        className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                      />
+
+                    </div>
+
+                    {/* Official Source URL */}
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Official Source URL
+                      </label>
+
+                      <input
+                        type="url"
+                        value={
+                          addData[
+                            "Official Source URL"
+                          ] || ""
+                        }
+                        onChange={(event) =>
+                          handleAddFieldChange(
+                            "Official Source URL",
+                            event.target.value
+                          )
+                        }
+                        placeholder="https://example.com"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                      />
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+                {/* Add custom field */}
+                <div className="mt-8 rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-5">
+
+                  <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+
+                    <div>
+
+                      <p className="text-sm font-bold text-slate-800">
+                        Need another field?
+                      </p>
+
+                      <p className="mt-1 text-xs text-slate-500">
+                        Add a custom field if the standard fields don't cover your data.
+                      </p>
+
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddNewField}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-white px-4 py-2.5 text-xs font-bold text-indigo-600 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50"
+                    >
+
+                      <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                       >
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="9"
+                        />
 
-                        <div className="mb-3 flex items-center justify-between gap-3">
-                          <label className="text-xs font-bold uppercase tracking-[0.12em] text-slate-600">
-                            {field}
-                            {isRequired && (
-                              <span className="ml-1 text-red-500">
-                                *
-                              </span>
-                            )}
-                          </label>
+                        <path d="M12 8v8" />
+                        <path d="M8 12h8" />
+                      </svg>
 
-                          <span className="rounded-full bg-slate-100 px-2 py-1 text-[9px] font-bold text-slate-400">
-                            {String(index + 1).padStart(
-                              2,
-                              "0"
-                            )}
-                          </span>
-                        </div>
+                      Add Custom Field
 
-                        {isLongField ? (
-                          <textarea
-                            value={value ?? ""}
-                            onChange={(event) =>
-                              handleAddFieldChange(
-                                field,
-                                event.target.value
-                              )
-                            }
-                            rows={
-                              field ===
-                              "Eligibility Details"
-                                ? 5
-                                : 4
-                            }
-                            placeholder={`Enter ${field.toLowerCase()}`}
-                            className="w-full resize-y rounded-xl border border-slate-200 bg-[#f8fafb] px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-                          />
-                        ) : (
-                          <input
-                            type={isUrl ? "url" : "text"}
-                            value={value ?? ""}
-                            onChange={(event) =>
-                              handleAddFieldChange(
-                                field,
-                                event.target.value
-                              )
-                            }
-                            placeholder={`Enter ${field.toLowerCase()}`}
-                            className="h-12 w-full rounded-xl border border-slate-200 bg-[#f8fafb] px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-                          />
-                        )}
+                    </button>
 
-                        {field === "Program ID" && (
-                          <p className="mt-2 text-[11px] text-slate-400">
-                            Optional. Leave blank if the system should
-                            not receive a manually assigned program ID.
-                          </p>
-                        )}
+                  </div>
 
-                        {field === "Official Source URL" && (
-                          <p className="mt-2 text-[11px] text-slate-400">
-                            Add the official source webpage for this
-                            funding opportunity.
-                          </p>
-                        )}
+                </div>
 
+                {/* Add errors */}
+                {addError && (
+                  <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5">
+
+                    <div className="flex items-start gap-3">
+
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                        !
                       </div>
-                    );
-                  }
+
+                      <p className="text-sm font-semibold text-red-700">
+                        {addError}
+                      </p>
+
+                    </div>
+
+                  </div>
+                )}
+
+                {/* Add success */}
+                {addMessage && (
+                  <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3.5">
+
+                    <div className="flex items-start gap-3">
+
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+                        ✓
+                      </div>
+
+                      <p className="text-sm font-semibold text-emerald-700">
+                        {addMessage}
+                      </p>
+
+                    </div>
+
+                  </div>
                 )}
 
               </div>
 
-              {/* ERROR */}
-              {addError && (
-                <div className="mt-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-4">
-
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
-                    !
-                  </div>
-
-                  <p className="pt-1 text-sm font-semibold text-red-700">
-                    {addError}
-                  </p>
-
-                </div>
-              )}
-
-              {/* SUCCESS */}
-              {addMessage && (
-                <div className="mt-6 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
-
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-xs font-bold text-white">
-                    ✓
-                  </div>
-
-                  <p className="pt-1 text-sm font-semibold text-emerald-700">
-                    {addMessage}
-                  </p>
-
-                </div>
-              )}
-
             </div>
 
             {/* FOOTER */}
-            <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+            <div className="shrink-0 border-t border-slate-100 bg-slate-50/80 px-6 py-4 sm:px-8">
 
-              <p className="text-xs leading-5 text-slate-400">
-                * Program Name is required.
-              </p>
-
-              <div className="flex flex-col-reverse gap-3 sm:flex-row">
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
 
                 <button
                   type="button"
                   onClick={handleCloseAddModal}
                   disabled={addingData}
-                  className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50"
+                  className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -1968,10 +2737,433 @@ const renderValue = (value) => {
                   type="button"
                   onClick={handleSaveManualData}
                   disabled={addingData}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#071a2d] px-7 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition hover:-translate-y-0.5 hover:from-indigo-700 hover:to-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
 
                   {addingData ? (
+                    <>
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
+
+                        <polyline points="17 21 17 13 7 13 7 21" />
+
+                        <polyline points="7 3 7 8 15 8" />
+                      </svg>
+
+                      Save Funding Program
+                    </>
+                  )}
+
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+              {/* =====================================================
+            EDIT FUNDING PROGRAM MODAL
+        ===================================================== */}
+
+        {editingService && (
+          <div
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
+            onMouseDown={(event) => {
+              if (
+                event.target === event.currentTarget &&
+                !savingEdit
+              ) {
+                handleCloseEdit();
+              }
+            }}
+          >
+            <div className="flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_30px_100px_rgba(15,23,42,0.25)]">
+
+              {/* =================================================
+                  EDIT MODAL HEADER
+              ================================================= */}
+
+              <div className="relative shrink-0 overflow-hidden bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 px-6 py-6 text-white sm:px-8">
+
+                <div className="absolute -right-16 -top-24 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
+
+                <div className="absolute bottom-[-100px] left-1/3 h-64 w-64 rounded-full bg-cyan-400/10 blur-3xl" />
+
+                <div className="relative flex items-center justify-between gap-4">
+
+                  <div>
+
+                    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-200">
+
+                      <span className="h-1.5 w-1.5 rounded-full bg-cyan-300" />
+
+                      Edit Funding Data
+
+                    </div>
+
+                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                      Edit Funding Opportunity
+                    </h2>
+
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+                      Update the funding information and save your changes.
+                    </p>
+
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleCloseEdit}
+                    disabled={savingEdit}
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-xl text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    aria-label="Close"
+                  >
+                    ×
+                  </button>
+
+                </div>
+
+              </div>
+
+              {/* =================================================
+                  EDIT MODAL BODY
+              ================================================= */}
+
+              <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 sm:px-8 sm:py-8">
+
+                {/* =================================================
+                    BASIC INFORMATION
+                ================================================= */}
+
+                <div className="mb-8">
+
+                  <div className="mb-5">
+
+                    <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-700">
+                      Basic Information
+                    </h3>
+
+                    <p className="mt-1 text-sm text-slate-400">
+                      Update the funding program title and description.
+                    </p>
+
+                  </div>
+
+                  <div className="grid gap-5 md:grid-cols-2">
+
+                    {/* Title */}
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
+
+                      <label className="mb-3 block text-xs font-bold uppercase tracking-[0.12em] text-slate-600">
+                        Funding Service Title
+                        <span className="ml-1 text-red-500">
+                          *
+                        </span>
+                      </label>
+
+                      <input
+                        type="text"
+                        value={editTitle}
+                        onChange={(event) =>
+                          setEditTitle(
+                            event.target.value
+                          )
+                        }
+                        placeholder="Enter funding service title"
+                        className="h-12 w-full rounded-xl border border-slate-200 bg-[#f8fafb] px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                      />
+
+                    </div>
+
+                    {/* Description */}
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
+
+                      <label className="mb-3 block text-xs font-bold uppercase tracking-[0.12em] text-slate-600">
+                        Description
+                      </label>
+
+                      <textarea
+                        value={editDescription}
+                        onChange={(event) =>
+                          setEditDescription(
+                            event.target.value
+                          )
+                        }
+                        rows={3}
+                        placeholder="Enter funding service description"
+                        className="w-full resize-y rounded-xl border border-slate-200 bg-[#f8fafb] px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                      />
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+                {/* =================================================
+                    FUNDING FIELDS
+                ================================================= */}
+
+                <div>
+
+                  <div className="mb-5">
+
+                    <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-700">
+                      Funding Fields
+                    </h3>
+
+                    <p className="mt-1 text-sm text-slate-400">
+                      Edit the imported or manually entered funding information.
+                    </p>
+
+                  </div>
+
+                  {Object.keys(editData).length === 0 ? (
+
+                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-10 text-center">
+
+                      <p className="text-sm font-semibold text-slate-600">
+                        No additional funding fields available.
+                      </p>
+
+                    </div>
+
+                  ) : (
+
+                    <div className="grid gap-5 md:grid-cols-2">
+
+                      {Object.entries(editData).map(
+                        ([field, value]) => {
+
+                          const isUrl =
+                            field ===
+                            "Official Source URL";
+
+                          const displayValue =
+                            value === null ||
+                            value === undefined
+                              ? ""
+                              : typeof value ===
+                                  "object"
+                                ? JSON.stringify(
+                                    value
+                                  )
+                                : String(value);
+
+                          const hasValidUrl =
+                            isUrl &&
+                            displayValue.trim() &&
+                            /^(https?:\/\/|www\.)\S+$/i.test(
+                              displayValue.trim()
+                            );
+
+                          const urlHref =
+                            hasValidUrl
+                              ? /^www\./i.test(
+                                  displayValue.trim()
+                                )
+                                ? `https://${displayValue.trim()}`
+                                : displayValue.trim()
+                              : "";
+
+                          const isLongField = [
+                            "Purpose",
+                            "Eligibility",
+                            "Eligibility Details",
+                            "Amount Notes",
+                            "Documents Needed",
+                            "Contact Information",
+                          ].includes(field);
+
+                          return (
+                            <div
+                              key={field}
+                              className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_3px_15px_rgba(15,23,42,0.04)] transition hover:border-indigo-200 hover:shadow-[0_8px_25px_rgba(15,23,42,0.07)] ${
+                                isLongField
+                                  ? "md:col-span-2"
+                                  : ""
+                              }`}
+                            >
+
+                              <div className="mb-3 flex items-center justify-between gap-3">
+
+                                <label className="text-xs font-bold uppercase tracking-[0.12em] text-slate-600">
+                                  {field}
+                                </label>
+
+                                <span className="rounded-full bg-slate-100 px-2 py-1 text-[9px] font-bold text-slate-400">
+                                  FIELD
+                                </span>
+
+                              </div>
+
+                              {isLongField ? (
+
+                                <textarea
+                                  value={displayValue}
+                                  onChange={(event) =>
+                                    handleEditFieldChange(
+                                      field,
+                                      event.target.value
+                                    )
+                                  }
+                                  rows={
+                                    field ===
+                                    "Eligibility Details"
+                                      ? 5
+                                      : 4
+                                  }
+                                  placeholder={`Enter ${field.toLowerCase()}`}
+                                  className="w-full resize-y rounded-xl border border-slate-200 bg-[#f8fafb] px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                                />
+
+                              ) : (
+
+                                <input
+                                  type={
+                                    isUrl
+                                      ? "url"
+                                      : "text"
+                                  }
+                                  value={displayValue}
+                                  onChange={(event) =>
+                                    handleEditFieldChange(
+                                      field,
+                                      event.target.value
+                                    )
+                                  }
+                                  placeholder={`Enter ${field.toLowerCase()}`}
+                                  className="h-12 w-full rounded-xl border border-slate-200 bg-[#f8fafb] px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                                />
+
+                              )}
+
+                              {/* Official URL */}
+                              {hasValidUrl && (
+                                <div className="mt-3">
+
+                                  <a
+                                    href={urlHref}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(event) =>
+                                      event.stopPropagation()
+                                    }
+                                    className="inline-flex max-w-full items-center gap-2 rounded-lg bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-600 transition hover:bg-indigo-100 hover:text-indigo-800"
+                                  >
+
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <path d="M14 3h7v7" />
+                                      <path d="M10 14 21 3" />
+                                      <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
+                                    </svg>
+
+                                    Open Official Source
+
+                                  </a>
+
+                                </div>
+                              )}
+
+                            </div>
+                          );
+                        }
+                      )}
+
+                    </div>
+
+                  )}
+
+                </div>
+
+                {/* =================================================
+                    EDIT ERROR
+                ================================================= */}
+
+                {editError && (
+                  <div className="mt-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-4">
+
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                      !
+                    </div>
+
+                    <p className="pt-1 text-sm font-semibold text-red-700">
+                      {editError}
+                    </p>
+
+                  </div>
+                )}
+
+                {/* =================================================
+                    EDIT SUCCESS
+                ================================================= */}
+
+                {editMessage && (
+                  <div className="mt-6 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-xs font-bold text-white">
+                      ✓
+                    </div>
+
+                    <p className="pt-1 text-sm font-semibold text-emerald-700">
+                      {editMessage}
+                    </p>
+
+                  </div>
+                )}
+
+              </div>
+
+              {/* =================================================
+                  EDIT FOOTER
+              ================================================= */}
+
+              <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4 sm:px-8">
+
+                <button
+                  type="button"
+                  onClick={handleCloseEdit}
+                  disabled={savingEdit}
+                  className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSaveEdit}
+                  disabled={savingEdit}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#071a2d] px-7 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+
+                  {savingEdit ? (
                     <>
                       <svg
                         className="animate-spin"
@@ -2000,7 +3192,24 @@ const renderValue = (value) => {
                       Saving...
                     </>
                   ) : (
-                    "Save Funding Data"
+                    <>
+                      <svg
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
+                        <polyline points="17 21 17 13 7 13 7 21" />
+                        <polyline points="7 3 7 8 15 8" />
+                      </svg>
+
+                      Save Changes
+                    </>
                   )}
 
                 </button>
@@ -2008,491 +3217,256 @@ const renderValue = (value) => {
               </div>
 
             </div>
-
-          </div>
-
-        </div>
-      )}
-            {/* =====================================================
-          EDIT MODAL
-      ===================================================== */}
-
-      {editingService && (
-
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm"
-          onMouseDown={(event) => {
-            if (
-              event.target ===
-                event.currentTarget &&
-              !savingEdit
-            ) {
-              handleCloseEdit();
-            }
-          }}
-        >
-
-          {/* 
-            ONLY DESIGN FIX:
-            Keep the modal itself as a flex column.
-            The header and footer are shrink-0.
-            Only the middle body is allowed to scroll.
-          */}
-          <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
-
-            {/* Modal header */}
-            <div className="relative shrink-0 overflow-hidden border-b border-slate-100 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 px-6 py-6 text-white sm:px-8">
-
-              <div className="absolute -right-10 -top-20 h-48 w-48 rounded-full bg-indigo-500/20 blur-3xl" />
-
-              <div className="relative flex items-center justify-between">
-
-                <div>
-
-                  <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-200">
-                    <span className="h-1.5 w-1.5 rounded-full bg-cyan-300" />
-                    Edit Funding Data
-                  </div>
-
-                  <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                    Edit Funding Opportunity
-                  </h2>
-
-                  <p className="mt-2 text-sm leading-6 text-slate-300">
-                    Update the funding information and save
-                    your changes.
-                  </p>
-
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleCloseEdit}
-                  disabled={savingEdit}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-xl text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
-                  aria-label="Close"
-                >
-                  ×
-                </button>
-
-              </div>
-
-            </div>
-
-            {/* Modal body */}
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-7 sm:px-8">
-
-              <div className="mb-8">
-
-                <div className="mb-5">
-
-                  <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-700">
-                    Funding Information
-                  </h3>
-
-                  <p className="mt-1 text-sm text-slate-400">
-                    Update the title, description and funding
-                    fields below.
-                  </p>
-
-                </div>
-
-                <div className="grid gap-5 md:grid-cols-2">
-
-                  {/* Funding title */}
-                  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
-
-                    <label className="mb-3 block text-xs font-bold uppercase tracking-[0.12em] text-slate-600">
-                      Funding Service Title
-                    </label>
-
-                    <input
-                      type="text"
-                      value={editTitle}
-                      onChange={(event) =>
-                        setEditTitle(
-                          event.target.value
-                        )
-                      }
-                      placeholder="Enter funding service title"
-                      className="h-12 w-full rounded-xl border border-slate-200 bg-[#f8fafb] px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
-                    />
-
-                  </div>
-
-                  {/* Description */}
-                  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
-
-                    <label className="mb-3 block text-xs font-bold uppercase tracking-[0.12em] text-slate-600">
-                      Description
-                    </label>
-
-                    <textarea
-                      value={editDescription}
-                      onChange={(event) =>
-                        setEditDescription(
-                          event.target.value
-                        )
-                      }
-                      rows={3}
-                      placeholder="Enter funding service description"
-                      className="w-full resize-y rounded-xl border border-slate-200 bg-[#f8fafb] px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
-                    />
-
-                  </div>
-
-                </div>
-
-              </div>
-
-              {/* Funding fields */}
-              <div>
-
-                <div className="mb-5">
-
-                  <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-700">
-                    Funding Fields
-                  </h3>
-
-                  <p className="mt-1 text-sm text-slate-400">
-                    Edit the imported or manually entered
-                    funding information.
-                  </p>
-
-                </div>
-
-                <div className="grid gap-5 md:grid-cols-2">
-
-                {Object.entries(editData).map(
-  ([field, value]) => {
-    const isUrl =
-      field === "Official Source URL";
-
-    const displayValue =
-      value === null ||
-      value === undefined
-        ? ""
-        : typeof value === "object"
-          ? JSON.stringify(value)
-          : String(value);
-
-    const hasValidUrl =
-      isUrl &&
-      displayValue.trim() &&
-      /^(https?:\/\/|www\.)\S+$/i.test(
-        displayValue.trim()
-      );
-
-    const urlHref = hasValidUrl
-      ? /^www\./i.test(displayValue.trim())
-        ? `https://${displayValue.trim()}`
-        : displayValue.trim()
-      : "";
-
-    return (
-      <div
-        key={field}
-        className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_3px_15px_rgba(15,23,42,0.04)] transition hover:border-indigo-200 hover:shadow-[0_8px_25px_rgba(15,23,42,0.07)]"
-      >
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <label className="text-xs font-bold uppercase tracking-[0.12em] text-slate-600">
-            {field}
-          </label>
-        </div>
-
-        <textarea
-          value={displayValue}
-          onChange={(event) =>
-            handleEditFieldChange(
-              field,
-              event.target.value
-            )
-          }
-          rows={3}
-          className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
-        />
-
-        {/* Official Source URL */}
-        {hasValidUrl && (
-          <div className="mt-3">
-            <a
-              href={urlHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(event) =>
-                event.stopPropagation()
-              }
-              className="inline-flex max-w-full items-center gap-2 rounded-lg bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-600 transition hover:bg-indigo-100 hover:text-indigo-800"
-            >
-              <span className="max-w-[450px] truncate">
-                Open Official Source
-              </span>
-
-              <svg
-                className="shrink-0"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M14 3h7v7" />
-                <path d="M10 14 21 3" />
-                <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
-              </svg>
-            </a>
           </div>
         )}
-      </div>
-    );
-  }
-)}
+
+        {/* =====================================================
+            ACTIVE / INACTIVE CONFIRMATION MODAL
+        ===================================================== */}
+
+        {statusConfirmingService && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm"
+            onMouseDown={(event) => {
+              if (
+                event.target ===
+                  event.currentTarget &&
+                statusUpdatingId === null
+              ) {
+                handleCloseStatusConfirmation();
+              }
+            }}
+          >
+
+            <div className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_30px_100px_rgba(15,23,42,0.25)]">
+
+              {/* =================================================
+                  STATUS MODAL HEADER
+              ================================================= */}
+
+              <div className="border-b border-slate-100 px-6 py-6">
+
+                <div className="flex items-start gap-4">
+
+                  <div
+                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
+                      statusConfirmingService.isActive
+                        ? "bg-amber-100 text-amber-600"
+                        : "bg-emerald-100 text-emerald-600"
+                    }`}
+                  >
+
+                    {statusConfirmingService.isActive ? (
+                      <svg
+                        width="23"
+                        height="23"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect
+                          width="18"
+                          height="18"
+                          x="3"
+                          y="3"
+                          rx="2"
+                        />
+
+                        <path d="M9 9l6 6" />
+                        <path d="m15 9-6 6" />
+                      </svg>
+                    ) : (
+                      <svg
+                        width="23"
+                        height="23"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M20 6 9 17l-5-5" />
+                      </svg>
+                    )}
+
+                  </div>
+
+                  <div className="min-w-0">
+
+                    <h3 className="text-lg font-bold text-slate-950">
+                      {statusConfirmingService.isActive
+                        ? "Deactivate Funding Program?"
+                        : "Activate Funding Program?"}
+                    </h3>
+
+                    <p className="mt-1 truncate text-sm text-slate-500">
+                      {statusConfirmingService.title}
+                    </p>
+
+                  </div>
 
                 </div>
 
               </div>
 
-              {/* Error */}
-              {editError && (
-                <div className="mt-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-4">
+              {/* =================================================
+                  STATUS MODAL BODY
+              ================================================= */}
 
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
-                    !
+              <div className="px-6 py-6">
+
+                {statusConfirmingService.isActive ? (
+
+                  <div className="space-y-4">
+
+                    <p className="text-sm leading-6 text-slate-600">
+                      Deactivating this funding program will hide it from customers on the public website.
+                    </p>
+
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+
+                      <div className="flex gap-3">
+
+                        <svg
+                          className="mt-0.5 shrink-0 text-amber-600"
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="10"
+                          />
+
+                          <line
+                            x1="12"
+                            y1="8"
+                            x2="12"
+                            y2="12"
+                          />
+
+                          <line
+                            x1="12"
+                            y1="16"
+                            x2="12.01"
+                            y2="16"
+                          />
+                        </svg>
+
+                        <p className="text-sm font-medium leading-6 text-amber-800">
+                          Customers will no longer be able to see or apply for this program.
+                        </p>
+
+                      </div>
+
+                    </div>
+
+                    <p className="text-xs leading-5 text-slate-400">
+                      Existing applications and funding data will remain preserved.
+                    </p>
+
                   </div>
 
-                  <p className="pt-1 text-sm font-semibold text-red-700">
-                    {editError}
-                  </p>
-
-                </div>
-              )}
-
-              {/* Success */}
-              {editMessage && (
-                <div className="mt-6 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
-
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-xs font-bold text-white">
-                    ✓
-                  </div>
-
-                  <p className="pt-1 text-sm font-semibold text-emerald-700">
-                    {editMessage}
-                  </p>
-
-                </div>
-              )}
-
-            </div>
-
-            {/* Modal footer */}
-            <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4 sm:px-8">
-
-              <button
-                type="button"
-                onClick={handleCloseEdit}
-                disabled={savingEdit}
-                className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={handleSaveEdit}
-                disabled={savingEdit}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#071a2d] px-7 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-
-                {savingEdit ? (
-                  <>
-                    <svg
-                      className="animate-spin"
-                      width="17"
-                      height="17"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="9"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        opacity="0.25"
-                      />
-
-                      <path
-                        d="M21 12a9 9 0 0 0-9-9"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-
-                    Saving...
-                  </>
                 ) : (
-                  <>
-                    <svg
-                      width="17"
-                      height="17"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
-                      <polyline points="17 21 17 13 7 13 7 21" />
-                      <polyline points="7 3 7 8 15 8" />
-                    </svg>
 
-                    Save Changes
-                  </>
+                  <div className="space-y-4">
+
+                    <p className="text-sm leading-6 text-slate-600">
+                      Activating this funding program will make it visible to customers again.
+                    </p>
+
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+
+                      <div className="flex gap-3">
+
+                        <svg
+                          className="mt-0.5 shrink-0 text-emerald-600"
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M20 6 9 17l-5-5" />
+                        </svg>
+
+                        <p className="text-sm font-medium leading-6 text-emerald-800">
+                          Customers will be able to view and apply for this program again.
+                        </p>
+
+                      </div>
+
+                    </div>
+
+                    <p className="text-xs leading-5 text-slate-400">
+                      Existing applications and funding data will remain preserved.
+                    </p>
+
+                  </div>
+
                 )}
 
-              </button>
+                {/* Status error */}
+                {statusError && (
+                  <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
 
-            </div>
+                    <p className="text-sm font-semibold text-red-700">
+                      {statusError}
+                    </p>
 
-          </div>
-
-        </div>
-      )}
-
-      {/* =====================================================
-          DELETE MODAL
-      ===================================================== */}
-
-      {deletingService && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
-          onMouseDown={(event) => {
-            if (
-              event.target ===
-                event.currentTarget &&
-              !deleting
-            ) {
-              handleCloseDelete();
-            }
-          }}
-        >
-
-          <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
-
-            <div className="flex justify-center pt-7">
-
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600">
-
-                <svg
-                  width="27"
-                  height="27"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                  <path d="M10 11v6" />
-                  <path d="M14 11v6" />
-                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                </svg>
+                  </div>
+                )}
 
               </div>
 
-            </div>
+              {/* =================================================
+                  STATUS MODAL FOOTER
+              ================================================= */}
 
-            <div className="px-7 pb-7 pt-5 text-center">
-
-              <h2 className="text-xl font-bold text-slate-950">
-                Delete Funding Program?
-              </h2>
-
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                This action cannot be undone. The selected funding program will be permanently removed.
-              </p>
-
-              <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-left">
-
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Selected Program
-                </p>
-
-                <p className="mt-1 font-bold text-slate-800">
-                  {deletingService.title ||
-                    "Funding Program"}
-                </p>
-
-                <p className="mt-1 text-xs text-slate-400">
-                  Funding ID #
-                  {deletingService.id}
-                </p>
-
-              </div>
-
-              {deleteError && (
-                <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left">
-                  <p className="text-sm font-semibold text-red-700">
-                    {deleteError}
-                  </p>
-                </div>
-              )}
-
-              <div className="mt-6 grid grid-cols-2 gap-3">
+              <div className="flex flex-col-reverse gap-3 border-t border-slate-100 bg-slate-50/70 px-6 py-5 sm:flex-row sm:justify-end">
 
                 <button
                   type="button"
-                  onClick={handleCloseDelete}
-                  disabled={deleting}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50"
+                  onClick={handleCloseStatusConfirmation}
+                  disabled={
+                    statusUpdatingId !== null
+                  }
+                  className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Cancel
                 </button>
 
                 <button
                   type="button"
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-red-100 transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={handleToggleStatus}
+                  disabled={
+                    statusUpdatingId !== null
+                  }
+                  className={`rounded-xl px-5 py-2.5 text-sm font-bold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                    statusConfirmingService.isActive
+                      ? "bg-amber-600 hover:bg-amber-700"
+                      : "bg-emerald-600 hover:bg-emerald-700"
+                  }`}
                 >
 
-                  {deleting && (
-                    <svg
-                      className="animate-spin"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="9"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        opacity="0.3"
-                      />
-
-                      <path
-                        d="M21 12a9 9 0 0 0-9-9"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  )}
-
-                  {deleting
-                    ? "Deleting..."
-                    : "Yes, Delete"}
+                  {statusUpdatingId !== null
+                    ? "Updating..."
+                    : statusConfirmingService.isActive
+                    ? "Deactivate Program"
+                    : "Activate Program"}
 
                 </button>
 
@@ -2501,10 +3475,147 @@ const renderValue = (value) => {
             </div>
 
           </div>
+        )}
 
-        </div>
-      )}
+        {/* =====================================================
+            DELETE CONFIRMATION MODAL
+        ===================================================== */}
 
-    </main>
+        {deletingService && (
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
+            onMouseDown={(event) => {
+              if (
+                event.target === event.currentTarget &&
+                !deleting
+              ) {
+                handleCloseDelete();
+              }
+            }}
+          >
+            <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
+
+              <div className="flex justify-center pt-7">
+
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+
+                  <svg
+                    width="27"
+                    height="27"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                    <path d="M10 11v6" />
+                    <path d="M14 11v6" />
+                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                  </svg>
+
+                </div>
+
+              </div>
+
+              <div className="px-7 pb-7 pt-5 text-center">
+
+                <h2 className="text-xl font-bold text-slate-950">
+                  Delete Funding Program?
+                </h2>
+
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  This action cannot be undone. The selected funding
+                  program will be permanently removed.
+                </p>
+
+                <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-left">
+
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Selected Program
+                  </p>
+
+                  <p className="mt-1 font-bold text-slate-800">
+                    {deletingService.title ||
+                      "Funding Program"}
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-400">
+                    Funding ID #{deletingService.id}
+                  </p>
+
+                </div>
+
+                {deleteError && (
+                  <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left">
+
+                    <p className="text-sm font-semibold text-red-700">
+                      {deleteError}
+                    </p>
+
+                  </div>
+                )}
+
+                <div className="mt-6 grid grid-cols-2 gap-3">
+
+                  <button
+                    type="button"
+                    onClick={handleCloseDelete}
+                    disabled={deleting}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-red-100 transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+
+                    {deleting && (
+                      <svg
+                        className="animate-spin"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="9"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          opacity="0.3"
+                        />
+
+                        <path
+                          d="M21 12a9 9 0 0 0-9-9"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    )}
+
+                    {deleting
+                      ? "Deleting..."
+                      : "Yes, Delete"}
+
+                  </button>
+
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        )}
+
+      </main>
   );
 }

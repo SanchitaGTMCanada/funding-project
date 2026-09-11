@@ -166,7 +166,7 @@ export default function Home() {
         setLoading(true);
 
         const response = await fetch(
-          "/api/funding-services",
+       "/api/funding-services?public=true",
           {
             cache: "no-store",
           }

@@ -1,4 +1,3 @@
-
 import { prisma } from "@/lib/prisma";
 import { Resend } from "resend";
 import { requireAuth } from "@/lib/auth/requireAuth";
@@ -20,7 +19,10 @@ export async function POST(request) {
       message,
     } = body;
 
+    // =====================================================
     // Validate funding service
+    // =====================================================
+
     if (!fundingServiceId) {
       return Response.json(
         {
@@ -31,7 +33,10 @@ export async function POST(request) {
       );
     }
 
+    // =====================================================
     // Validate required applicant fields
+    // =====================================================
+
     if (!name || !phone || !email) {
       return Response.json(
         {
@@ -43,11 +48,34 @@ export async function POST(request) {
       );
     }
 
+    // =====================================================
+    // Validate funding service ID
+    // =====================================================
+
+    const parsedFundingServiceId =
+      Number(fundingServiceId);
+
+    if (
+      !Number.isInteger(parsedFundingServiceId) ||
+      parsedFundingServiceId <= 0
+    ) {
+      return Response.json(
+        {
+          success: false,
+          message: "Invalid funding service",
+        },
+        { status: 400 }
+      );
+    }
+
+    // =====================================================
     // Check that the funding service exists
+    // =====================================================
+
     const fundingService =
       await prisma.fundingService.findUnique({
         where: {
-          id: Number(fundingServiceId),
+          id: parsedFundingServiceId,
         },
       });
 
@@ -61,33 +89,75 @@ export async function POST(request) {
       );
     }
 
+    // =====================================================
+    // IMPORTANT:
+    // Prevent applications for inactive programs
+    // =====================================================
+
+    if (!fundingService.isActive) {
+      return Response.json(
+        {
+          success: false,
+          message:
+            "This funding program is currently inactive and is not accepting applications.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // =====================================================
     // Save application
+    // =====================================================
+
     const application =
       await prisma.application.create({
         data: {
-          fundingServiceId: Number(fundingServiceId),
+          fundingServiceId:
+            parsedFundingServiceId,
+
           name: name.trim(),
+
           phone: phone.trim(),
-          email: email.trim().toLowerCase(),
-          company: company?.trim() || null,
-          address: address?.trim() || null,
-          city: city?.trim() || null,
-          message: message?.trim() || null,
+
+          email: email
+            .trim()
+            .toLowerCase(),
+
+          company:
+            company?.trim() || null,
+
+          address:
+            address?.trim() || null,
+
+          city:
+            city?.trim() || null,
+
+          message:
+            message?.trim() || null,
         },
       });
 
+    // =====================================================
     // Get configured email recipients
+    // =====================================================
+
     const recipients = [
       process.env.APPLICATION_EMAIL_1,
       process.env.APPLICATION_EMAIL_2,
     ].filter(Boolean);
 
+    // =====================================================
     // Send application notification email
+    // =====================================================
+
     if (recipients.length > 0) {
       await resend.emails.send({
         from: "Funding Management <onboarding@resend.dev>",
+
         to: recipients,
+
         subject: `New Funding Application - ${fundingService.title}`,
+
         html: `
           <div
             style="
@@ -169,14 +239,21 @@ export async function POST(request) {
       });
     }
 
+    // =====================================================
+    // Success response
+    // =====================================================
+
     return Response.json(
       {
         success: true,
-        message: "Application submitted successfully",
+        message:
+          "Application submitted successfully",
+
         application: {
           id: application.id,
           status: application.status,
-          createdAt: application.createdAt,
+          createdAt:
+            application.createdAt,
         },
       },
       { status: 201 }
@@ -199,8 +276,13 @@ export async function POST(request) {
   }
 }
 
+
+// =========================================================
 // GET - Fetch applications
+// =========================================================
 // Protected because applications contain customer information.
+// =========================================================
+
 export async function GET() {
   try {
     const {
@@ -227,6 +309,7 @@ export async function GET() {
         include: {
           fundingService: true,
         },
+
         orderBy: {
           createdAt: "desc",
         },
@@ -249,7 +332,8 @@ export async function GET() {
     return Response.json(
       {
         success: false,
-        message: "Failed to fetch applications",
+        message:
+          "Failed to fetch applications",
       },
       { status: 500 }
     );

@@ -1,14 +1,75 @@
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth/session";
 import { requireModifyPermission } from "@/lib/auth/requireAuth";
 
-export async function GET() {
+// =========================================================
+// GET FUNDING SERVICES
+// =========================================================
+// Public/customer page:
+//   - ALWAYS returns ACTIVE programs only
+//
+// Dashboard:
+//   - Logged-in Employee / Super Admin
+//   - Returns ALL programs
+//
+// Public request:
+//   /api/funding-services?public=true
+//
+// Dashboard request:
+//   /api/funding-services
+// =========================================================
+
+export async function GET(request) {
   try {
+    // -------------------------------------------------------
+    // Check whether the request comes from
+    // a logged-in dashboard user or a public customer.
+    // -------------------------------------------------------
+
+    const user = await getCurrentUser();
+
+    // -------------------------------------------------------
+    // Check whether this request explicitly comes
+    // from the public/customer page.
+    // -------------------------------------------------------
+
+    const { searchParams } = new URL(request.url);
+
+    const isPublic =
+      searchParams.get("public") === "true";
+
+    // -------------------------------------------------------
+    // Fetch funding services
+    // -------------------------------------------------------
+    //
+    // PUBLIC:
+    //   Always return ACTIVE programs only.
+    //
+    // DASHBOARD:
+    //   Authenticated Employee / Super Admin
+    //   can see ALL programs.
+    //
+    // UNAUTHENTICATED:
+    //   Active programs only.
+    // -------------------------------------------------------
+
     const fundingServices =
       await prisma.fundingService.findMany({
+        where:
+          isPublic || !user
+            ? {
+                isActive: true,
+              }
+            : {},
+
         orderBy: {
           createdAt: "desc",
         },
       });
+
+    // -------------------------------------------------------
+    // Success response
+    // -------------------------------------------------------
 
     return Response.json({
       success: true,
@@ -33,6 +94,15 @@ export async function GET() {
   }
 }
 
+
+// =========================================================
+// POST / CREATE FUNDING SERVICE
+// =========================================================
+// Employee + Super Admin
+//
+// Newly created funding programs are ACTIVE by default.
+// =========================================================
+
 export async function POST(request) {
   try {
     // -----------------------------------------
@@ -40,6 +110,7 @@ export async function POST(request) {
     // -----------------------------------------
     // Only logged-in Employees and Super Admins
     // can manually add funding data.
+
     const {
       authorized,
       user,
@@ -64,6 +135,7 @@ export async function POST(request) {
     // -----------------------------------------
     // Read request body
     // -----------------------------------------
+
     const body = await request.json();
 
     const {
@@ -75,6 +147,7 @@ export async function POST(request) {
     // -----------------------------------------
     // Validate funding data
     // -----------------------------------------
+
     if (
       data === null ||
       typeof data !== "object" ||
@@ -95,6 +168,7 @@ export async function POST(request) {
     // -----------------------------------------
     // Clean submitted fields
     // -----------------------------------------
+
     const cleanedData = {};
 
     Object.entries(data).forEach(
@@ -133,6 +207,7 @@ export async function POST(request) {
     // -----------------------------------------
     // Make sure at least one field is filled
     // -----------------------------------------
+
     const hasData =
       Object.values(cleanedData).some(
         (value) =>
@@ -155,11 +230,13 @@ export async function POST(request) {
     // -----------------------------------------
     // Generate database title
     // -----------------------------------------
+    //
     // Program Name is NOT mandatory.
     //
     // If Program Name exists, use it.
     // Otherwise use "Funding Opportunity"
     // as the internal database title.
+
     const fundingTitle =
       String(
         cleanedData["Program Name"] || ""
@@ -172,11 +249,13 @@ export async function POST(request) {
     // -----------------------------------------
     // Generate description
     // -----------------------------------------
+    //
     // If Purpose exists in the manual form,
     // use it as the description.
     //
     // Otherwise use the description supplied
     // by the request body.
+
     const fundingDescription =
       String(
         cleanedData["Purpose"] || ""
@@ -189,6 +268,11 @@ export async function POST(request) {
     // -----------------------------------------
     // Create funding service
     // -----------------------------------------
+    //
+    // isActive is explicitly set to true.
+    // This means every newly created program
+    // is immediately visible to customers.
+
     const fundingService =
       await prisma.fundingService.create({
         data: {
@@ -198,12 +282,15 @@ export async function POST(request) {
             fundingDescription,
 
           data: cleanedData,
+
+          isActive: true,
         },
       });
 
     // -----------------------------------------
     // Log creation
     // -----------------------------------------
+
     console.log(
       `Funding service created by ${user.email} (${user.role}): #${fundingService.id}`
     );
@@ -211,6 +298,7 @@ export async function POST(request) {
     // -----------------------------------------
     // Success response
     // -----------------------------------------
+
     return Response.json(
       {
         success: true,
