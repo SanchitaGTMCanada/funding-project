@@ -1,5 +1,10 @@
 import { getCurrentUser } from "@/lib/auth/session";
 
+
+// =========================================================
+// REQUIRE AUTHENTICATION
+// =========================================================
+
 export async function requireAuth() {
   const user = await getCurrentUser();
 
@@ -20,8 +25,23 @@ export async function requireAuth() {
   };
 }
 
+
+// =========================================================
+// REQUIRE MODIFY PERMISSION
+// =========================================================
+// Employee + Super Admin
+//
+// Used for:
+// - Creating funding services
+// - Editing funding services
+// - Uploading funding services
+// =========================================================
+
 export async function requireModifyPermission() {
-  const { authorized, user } = await requireAuth();
+  const {
+    authorized,
+    user,
+  } = await requireAuth();
 
   if (!authorized) {
     return {
@@ -32,6 +52,7 @@ export async function requireModifyPermission() {
     };
   }
 
+  // Employee and Super Admin can modify
   if (
     user.role !== "EMPLOYEE" &&
     user.role !== "SUPER_ADMIN"
@@ -52,8 +73,21 @@ export async function requireModifyPermission() {
   };
 }
 
+
+// =========================================================
+// REQUIRE DELETE PERMISSION
+// =========================================================
+// Employee + Super Admin
+//
+// Both Employee and Super Admin can delete
+// funding services.
+// =========================================================
+
 export async function requireDeletePermission() {
-  const { authorized, user } = await requireAuth();
+  const {
+    authorized,
+    user,
+  } = await requireAuth();
 
   if (!authorized) {
     return {
@@ -64,12 +98,16 @@ export async function requireDeletePermission() {
     };
   }
 
-  if (user.role !== "SUPER_ADMIN") {
+  // Employee and Super Admin can delete
+  if (
+    user.role !== "EMPLOYEE" &&
+    user.role !== "SUPER_ADMIN"
+  ) {
     return {
       authorized: false,
       user,
       status: 403,
-      message: "Only Super Admin can delete",
+      message: "You do not have permission to delete",
     };
   }
 

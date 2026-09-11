@@ -272,7 +272,7 @@ export async function PATCH(request, { params }) {
 
 
 // =========================================================
-// DELETE - Super Admin ONLY
+// DELETE - Employee + Super Admin
 // =========================================================
 
 export async function DELETE(request, { params }) {

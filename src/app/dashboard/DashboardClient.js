@@ -93,7 +93,8 @@ export default function DashboardClient({ user }) {
   // ROLE
   // =========================================================
 
-  const isSuperAdmin = user?.role === "SUPER_ADMIN";
+ const isSuperAdmin = user?.role === "SUPER_ADMIN";
+const isEmployee = user?.role === "EMPLOYEE";
 
   // =========================================================
   // FETCH FUNDING SERVICES
@@ -1975,42 +1976,39 @@ export default function DashboardClient({ user }) {
                                 SUPER ADMIN ONLY
                             ================================================= */}
 
-                            {isSuperAdmin && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleOpenDelete(
-                                    service
-                                  )
-                                }
-                                className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-600 transition hover:bg-red-600 hover:text-white"
-                              >
+                        {/* =================================================
+    DELETE
+    EMPLOYEE + SUPER ADMIN
+================================================= */}
 
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <polyline points="3 6 5 6 21 6" />
+{(isEmployee || isSuperAdmin) && (
+  <button
+    type="button"
+    onClick={() =>
+      handleOpenDelete(service)
+    }
+    className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-600 transition hover:bg-red-600 hover:text-white"
+  >
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+    </svg>
 
-                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-
-                                  <path d="M10 11v6" />
-
-                                  <path d="M14 11v6" />
-
-                                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                </svg>
-
-                                Delete
-
-                              </button>
-                            )}
+    Delete
+  </button>
+)}
 
                           </div>
 
