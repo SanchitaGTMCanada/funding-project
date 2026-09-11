@@ -11,24 +11,21 @@ if (!databaseUrl) {
 
 const parsedUrl = new URL(databaseUrl);
 
-const adapterOptions = {
+const adapter = new PrismaMariaDb({
   host: parsedUrl.hostname,
   port: Number(parsedUrl.port || 3306),
   user: decodeURIComponent(parsedUrl.username),
   password: decodeURIComponent(parsedUrl.password),
   database: parsedUrl.pathname.replace(/^\//, ""),
-  connectionLimit: 5,
-};
 
-const sslMode = parsedUrl.searchParams.get("ssl-mode");
+  connectionLimit: 1,
 
-if (sslMode?.toUpperCase() === "REQUIRED") {
-  adapterOptions.ssl = {
+  connectTimeout: 10000,
+
+  ssl: {
     rejectUnauthorized: false,
-  };
-}
-
-const adapter = new PrismaMariaDb(adapterOptions);
+  },
+});
 
 const globalForPrisma = globalThis;
 
