@@ -9,7 +9,22 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is not configured");
 }
 
-const adapter = new PrismaMariaDb(databaseUrl);
+const parsedUrl = new URL(databaseUrl);
+
+const adapterOptions = {
+  host: parsedUrl.hostname,
+  port: Number(parsedUrl.port || 3306),
+  user: decodeURIComponent(parsedUrl.username),
+  password: decodeURIComponent(parsedUrl.password),
+  database: parsedUrl.pathname.replace(/^\//, ""),
+  connectionLimit: 5,
+};
+
+if (parsedUrl.searchParams.get("ssl-mode") === "REQUIRED") {
+  adapterOptions.ssl = true;
+}
+
+const adapter = new PrismaMariaDb(adapterOptions);
 
 const globalForPrisma = globalThis;
 
