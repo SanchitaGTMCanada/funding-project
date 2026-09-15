@@ -718,6 +718,37 @@ const isEmployee = user?.role === "EMPLOYEE";
   // STATUS / ACTIVE-INACTIVE
   // =========================================================
 
+
+  // =========================================================
+// CLOSE ALL FUNDING MODALS
+// =========================================================
+
+const closeAllFundingModals = () => {
+  // Edit modal
+  setEditingService(null);
+  setEditTitle("");
+  setEditDescription("");
+  setEditData({});
+  setEditMessage("");
+  setEditError("");
+
+  // Delete modal
+  setDeletingService(null);
+  setDeleteError("");
+
+  // Activate / Deactivate confirmation modal
+  setStatusConfirmingService(null);
+  setStatusError("");
+
+  // Add modal
+  setShowAddModal(false);
+  setAddTitle("");
+  setAddDescription("");
+  setAddData({});
+  setAddMessage("");
+  setAddError("");
+};
+
 const handleOpenStatusConfirmation = (service) => {
   if (!isEmployee && !isSuperAdmin) {
     return;
@@ -745,7 +776,6 @@ const handleToggleStatus = async () => {
   }
 
   const service = statusConfirmingService;
-
   const nextIsActive = !service.isActive;
 
   setStatusUpdatingId(service.id);
@@ -767,35 +797,53 @@ const handleToggleStatus = async () => {
       }
     );
 
-    const result = await response.json();
+    const responseText = await response.text();
+
+    let result = {};
+
+    if (responseText) {
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error(
+          "Funding status response JSON parse error:",
+          parseError
+        );
+      }
+    }
 
     if (!response.ok) {
       throw new Error(
         result.message ||
-          "Failed to update funding program status."
+          `Failed to update funding program status (${response.status}).`
       );
     }
 
-    setFundingServices(
-      (currentServices) =>
-        currentServices.map((item) =>
-          item.id === service.id
-            ? {
-                ...item,
-                isActive:
-                  result.fundingService
-                    ?.isActive ??
-                  nextIsActive,
-                updatedAt:
-                  result.fundingService
-                    ?.updatedAt ??
-                  item.updatedAt,
-              }
-            : item
-        )
+    // =====================================================
+    // UPDATE TABLE DATA
+    // =====================================================
+
+    setFundingServices((currentServices) =>
+      currentServices.map((item) =>
+        item.id === service.id
+          ? {
+              ...item,
+              isActive:
+                result.fundingService?.isActive ??
+                nextIsActive,
+              updatedAt:
+                result.fundingService?.updatedAt ??
+                item.updatedAt,
+            }
+          : item
+      )
     );
 
-    setStatusConfirmingService(null);
+    // =====================================================
+    // CLOSE ALL MODALS AFTER SUCCESS
+    // =====================================================
+
+    closeAllFundingModals();
   } catch (error) {
     console.error(
       "Toggle funding service status error:",
@@ -803,7 +851,7 @@ const handleToggleStatus = async () => {
     );
 
     setStatusError(
-      error.message ||
+      error?.message ||
         "Failed to update funding program status."
     );
   } finally {
@@ -828,50 +876,72 @@ const handleToggleStatus = async () => {
     setDeleteError("");
   };
 
-  const handleDelete = async () => {
-    if (!deletingService) {
+ const handleDelete = async () => {
+  if (!deletingService) {
+    return;
+  }
+
+  setDeleting(true);
+  setDeleteError("");
+
+  try {
+    const response = await fetch(
+      `/api/funding-services/${deletingService.id}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+      }
+    );
+
+    const responseText = await response.text();
+
+    let result = {};
+
+    if (responseText) {
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error(
+          "Delete response JSON parse error:",
+          parseError
+        );
+      }
+    }
+
+    if (!response.ok) {
+      setDeleteError(
+        result.message ||
+          `Failed to delete funding service (${response.status}).`
+      );
+
       return;
     }
 
-    setDeleting(true);
-    setDeleteError("");
+    // =====================================================
+    // REFRESH TABLE
+    // =====================================================
 
-    try {
-      const response = await fetch(
-        `/api/funding-services/${deletingService.id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
+    await fetchFundingServices();
 
-      const result = await response.json();
+    // =====================================================
+    // CLOSE ALL MODALS AFTER SUCCESS
+    // =====================================================
 
-      if (!response.ok) {
-        setDeleteError(
-          result.message ||
-            "Failed to delete funding service."
-        );
+    closeAllFundingModals();
+  } catch (error) {
+    console.error(
+      "Delete funding service error:",
+      error
+    );
 
-        return;
-      }
-
-      setDeletingService(null);
-
-      await fetchFundingServices();
-    } catch (error) {
-      console.error(
-        "Delete funding service error:",
-        error
-      );
-
-      setDeleteError(
+    setDeleteError(
+      error?.message ||
         "Something went wrong while deleting the funding service."
-      );
-    } finally {
-      setDeleting(false);
-    }
-  };
+    );
+  } finally {
+    setDeleting(false);
+  }
+};
 
   // =========================================================
   // UI
@@ -1932,160 +2002,55 @@ const handleToggleStatus = async () => {
                             ACTIONS
                         ================================================= */}
 
-                        <td
-                          className={`sticky right-0 z-10 border-l border-slate-200 px-5 py-4 ${
-                            index % 2 === 0
-                              ? "bg-white group-hover:bg-slate-100/80"
-                              : "bg-slate-50/70 group-hover:bg-slate-100"
-                          }`}
-                        >
-
-                          <div className="flex items-center gap-2">
-
-                            {/* =================================================
-                                EDIT
-                            ================================================= */}
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleEdit(service)
-                              }
-                              className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-indigo-600"
-                            >
-
-                              <svg
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M12 20h9" />
-                                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
-                              </svg>
-
-                              Edit
-
-                            </button>
-{/* =================================================
-    ACTIVATE / DEACTIVATE
-    EMPLOYEE → DEACTIVATE ONLY
-    SUPER ADMIN → ACTIVATE + DEACTIVATE
+                       {/* =================================================
+    ACTIONS
 ================================================= */}
 
-{(isEmployee || isSuperAdmin)  && (
+<td
+  className={`sticky right-0 z-10 border-l border-slate-200 px-5 py-4 ${
+    index % 2 === 0
+      ? "bg-white group-hover:bg-slate-100/80"
+      : "bg-slate-50/70 group-hover:bg-slate-100"
+  }`}
+>
+  <div className="flex items-center gap-2">
     <button
       type="button"
-      onClick={() =>
-        handleOpenStatusConfirmation(service)
-      }
-      disabled={
-        statusUpdatingId === service.id
-      }
-      className={`flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-        service.isActive
-          ? "border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-300 hover:bg-amber-100"
-          : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100"
-      }`}
+      onClick={() => handleEdit(service)}
+      className="
+        flex
+        items-center
+        gap-1.5
+        rounded-lg
+        bg-slate-900
+        px-3.5
+        py-2
+        text-xs
+        font-bold
+        text-white
+        shadow-sm
+        transition
+        hover:bg-indigo-600
+      "
     >
-      {statusUpdatingId === service.id ? (
-        <>
-          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          Updating...
-        </>
-      ) : service.isActive ? (
-        <>
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <rect
-              width="18"
-              height="18"
-              x="3"
-              y="3"
-              rx="2"
-            />
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
+      </svg>
 
-            <path d="M9 9l6 6" />
-            <path d="m15 9-6 6" />
-          </svg>
-
-          Deactivate
-        </>
-      ) : (
-        <>
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M20 6 9 17l-5-5" />
-          </svg>
-
-          Activate
-        </>
-      )}
+      Edit
     </button>
-  )}
-
-                            {/* =================================================
-                                DELETE
-                                SUPER ADMIN ONLY
-                            ================================================= */}
-
-                        {/* =================================================
-    DELETE
-    EMPLOYEE + SUPER ADMIN
-================================================= */}
-
-{(isEmployee || isSuperAdmin) && (
-  <button
-    type="button"
-    onClick={() =>
-      handleOpenDelete(service)
-    }
-    className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-600 transition hover:bg-red-600 hover:text-white"
-  >
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-      <path d="M10 11v6" />
-      <path d="M14 11v6" />
-      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-    </svg>
-
-    Delete
-  </button>
-)}
-
-                          </div>
-
-                        </td>
+  </div>
+</td>
 
                       </tr>
 
@@ -3216,77 +3181,283 @@ const handleToggleStatus = async () => {
                   EDIT FOOTER
               ================================================= */}
 
-              <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4 sm:px-8">
+          {/* =================================================
+    EDIT FOOTER
+================================================= */}
 
-                <button
-                  type="button"
-                  onClick={handleCloseEdit}
-                  disabled={savingEdit}
-                  className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Cancel
-                </button>
+<div className="flex shrink-0 flex-col gap-4 border-t border-slate-100 bg-slate-50 px-6 py-4 sm:px-8">
 
-                <button
-                  type="button"
-                  onClick={handleSaveEdit}
-                  disabled={savingEdit}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#071a2d] px-7 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
-                >
+  {/* LEFT SIDE - DANGER / STATUS ACTIONS */}
 
-                  {savingEdit ? (
-                    <>
-                      <svg
-                        className="animate-spin"
-                        width="17"
-                        height="17"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                      >
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="9"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          opacity="0.25"
-                        />
+  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
-                        <path
-                          d="M21 12a9 9 0 0 0-9-9"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                        />
-                      </svg>
+    <div className="flex flex-wrap items-center gap-3">
 
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        width="17"
-                        height="17"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
-                        <polyline points="17 21 17 13 7 13 7 21" />
-                        <polyline points="7 3 7 8 15 8" />
-                      </svg>
+      {/* ACTIVATE / DEACTIVATE */}
 
-                      Save Changes
-                    </>
-                  )}
+      {(isEmployee || isSuperAdmin) && (
+        <button
+          type="button"
+          onClick={() =>
+            handleOpenStatusConfirmation(
+              editingService
+            )
+          }
+          disabled={
+            statusUpdatingId ===
+              editingService?.id ||
+            savingEdit ||
+            deleting
+          }
+          className={`
+            inline-flex
+            items-center
+            gap-2
+            rounded-xl
+            border
+            px-4
+            py-2.5
+            text-sm
+            font-bold
+            transition
+            disabled:cursor-not-allowed
+            disabled:opacity-50
 
-                </button>
+            ${
+              editingService?.isActive
+                ? `
+                  border-amber-200
+                  bg-amber-50
+                  text-amber-700
+                  hover:border-amber-300
+                  hover:bg-amber-100
+                `
+                : `
+                  border-emerald-200
+                  bg-emerald-50
+                  text-emerald-700
+                  hover:border-emerald-300
+                  hover:bg-emerald-100
+                `
+            }
+          `}
+        >
+          {editingService?.isActive ? (
+            <>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect
+                  width="18"
+                  height="18"
+                  x="3"
+                  y="3"
+                  rx="2"
+                />
 
-              </div>
+                <path d="M9 9l6 6" />
+                <path d="m15 9-6 6" />
+              </svg>
 
+              Deactivate
+            </>
+          ) : (
+            <>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+
+              Activate
+            </>
+          )}
+        </button>
+      )}
+
+      {/* DELETE */}
+
+      {(isEmployee || isSuperAdmin) && (
+        <button
+          type="button"
+          onClick={() =>
+            handleOpenDelete(editingService)
+          }
+          disabled={
+            deleting ||
+            savingEdit ||
+            statusUpdatingId ===
+              editingService?.id
+          }
+          className="
+            inline-flex
+            items-center
+            gap-2
+            rounded-xl
+            border
+            border-red-200
+            bg-red-50
+            px-4
+            py-2.5
+            text-sm
+            font-bold
+            text-red-600
+            transition
+            hover:border-red-300
+            hover:bg-red-100
+            disabled:cursor-not-allowed
+            disabled:opacity-50
+          "
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+            <path d="M10 11v6" />
+            <path d="M14 11v6" />
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+          </svg>
+
+          Delete
+        </button>
+      )}
+
+    </div>
+
+    {/* RIGHT SIDE - SAVE / CANCEL */}
+
+    <div className="flex flex-col gap-3 sm:flex-row">
+
+      <button
+        type="button"
+        onClick={handleCloseEdit}
+        disabled={
+          savingEdit ||
+          deleting ||
+          statusUpdatingId !== null
+        }
+        className="
+          rounded-xl
+          border
+          border-slate-200
+          bg-white
+          px-6
+          py-3
+          text-sm
+          font-bold
+          text-slate-600
+          transition
+          hover:bg-slate-100
+          disabled:cursor-not-allowed
+          disabled:opacity-50
+        "
+      >
+        Cancel
+      </button>
+
+      <button
+        type="button"
+        onClick={handleSaveEdit}
+        disabled={
+          savingEdit ||
+          deleting ||
+          statusUpdatingId !== null
+        }
+        className="
+          inline-flex
+          items-center
+          justify-center
+          gap-2
+          rounded-xl
+          bg-[#071a2d]
+          px-7
+          py-3
+          text-sm
+          font-bold
+          text-white
+          shadow-lg
+          transition
+          hover:bg-indigo-600
+          disabled:cursor-not-allowed
+          disabled:opacity-50
+        "
+      >
+        {savingEdit ? (
+          <>
+            <svg
+              className="animate-spin"
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="9"
+                stroke="currentColor"
+                strokeWidth="3"
+                opacity="0.25"
+              />
+
+              <path
+                d="M21 12a9 9 0 0 0-9-9"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+            </svg>
+
+            Saving...
+          </>
+        ) : (
+          <>
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+
+            Save Changes
+          </>
+        )}
+      </button>
+
+    </div>
+
+  </div>
+</div>
             </div>
           </div>
         )}
@@ -3554,7 +3725,7 @@ const handleToggleStatus = async () => {
 
         {deletingService && (
           <div
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
             onMouseDown={(event) => {
               if (
                 event.target === event.currentTarget &&
