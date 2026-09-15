@@ -1186,271 +1186,352 @@ const handleToggleStatus = async () => {
 
         </div>
 
-        {/* =====================================================
-            IMPORT / MANUAL ENTRY CARD
-        ===================================================== */}
+ {/* =====================================================
+    IMPORT / MANUAL ENTRY CARD
+===================================================== */}
 
-        <div className="mb-7 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+<div className="mb-7 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
 
-          <div className="border-b border-slate-100 px-6 py-5 sm:px-7">
+  {/* HEADER */}
 
-            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+  <div className="border-b border-slate-100 px-6 py-5 sm:px-7">
+    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 
-              <div>
+      <div>
+        <div className="flex items-center gap-3">
 
-                <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 3v12" />
+              <path d="m7 8 5-5 5 5" />
+              <path d="M5 21h14" />
+              <path d="M5 17h14" />
+            </svg>
+          </div>
 
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M12 3v12" />
-                      <path d="m7 8 5-5 5 5" />
-                      <path d="M5 21h14" />
-                      <path d="M5 17h14" />
-                    </svg>
-                  </div>
+          <div>
+            <h3 className="text-lg font-bold text-slate-950">
+              Add Funding Data
+            </h3>
 
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-950">
-                      Add Funding Data
-                    </h3>
+            <p className="text-sm text-slate-500">
+              {isSuperAdmin
+                ? "Import from Excel or enter a funding opportunity manually."
+                : "Enter a new funding opportunity manually."}
+            </p>
+          </div>
 
-                    <p className="text-sm text-slate-500">
-                      Import from Excel or enter a funding opportunity manually.
-                    </p>
-                  </div>
+        </div>
+      </div>
 
-                </div>
+      <div className="rounded-full bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500">
+        {isSuperAdmin
+          ? "ADMIN DATA ENTRY"
+          : "EMPLOYEE DATA ENTRY"}
+      </div>
 
-              </div>
+    </div>
+  </div>
 
-              <div className="rounded-full bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500">
-                EMPLOYEE DATA ENTRY
-              </div>
+  {/* BODY */}
 
-            </div>
+  <div className="p-6 sm:p-7">
+
+    <div
+      className={
+        isSuperAdmin
+          ? "grid gap-4 lg:grid-cols-2"
+          : "grid gap-4"
+      }
+    >
+
+      {/* =================================================
+          EXCEL UPLOAD
+          SUPER ADMIN ONLY
+      ================================================= */}
+
+      {isSuperAdmin && (
+        <label
+          htmlFor="excel-upload"
+          className={`group relative flex min-h-[125px] cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed p-5 transition ${
+            selectedFile
+              ? "border-indigo-300 bg-indigo-50/50"
+              : "border-slate-200 bg-slate-50/70 hover:border-indigo-300 hover:bg-indigo-50/40"
+          }`}
+        >
+
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-sm">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line
+                x1="12"
+                y1="3"
+                x2="12"
+                y2="15"
+              />
+            </svg>
+          </div>
+
+          <div className="min-w-0">
+
+            <p className="font-semibold text-slate-800">
+              {selectedFile
+                ? selectedFile.name
+                : "Choose an Excel file"}
+            </p>
+
+            <p className="mt-1 text-xs text-slate-500">
+              {selectedFile
+                ? "Ready to upload"
+                : "Upload .xls or .xlsx data"}
+            </p>
 
           </div>
 
-          <div className="p-6 sm:p-7">
+          <input
+            id="excel-upload"
+            type="file"
+            accept=".xls,.xlsx"
+            onChange={handleFileChange}
+            className="hidden"
+          />
 
-            <div className="grid gap-4 lg:grid-cols-2">
+        </label>
+      )}
 
-              {/* Excel */}
-              <label
-                htmlFor="excel-upload"
-                className={`group relative flex min-h-[125px] cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed p-5 transition ${
-                  selectedFile
-                    ? "border-indigo-300 bg-indigo-50/50"
-                    : "border-slate-200 bg-slate-50/70 hover:border-indigo-300 hover:bg-indigo-50/40"
-                }`}
+      {/* =================================================
+          MANUAL ENTRY
+      ================================================= */}
+
+      <button
+        type="button"
+        onClick={handleOpenAddModal}
+        className="
+          group
+          relative
+          flex
+          min-h-[125px]
+          w-full
+          items-center
+          gap-4
+          rounded-2xl
+          border-2
+          border-dashed
+          border-cyan-200
+          bg-gradient-to-br
+          from-cyan-50/70
+          to-indigo-50/60
+          p-5
+          text-left
+          transition
+          hover:-translate-y-0.5
+          hover:border-indigo-300
+          hover:from-indigo-50
+          hover:to-cyan-50
+        "
+      >
+
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-sm transition group-hover:scale-105">
+
+          <svg
+            width="23"
+            height="23"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="9"
+            />
+
+            <path d="M12 8v8" />
+            <path d="M8 12h8" />
+          </svg>
+
+        </div>
+
+        <div className="min-w-0">
+
+          <p className="font-semibold text-slate-900">
+            Add Data Manually
+          </p>
+
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            Enter a new funding opportunity directly
+            into the system.
+          </p>
+
+        </div>
+
+        <div className="ml-auto hidden rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-indigo-600 shadow-sm sm:block">
+          + ADD
+        </div>
+
+      </button>
+
+    </div>
+
+    {/* =================================================
+        EXCEL UPLOAD ACTION
+        SUPER ADMIN ONLY
+    ================================================= */}
+
+    {isSuperAdmin && (
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+
+        <button
+          type="button"
+          onClick={handleExcelUpload}
+          disabled={
+            !selectedFile || uploading
+          }
+          className="
+            flex
+            min-h-[56px]
+            items-center
+            justify-center
+            gap-2
+            rounded-2xl
+            bg-gradient-to-r
+            from-indigo-600
+            to-violet-600
+            px-7
+            text-sm
+            font-bold
+            text-white
+            shadow-lg
+            shadow-indigo-200
+            transition
+            hover:-translate-y-0.5
+            hover:from-indigo-700
+            hover:to-violet-700
+            disabled:cursor-not-allowed
+            disabled:opacity-40
+            disabled:hover:translate-y-0
+          "
+        >
+
+          {uploading ? (
+            <>
+              <svg
+                className="animate-spin"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
               >
-
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-sm">
-                  <svg
-                    width="22"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line
-                      x1="12"
-                      y1="3"
-                      x2="12"
-                      y2="15"
-                    />
-                  </svg>
-                </div>
-
-                <div className="min-w-0">
-
-                  <p className="font-semibold text-slate-800">
-                    {selectedFile
-                      ? selectedFile.name
-                      : "Choose an Excel file"}
-                  </p>
-
-                  <p className="mt-1 text-xs text-slate-500">
-                    {selectedFile
-                      ? "Ready to upload"
-                      : "Upload .xls or .xlsx data"}
-                  </p>
-
-                </div>
-
-                <input
-                  id="excel-upload"
-                  type="file"
-                  accept=".xls,.xlsx"
-                  onChange={handleFileChange}
-                  className="hidden"
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="9"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  opacity="0.3"
                 />
 
-              </label>
+                <path
+                  d="M21 12a9 9 0 0 0-9-9"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+              </svg>
 
-              {/* Manual entry */}
-              <button
-                type="button"
-                onClick={handleOpenAddModal}
-                className="group relative flex min-h-[125px] items-center gap-4 rounded-2xl border-2 border-dashed border-cyan-200 bg-gradient-to-br from-cyan-50/70 to-indigo-50/60 p-5 text-left transition hover:-translate-y-0.5 hover:border-indigo-300 hover:from-indigo-50 hover:to-cyan-50"
+              Uploading...
+            </>
+          ) : (
+            <>
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
+                <path d="M12 3v12" />
+                <path d="m7 8 5-5 5 5" />
+                <path d="M5 21h14" />
+              </svg>
 
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-sm transition group-hover:scale-105">
+              Upload Excel
+            </>
+          )}
 
-                  <svg
-                    width="23"
-                    height="23"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="9"
-                    />
-                    <path d="M12 8v8" />
-                    <path d="M8 12h8" />
-                  </svg>
+        </button>
 
-                </div>
+        <p className="text-xs text-slate-400">
+          Only Super Admins can import funding data
+          through Excel.
+        </p>
 
-                <div>
+      </div>
+    )}
 
-                  <p className="font-semibold text-slate-900">
-                    Add Data Manually
-                  </p>
+    {/* =================================================
+        SUCCESS MESSAGE
+    ================================================= */}
 
-                  <p className="mt-1 text-xs leading-5 text-slate-500">
-                    Enter a new funding opportunity directly into the system.
-                  </p>
+    {uploadMessage && (
+      <div className="mt-5 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3.5">
 
-                </div>
-
-                <div className="ml-auto hidden rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-indigo-600 shadow-sm sm:block">
-                  + ADD
-                </div>
-
-              </button>
-
-            </div>
-
-            {/* Upload button */}
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-
-              <button
-                type="button"
-                onClick={handleExcelUpload}
-                disabled={!selectedFile || uploading}
-                className="flex min-h-[56px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-7 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition hover:-translate-y-0.5 hover:from-indigo-700 hover:to-violet-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
-              >
-
-                {uploading ? (
-                  <>
-                    <svg
-                      className="animate-spin"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="9"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        opacity="0.3"
-                      />
-
-                      <path
-                        d="M21 12a9 9 0 0 0-9-9"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M12 3v12" />
-                      <path d="m7 8 5-5 5 5" />
-                      <path d="M5 21h14" />
-                    </svg>
-
-                    Upload Excel
-                  </>
-                )}
-
-              </button>
-
-              <p className="text-xs text-slate-400">
-                Employees and Super Admins can add and edit funding data.
-              </p>
-
-            </div>
-
-            {/* Upload success */}
-            {uploadMessage && (
-              <div className="mt-5 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3.5">
-
-                <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
-                  ✓
-                </div>
-
-                <p className="text-sm font-semibold text-emerald-700">
-                  {uploadMessage}
-                </p>
-
-              </div>
-            )}
-
-            {/* Upload error */}
-            {uploadError && (
-              <div className="mt-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5">
-
-                <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
-                  !
-                </div>
-
-                <p className="text-sm font-semibold text-red-700">
-                  {uploadError}
-                </p>
-
-              </div>
-            )}
-
-          </div>
+        <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+          ✓
         </div>
+
+        <p className="text-sm font-semibold text-emerald-700">
+          {uploadMessage}
+        </p>
+
+      </div>
+    )}
+
+    {/* =================================================
+        ERROR MESSAGE
+    ================================================= */}
+
+    {uploadError && (
+      <div className="mt-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5">
+
+        <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+          !
+        </div>
+
+        <p className="text-sm font-semibold text-red-700">
+          {uploadError}
+        </p>
+
+      </div>
+    )}
+
+  </div>
+</div>
                 {/* =====================================================
             FUNDING TABLE
         ===================================================== */}
