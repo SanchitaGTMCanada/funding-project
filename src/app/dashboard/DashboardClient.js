@@ -718,14 +718,14 @@ const isEmployee = user?.role === "EMPLOYEE";
   // STATUS / ACTIVE-INACTIVE
   // =========================================================
 
-  const handleOpenStatusConfirmation = (service) => {
-    if (!isSuperAdmin) {
-      return;
-    }
+const handleOpenStatusConfirmation = (service) => {
+  if (!isEmployee && !isSuperAdmin) {
+    return;
+  }
 
-    setStatusConfirmingService(service);
-    setStatusError("");
-  };
+  setStatusConfirmingService(service);
+  setStatusError("");
+};
 
   const handleCloseStatusConfirmation = () => {
     if (statusUpdatingId !== null) {
@@ -736,81 +736,80 @@ const isEmployee = user?.role === "EMPLOYEE";
     setStatusError("");
   };
 
-  const handleToggleStatus = async () => {
-    if (
-      !statusConfirmingService ||
-      !isSuperAdmin
-    ) {
-      return;
-    }
+const handleToggleStatus = async () => {
+  if (
+    !statusConfirmingService ||
+    (!isEmployee && !isSuperAdmin)
+  ) {
+    return;
+  }
 
-    const service = statusConfirmingService;
+  const service = statusConfirmingService;
 
-    const nextIsActive = !service.isActive;
+  const nextIsActive = !service.isActive;
 
-    setStatusUpdatingId(service.id);
-    setStatusError("");
-    setUploadError("");
+  setStatusUpdatingId(service.id);
+  setStatusError("");
+  setUploadError("");
 
-    try {
-      const response = await fetch(
-        `/api/funding-services/${service.id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            isActive: nextIsActive,
-          }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          result.message ||
-            "Failed to update funding program status."
-        );
+  try {
+    const response = await fetch(
+      `/api/funding-services/${service.id}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          isActive: nextIsActive,
+        }),
       }
+    );
 
-      setFundingServices(
-        (currentServices) =>
-          currentServices.map((item) =>
-            item.id === service.id
-              ? {
-                  ...item,
-                  isActive:
-                    result.fundingService
-                      ?.isActive ??
-                    nextIsActive,
-                  updatedAt:
-                    result.fundingService
-                      ?.updatedAt ??
-                    item.updatedAt,
-                }
-              : item
-          )
-      );
+    const result = await response.json();
 
-      setStatusConfirmingService(null);
-    } catch (error) {
-      console.error(
-        "Toggle funding service status error:",
-        error
-      );
-
-      setStatusError(
-        error.message ||
+    if (!response.ok) {
+      throw new Error(
+        result.message ||
           "Failed to update funding program status."
       );
-    } finally {
-      setStatusUpdatingId(null);
     }
-  };
 
+    setFundingServices(
+      (currentServices) =>
+        currentServices.map((item) =>
+          item.id === service.id
+            ? {
+                ...item,
+                isActive:
+                  result.fundingService
+                    ?.isActive ??
+                  nextIsActive,
+                updatedAt:
+                  result.fundingService
+                    ?.updatedAt ??
+                  item.updatedAt,
+              }
+            : item
+        )
+    );
+
+    setStatusConfirmingService(null);
+  } catch (error) {
+    console.error(
+      "Toggle funding service status error:",
+      error
+    );
+
+    setStatusError(
+      error.message ||
+        "Failed to update funding program status."
+    );
+  } finally {
+    setStatusUpdatingId(null);
+  }
+};
   // =========================================================
   // DELETE
   // =========================================================
@@ -1891,85 +1890,78 @@ const isEmployee = user?.role === "EMPLOYEE";
                               Edit
 
                             </button>
+{/* =================================================
+    ACTIVATE / DEACTIVATE
+    EMPLOYEE → DEACTIVATE ONLY
+    SUPER ADMIN → ACTIVATE + DEACTIVATE
+================================================= */}
 
-                            {/* =================================================
-                                ACTIVATE / DEACTIVATE
-                                SUPER ADMIN ONLY
-                            ================================================= */}
+{(isEmployee || isSuperAdmin)  && (
+    <button
+      type="button"
+      onClick={() =>
+        handleOpenStatusConfirmation(service)
+      }
+      disabled={
+        statusUpdatingId === service.id
+      }
+      className={`flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+        service.isActive
+          ? "border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-300 hover:bg-amber-100"
+          : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100"
+      }`}
+    >
+      {statusUpdatingId === service.id ? (
+        <>
+          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          Updating...
+        </>
+      ) : service.isActive ? (
+        <>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect
+              width="18"
+              height="18"
+              x="3"
+              y="3"
+              rx="2"
+            />
 
-                            {isSuperAdmin && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleOpenStatusConfirmation(
-                                    service
-                                  )
-                                }
-                                disabled={
-                                  statusUpdatingId ===
-                                  service.id
-                                }
-                                className={`flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                                  service.isActive
-                                    ? "border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-300 hover:bg-amber-100"
-                                    : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100"
-                                }`}
-                              >
+            <path d="M9 9l6 6" />
+            <path d="m15 9-6 6" />
+          </svg>
 
-                                {statusUpdatingId ===
-                                service.id ? (
-                                  <>
-                                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          Deactivate
+        </>
+      ) : (
+        <>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
 
-                                    Updating...
-                                  </>
-                                ) : service.isActive ? (
-                                  <>
-                                    <svg
-                                      width="14"
-                                      height="14"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
-                                      <rect
-                                        width="18"
-                                        height="18"
-                                        x="3"
-                                        y="3"
-                                        rx="2"
-                                      />
-
-                                      <path d="M9 9l6 6" />
-                                      <path d="m15 9-6 6" />
-                                    </svg>
-
-                                    Deactivate
-                                  </>
-                                ) : (
-                                  <>
-                                    <svg
-                                      width="14"
-                                      height="14"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
-                                      <path d="M20 6 9 17l-5-5" />
-                                    </svg>
-
-                                    Activate
-                                  </>
-                                )}
-
-                              </button>
-                            )}
+          Activate
+        </>
+      )}
+    </button>
+  )}
 
                             {/* =================================================
                                 DELETE

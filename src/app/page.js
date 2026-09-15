@@ -905,76 +905,7 @@ export default function Home() {
                 IBS LOGO
             ================================================= */}
 
-            <div className="flex shrink-0 items-center justify-center lg:w-[320px] xl:w-[360px]">
-
-              <div className="relative flex items-center justify-center">
-
-                <div className="absolute h-64 w-64 rounded-full bg-teal-400/8 blur-3xl" />
-
-                <div
-                  className="
-                    relative
-                    h-[285px] w-[285px]
-                    rounded-full
-                    bg-gradient-to-br
-                    from-teal-300/80
-                    via-cyan-400/60
-                    to-blue-500/70
-                    p-[2px]
-                    shadow-[0_8px_30px_rgba(0,0,0,0.28)]
-                    sm:h-[315px] sm:w-[315px]
-                    lg:h-[345px] lg:w-[345px]
-                  "
-                >
-
-                  <div className="flex h-full w-full items-center justify-center rounded-full bg-[#071a2d] p-2">
-
-                    <div
-                      className="
-                        flex h-full w-full items-center justify-center
-                        rounded-full
-                        border border-white/10
-                        bg-[#0a2238]
-                        p-2
-                      "
-                    >
-
-                      <div
-                        className="
-                          relative
-                          h-full w-full
-                          overflow-hidden
-                          rounded-full
-                          border
-                          border-teal-300/30
-                          bg-white
-                          shadow-[0_8px_25px_rgba(0,0,0,0.32)]
-                        "
-                      >
-
-                        <img
-                          src="/logo.jpg"
-                          alt="IBS Group Canada"
-                          className="h-full w-full object-cover"
-                        />
-
-                        <div className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-br from-white/10 via-transparent to-transparent" />
-
-                      </div>
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-                <div className="absolute -right-1 top-10 h-2.5 w-2.5 rounded-full bg-teal-300/70" />
-
-                <div className="absolute bottom-1 left-10 h-2 w-2 rounded-full bg-cyan-300/60" />
-
-              </div>
-
-            </div>
+       
 
             {/* =================================================
                 HERO CONTENT
