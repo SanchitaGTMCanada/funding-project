@@ -21,6 +21,11 @@ export default function DashboardClient({ user }) {
 
   const [addTitle, setAddTitle] = useState("");
   const [addDescription, setAddDescription] = useState("");
+  // =========================================================
+// VIEW STATE
+// =========================================================
+
+const [viewingService, setViewingService] = useState(null);
 
   const [addData, setAddData] = useState({
     "Program ID": "",
@@ -527,6 +532,18 @@ const isEmployee = user?.role === "EMPLOYEE";
   };
 
   // =========================================================
+// VIEW
+// =========================================================
+
+const handleView = (service) => {
+  setViewingService(service);
+};
+
+const handleCloseView = () => {
+  setViewingService(null);
+};
+
+  // =========================================================
   // EDIT
   // =========================================================
 
@@ -723,7 +740,14 @@ const isEmployee = user?.role === "EMPLOYEE";
 // CLOSE ALL FUNDING MODALS
 // =========================================================
 
+// =========================================================
+// CLOSE ALL FUNDING MODALS
+// =========================================================
+
 const closeAllFundingModals = () => {
+  // View modal
+  setViewingService(null);
+
   // Edit modal
   setEditingService(null);
   setEditTitle("");
@@ -2006,6 +2030,10 @@ const handleToggleStatus = async () => {
     ACTIONS
 ================================================= */}
 
+{/* =================================================
+    ACTIONS
+================================================= */}
+
 <td
   className={`sticky right-0 z-10 border-l border-slate-200 px-5 py-4 ${
     index % 2 === 0
@@ -2014,11 +2042,54 @@ const handleToggleStatus = async () => {
   }`}
 >
   <div className="flex items-center gap-2">
+    
+    {/* VIEW */}
+    <button
+      type="button"
+      onClick={() => handleView(service)}
+      className="
+        inline-flex
+        items-center
+        gap-1.5
+        rounded-lg
+        border
+        border-indigo-200
+        bg-indigo-50
+        px-3.5
+        py-2
+        text-xs
+        font-bold
+        text-indigo-700
+        shadow-sm
+        transition
+        hover:border-indigo-300
+        hover:bg-indigo-600
+        hover:text-white
+      "
+    >
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+
+      View
+    </button>
+
+    {/* EDIT */}
     <button
       type="button"
       onClick={() => handleEdit(service)}
       className="
-        flex
+        inline-flex
         items-center
         gap-1.5
         rounded-lg
@@ -2049,6 +2120,7 @@ const handleToggleStatus = async () => {
 
       Edit
     </button>
+
   </div>
 </td>
 
@@ -3857,6 +3929,354 @@ const handleToggleStatus = async () => {
             </div>
           </div>
         )}
+
+        {/* =====================================================
+    VIEW FUNDING PROGRAM MODAL
+===================================================== */}
+
+{viewingService && (
+  <div
+    className="
+      fixed
+      inset-0
+      z-[150]
+      flex
+      items-center
+      justify-center
+      bg-slate-950/70
+      p-4
+      backdrop-blur-sm
+    "
+    onMouseDown={(event) => {
+      if (event.target === event.currentTarget) {
+        handleCloseView();
+      }
+    }}
+  >
+    <div
+      className="
+        flex
+        max-h-[92vh]
+        w-full
+        max-w-5xl
+        flex-col
+        overflow-hidden
+        rounded-3xl
+        border
+        border-slate-200
+        bg-white
+        shadow-[0_30px_100px_rgba(15,23,42,0.3)]
+      "
+    >
+      {/* =================================================
+          HEADER
+      ================================================= */}
+
+      <div className="relative shrink-0 overflow-hidden bg-gradient-to-br from-[#071a2d] via-indigo-950 to-slate-950 px-6 py-6 text-white sm:px-8">
+        <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
+
+        <div className="absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-cyan-400/10 blur-3xl" />
+
+        <div className="relative flex items-start justify-between gap-5">
+          <div className="min-w-0">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-indigo-300/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-200">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              Funding Program
+            </div>
+
+            <h2 className="break-words text-2xl font-bold tracking-tight sm:text-3xl">
+              {viewingService.title || "Funding Program"}
+            </h2>
+
+            {viewingService.description && (
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
+                {viewingService.description}
+              </p>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleCloseView}
+            className="
+              flex
+              h-10
+              w-10
+              shrink-0
+              items-center
+              justify-center
+              rounded-xl
+              border
+              border-white/10
+              bg-white/10
+              text-slate-300
+              transition
+              hover:bg-white/20
+              hover:text-white
+            "
+            aria-label="Close"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* =================================================
+          BODY
+      ================================================= */}
+
+      <div className="flex-1 overflow-y-auto bg-slate-50">
+        <div className="p-6 sm:p-8">
+
+          {/* =================================================
+              PROGRAM SUMMARY
+          ================================================= */}
+
+          <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+            {/* ID */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                Record ID
+              </p>
+
+              <p className="mt-2 text-sm font-bold text-slate-900">
+                #{viewingService.id}
+              </p>
+            </div>
+
+            {/* Status */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                Status
+              </p>
+
+              <div className="mt-2">
+                <span
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold ${
+                    viewingService.isActive
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-slate-200 bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      viewingService.isActive
+                        ? "bg-emerald-500"
+                        : "bg-slate-400"
+                    }`}
+                  />
+
+                  {viewingService.isActive
+                    ? "Active"
+                    : "Inactive"}
+                </span>
+              </div>
+            </div>
+
+            {/* Created */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                Created
+              </p>
+
+              <p className="mt-2 text-sm font-semibold text-slate-800">
+                {viewingService.createdAt
+                  ? new Date(
+                      viewingService.createdAt
+                    ).toLocaleString()
+                  : "-"}
+              </p>
+            </div>
+
+          </div>
+
+          {/* =================================================
+              DESCRIPTION
+          ================================================= */}
+
+          {viewingService.description && (
+            <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="text-sm font-bold text-slate-950">
+                  Description
+                </h3>
+
+                <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide text-indigo-600">
+                  Overview
+                </span>
+              </div>
+
+              <p className="text-sm leading-7 text-slate-600">
+                {viewingService.description}
+              </p>
+            </div>
+          )}
+
+          {/* =================================================
+              PROGRAM DATA
+          ================================================= */}
+
+          <div>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base font-bold text-slate-950">
+                  Program Information
+                </h3>
+
+                <p className="mt-1 text-xs text-slate-500">
+                  Complete funding information for this program.
+                </p>
+              </div>
+
+              <span className="rounded-full bg-slate-100 px-3 py-1.5 text-[10px] font-bold text-slate-500">
+                {Object.keys(
+                  viewingService.data || {}
+                ).length}{" "}
+                Fields
+              </span>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+
+              {Object.entries(
+                viewingService.data || {}
+              ).map(([field, value]) => {
+                const displayValue =
+                  value === null ||
+                  value === undefined ||
+                  value === ""
+                    ? "-"
+                    : typeof value === "object"
+                    ? JSON.stringify(value)
+                    : String(value);
+
+                const isUrl =
+                  typeof value === "string" &&
+                  /^(https?:\/\/|www\.)\S+$/i.test(
+                    value.trim()
+                  );
+
+                const urlHref = isUrl
+                  ? /^www\./i.test(value.trim())
+                    ? `https://${value.trim()}`
+                    : value.trim()
+                  : "";
+
+                const isLongField = [
+                  "Purpose",
+                  "Eligibility",
+                  "Eligibility Details",
+                  "Amount Notes",
+                  "Documents Needed",
+                  "Contact Information",
+                ].includes(field);
+
+                return (
+                  <div
+                    key={field}
+                    className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ${
+                      isLongField
+                        ? "md:col-span-2"
+                        : ""
+                    }`}
+                  >
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+                        {field}
+                      </p>
+
+                      <span className="rounded-full bg-slate-100 px-2 py-1 text-[9px] font-bold text-slate-400">
+                        FIELD
+                      </span>
+                    </div>
+
+                    <div
+                      className={`whitespace-pre-wrap text-sm leading-6 ${
+                        displayValue === "-"
+                          ? "text-slate-400"
+                          : "text-slate-700"
+                      }`}
+                    >
+                      {isUrl ? (
+                        <a
+                          href={urlHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex max-w-full items-center gap-2 rounded-lg bg-indigo-50 px-3 py-2 font-semibold text-indigo-600 transition hover:bg-indigo-100 hover:text-indigo-800"
+                        >
+                          <span className="truncate">
+                            {displayValue}
+                          </span>
+
+                          <svg
+                            className="shrink-0"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M14 3h7v7" />
+                            <path d="M10 14 21 3" />
+                            <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
+                          </svg>
+                        </a>
+                      ) : (
+                        displayValue
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* =================================================
+          FOOTER
+      ================================================= */}
+
+      <div className="flex shrink-0 items-center justify-end border-t border-slate-200 bg-white px-6 py-4 sm:px-8">
+        <button
+          type="button"
+          onClick={handleCloseView}
+          className="
+            rounded-xl
+            bg-slate-900
+            px-6
+            py-3
+            text-sm
+            font-bold
+            text-white
+            transition
+            hover:bg-indigo-600
+          "
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       </main>
   );
