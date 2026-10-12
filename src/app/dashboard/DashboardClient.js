@@ -704,7 +704,7 @@ const handleCloseView = () => {
         onClick={(event) =>
           event.stopPropagation()
         }
-        className="inline-flex max-w-full items-center gap-1.5 truncate font-semibold text-indigo-600 underline decoration-indigo-300 underline-offset-2 transition hover:text-indigo-800 hover:decoration-indigo-500"
+        className="inline-flex max-w-full items-center gap-1.5 truncate font-semibold text-teal-600 underline decoration-teal-300 underline-offset-2 transition hover:text-teal-800 hover:decoration-teal-500"
         title={formattedValue}
       >
         <span className="truncate">
@@ -972,15 +972,15 @@ const handleToggleStatus = async () => {
   // =========================================================
 
   return (
-    <main className="min-h-screen bg-[#f5f7fb] text-slate-900">
+    <main className="min-h-screen bg-[#f1f6f8] text-slate-900">
 
       {/* Decorative background */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-indigo-200/30 blur-3xl" />
+        <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-teal-200/25 blur-3xl" />
 
         <div className="absolute right-0 top-40 h-96 w-96 rounded-full bg-cyan-200/20 blur-3xl" />
 
-        <div className="absolute bottom-0 left-1/3 h-96 w-96 rounded-full bg-violet-200/20 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-96 w-96 rounded-full bg-cyan-200/15 blur-3xl" />
       </div>
 
       {/* =====================================================
@@ -990,58 +990,37 @@ const handleToggleStatus = async () => {
       <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1600px] items-center justify-between px-5 py-4 lg:px-8">
 
-          {/* Brand */}
-          <div className="flex items-center gap-3">
+      
+{/* Brand */}
+<div className="flex items-center gap-3">
+  {/* Brand Icon */}
+      <div className="flex h-18 w-18 shrink-0 items-center justify-center overflow-hidden rounded-2xl shadow-xl shadow-teal-900/30">
+  <img
+    src="/logo.jpg"
+    alt="IBS Funding Program Logo"
+    className="h-full w-full object-cover"
+  />
+</div>
 
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 via-violet-600 to-cyan-500 shadow-lg shadow-indigo-200">
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M3 21h18" />
-                <path d="M5 21V9l7-5 7 5v12" />
-                <path d="M9 21v-6h6v6" />
-                <path d="M9 10h.01" />
-                <path d="M15 10h.01" />
-              </svg>
-            </div>
+  {/* Brand Name */}
+  <div>
+    <h1 className="text-lg font-black tracking-tight text-[#071a2d] sm:text-xl">
+      IBS Funding Program
+    </h1>
 
-            <div>
-              <h1 className="text-lg font-bold tracking-tight text-slate-950 sm:text-xl">
-                Funding Management
-              </h1>
+    
+  </div>
+</div>
 
-              <p className="hidden text-xs text-slate-500 sm:block">
-                Funding services administration
-              </p>
-            </div>
-
-          </div>
 
           {/* User area */}
           <div className="flex items-center gap-2 sm:gap-3">
 
-            <div className="hidden rounded-xl border border-slate-200 bg-white/70 px-4 py-2.5 sm:block">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                Signed in as
-              </p>
-
-              <p className="mt-0.5 text-sm font-semibold text-slate-800">
-                {user?.email}
-              </p>
-            </div>
-
-            <div
+             <div
               className={`rounded-xl px-3 py-2 text-xs font-bold tracking-wide ${
                 isSuperAdmin
-                  ? "bg-violet-100 text-violet-700"
-                  : "bg-indigo-100 text-indigo-700"
+                  ? "bg-cyan-50 text-cyan-800"
+                  : "bg-teal-50 text-teal-800"
               }`}
             >
               {isSuperAdmin
@@ -1049,15 +1028,27 @@ const handleToggleStatus = async () => {
                 : "EMPLOYEE"}
             </div>
 
+        <div className="hidden rounded-xl border border-teal-400/20 bg-gradient-to-r from-[#071a2d] to-[#0b3b46] px-4 py-2.5 shadow-md shadow-teal-950/10 sm:block">
+  <p className="text-[10px] font-semibold uppercase tracking-wider text-teal-300">
+    Signed in as
+  </p>
+
+  <p className="mt-0.5 text-sm font-semibold text-white">
+    {user?.email}
+  </p>
+</div>
+
+           
+
             <button
               type="button"
               onClick={handleLogout}
               disabled={loggingOut}
-              className="group flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
+              className="group flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
             >
               <svg
-                width="17"
-                height="17"
+                width="18"
+                height="18"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -1093,22 +1084,32 @@ const handleToggleStatus = async () => {
       <section className="mx-auto max-w-[1600px] px-5 py-7 lg:px-8 lg:py-10">
 
         {/* Hero */}
-        <div className="relative mb-7 overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-6 shadow-2xl shadow-slate-200 sm:p-8 lg:p-10">
+        <div className="relative mb-7 overflow-hidden rounded-3xl bg-gradient-to-br from-[#061525] via-[#062b35] to-[#0b2448] p-6 shadow-2xl shadow-slate-200 sm:p-8 lg:p-10">
 
-          <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
+          <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-teal-400/15 blur-3xl" />
 
           <div className="absolute -bottom-28 right-1/3 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
 
+             <div
+          className="absolute inset-0 opacity-[0.045]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.8) 1px, transparent 1px)",
+            backgroundSize:
+              "44px 44px",
+          }}
+        />
+
           <div className="relative z-10 max-w-3xl">
 
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-indigo-100 backdrop-blur-md">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/10 px-3 py-1.5 text-xs font-semibold text-teal-100 backdrop-blur-md">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-lg shadow-emerald-400/50" />
               Administration Portal
             </div>
 
             <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
               Manage your funding
-              <span className="block bg-gradient-to-r from-indigo-300 via-cyan-200 to-white bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-teal-300 via-cyan-200 to-white bg-clip-text text-transparent">
                 opportunities with ease.
               </span>
             </h2>
@@ -1140,7 +1141,7 @@ const handleToggleStatus = async () => {
                 </p>
               </div>
 
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
                 <svg
                   width="21"
                   height="21"
@@ -1167,7 +1168,7 @@ const handleToggleStatus = async () => {
             </div>
 
             <div className="mt-4 h-1 overflow-hidden rounded-full bg-slate-100">
-              <div className="h-full w-3/4 rounded-full bg-indigo-500 transition-all group-hover:w-full" />
+              <div className="h-full w-3/4 rounded-full bg-teal-500 transition-all group-hover:w-full" />
             </div>
           </div>
 
@@ -1228,7 +1229,7 @@ const handleToggleStatus = async () => {
                 </p>
               </div>
 
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600">
                 <svg
                   width="21"
                   height="21"
@@ -1294,7 +1295,7 @@ const handleToggleStatus = async () => {
       <div>
         <div className="flex items-center gap-3">
 
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
             <svg
               width="20"
               height="20"
@@ -1358,12 +1359,12 @@ const handleToggleStatus = async () => {
           htmlFor="excel-upload"
           className={`group relative flex min-h-[125px] cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed p-5 transition ${
             selectedFile
-              ? "border-indigo-300 bg-indigo-50/50"
-              : "border-slate-200 bg-slate-50/70 hover:border-indigo-300 hover:bg-indigo-50/40"
+              ? "border-teal-300 bg-teal-50/50"
+              : "border-slate-200 bg-slate-50/70 hover:border-teal-300 hover:bg-teal-50/40"
           }`}
         >
 
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-sm">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-teal-600 shadow-sm">
             <svg
               width="22"
               height="22"
@@ -1433,18 +1434,18 @@ const handleToggleStatus = async () => {
           border-cyan-200
           bg-gradient-to-br
           from-cyan-50/70
-          to-indigo-50/60
+          to-teal-50/60
           p-5
           text-left
           transition
           hover:-translate-y-0.5
-          hover:border-indigo-300
-          hover:from-indigo-50
+          hover:border-teal-300
+          hover:from-teal-50
           hover:to-cyan-50
         "
       >
 
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-sm transition group-hover:scale-105">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-teal-600 shadow-sm transition group-hover:scale-105">
 
           <svg
             width="23"
@@ -1481,7 +1482,7 @@ const handleToggleStatus = async () => {
 
         </div>
 
-        <div className="ml-auto hidden rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-indigo-600 shadow-sm sm:block">
+        <div className="ml-auto hidden rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-teal-600 shadow-sm sm:block">
           + ADD
         </div>
 
@@ -1511,18 +1512,18 @@ const handleToggleStatus = async () => {
             gap-2
             rounded-2xl
             bg-gradient-to-r
-            from-indigo-600
-            to-violet-600
+            from-[#071a2d]
+            to-[#087e8b]
             px-7
             text-sm
             font-bold
             text-white
             shadow-lg
-            shadow-indigo-200
+            shadow-teal-200
             transition
             hover:-translate-y-0.5
-            hover:from-indigo-700
-            hover:to-violet-700
+            hover:from-[#0b2438]
+            hover:to-[#0f9a9a]
             disabled:cursor-not-allowed
             disabled:opacity-40
             disabled:hover:translate-y-0
@@ -1713,7 +1714,7 @@ const handleToggleStatus = async () => {
                     )
                   }
                   placeholder="Search funding programs..."
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                 />
 
               </div>
@@ -1726,10 +1727,10 @@ const handleToggleStatus = async () => {
           {loadingServices ? (
             <div className="flex min-h-[350px] flex-col items-center justify-center px-6">
 
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-50">
 
                 <svg
-                  className="animate-spin text-indigo-600"
+                  className="animate-spin text-teal-600"
                   width="26"
                   height="26"
                   viewBox="0 0 24 24"
@@ -2053,17 +2054,17 @@ const handleToggleStatus = async () => {
         gap-1.5
         rounded-lg
         border
-        border-indigo-200
-        bg-indigo-50
+        border-teal-200
+        bg-teal-50
         px-3.5
         py-2
         text-xs
         font-bold
-        text-indigo-700
+        text-teal-700
         shadow-sm
         transition
-        hover:border-indigo-300
-        hover:bg-indigo-600
+        hover:border-teal-300
+        hover:bg-teal-600
         hover:text-white
       "
     >
@@ -2101,7 +2102,7 @@ const handleToggleStatus = async () => {
         text-white
         shadow-sm
         transition
-        hover:bg-indigo-600
+        hover:bg-teal-600
       "
     >
       <svg
@@ -2255,7 +2256,7 @@ const handleToggleStatus = async () => {
                           )
                         }
                         placeholder="Enter program ID"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 
                     </div>
@@ -2280,7 +2281,7 @@ const handleToggleStatus = async () => {
                           )
                         }
                         placeholder="Enter program name"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 
                     </div>
@@ -2302,7 +2303,7 @@ const handleToggleStatus = async () => {
                           )
                         }
                         placeholder="Enter status"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 
                     </div>
@@ -2324,7 +2325,7 @@ const handleToggleStatus = async () => {
                           )
                         }
                         placeholder="Enter category"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 
                     </div>
@@ -2346,7 +2347,7 @@ const handleToggleStatus = async () => {
                           )
                         }
                         placeholder="Enter locations"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 
                     </div>
@@ -2368,7 +2369,7 @@ const handleToggleStatus = async () => {
                           )
                         }
                         placeholder="Enter jurisdiction"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 
                     </div>
@@ -2392,7 +2393,7 @@ const handleToggleStatus = async () => {
                           )
                         }
                         placeholder="Enter funding agency"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 
                     </div>
@@ -2416,7 +2417,7 @@ const handleToggleStatus = async () => {
                           )
                         }
                         placeholder="Enter source category"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 
                     </div>
@@ -2459,7 +2460,7 @@ const handleToggleStatus = async () => {
                         }
                         rows={4}
                         placeholder="Describe the purpose of this funding program"
-                        className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 
                     </div>
@@ -2483,7 +2484,7 @@ const handleToggleStatus = async () => {
                           )
                         }
                         placeholder="Grant, loan, subsidy..."
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 
                     </div>
@@ -2507,7 +2508,7 @@ const handleToggleStatus = async () => {
                           )
                         }
                         placeholder="Additional amount information"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 
                     </div>
@@ -2531,7 +2532,7 @@ const handleToggleStatus = async () => {
                           )
                         }
                         placeholder="Minimum funding amount"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 
                     </div>
@@ -2555,7 +2556,7 @@ const handleToggleStatus = async () => {
                           )
                         }
                         placeholder="Maximum funding amount"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 
                     </div>
@@ -2600,7 +2601,7 @@ const handleToggleStatus = async () => {
                         }
                         rows={3}
                         placeholder="Who is eligible for this program?"
-                        className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 
                     </div>
@@ -2626,7 +2627,7 @@ const handleToggleStatus = async () => {
                         }
                         rows={4}
                         placeholder="Add detailed eligibility requirements"
-                        className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 
                     </div>
@@ -2652,7 +2653,7 @@ const handleToggleStatus = async () => {
                         }
                         rows={4}
                         placeholder="List required documents"
-                        className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 
                     </div>
@@ -2699,7 +2700,7 @@ const handleToggleStatus = async () => {
                         }
                         rows={4}
                         placeholder="Phone, email, office..."
-                        className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 
                     </div>
@@ -2725,7 +2726,7 @@ const handleToggleStatus = async () => {
                           )
                         }
                         placeholder="https://example.com"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 
                     </div>
@@ -2754,7 +2755,7 @@ const handleToggleStatus = async () => {
                     <button
                       type="button"
                       onClick={handleAddNewField}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-white px-4 py-2.5 text-xs font-bold text-indigo-600 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-teal-200 bg-white px-4 py-2.5 text-xs font-bold text-teal-600 shadow-sm transition hover:border-teal-300 hover:bg-teal-50"
                     >
 
                       <svg
@@ -2845,7 +2846,7 @@ const handleToggleStatus = async () => {
                   type="button"
                   onClick={handleSaveManualData}
                   disabled={addingData}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition hover:-translate-y-0.5 hover:from-indigo-700 hover:to-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-teal-200 transition hover:-translate-y-0.5 hover:from-teal-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
 
                   {addingData ? (
@@ -2909,9 +2910,9 @@ const handleToggleStatus = async () => {
                   EDIT MODAL HEADER
               ================================================= */}
 
-              <div className="relative shrink-0 overflow-hidden bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 px-6 py-6 text-white sm:px-8">
+              <div className="relative shrink-0 overflow-hidden bg-gradient-to-r from-slate-950 via-teal-950 to-slate-900 px-6 py-6 text-white sm:px-8">
 
-                <div className="absolute -right-16 -top-24 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
+                <div className="absolute -right-16 -top-24 h-64 w-64 rounded-full bg-teal-400/15 blur-3xl" />
 
                 <div className="absolute bottom-[-100px] left-1/3 h-64 w-64 rounded-full bg-cyan-400/10 blur-3xl" />
 
@@ -2919,7 +2920,7 @@ const handleToggleStatus = async () => {
 
                   <div>
 
-                    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-200">
+                    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-teal-200">
 
                       <span className="h-1.5 w-1.5 rounded-full bg-cyan-300" />
 
@@ -2996,7 +2997,7 @@ const handleToggleStatus = async () => {
                           )
                         }
                         placeholder="Enter funding service title"
-                        className="h-12 w-full rounded-xl border border-slate-200 bg-[#f8fafb] px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                        className="h-12 w-full rounded-xl border border-slate-200 bg-[#f8fafb] px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
                       />
 
                     </div>
@@ -3017,7 +3018,7 @@ const handleToggleStatus = async () => {
                         }
                         rows={3}
                         placeholder="Enter funding service description"
-                        className="w-full resize-y rounded-xl border border-slate-200 bg-[#f8fafb] px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                        className="w-full resize-y rounded-xl border border-slate-200 bg-[#f8fafb] px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
                       />
 
                     </div>
@@ -3104,7 +3105,7 @@ const handleToggleStatus = async () => {
                           return (
                             <div
                               key={field}
-                              className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_3px_15px_rgba(15,23,42,0.04)] transition hover:border-indigo-200 hover:shadow-[0_8px_25px_rgba(15,23,42,0.07)] ${
+                              className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_3px_15px_rgba(15,23,42,0.04)] transition hover:border-teal-200 hover:shadow-[0_8px_25px_rgba(15,23,42,0.07)] ${
                                 isLongField
                                   ? "md:col-span-2"
                                   : ""
@@ -3140,7 +3141,7 @@ const handleToggleStatus = async () => {
                                       : 4
                                   }
                                   placeholder={`Enter ${field.toLowerCase()}`}
-                                  className="w-full resize-y rounded-xl border border-slate-200 bg-[#f8fafb] px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                                  className="w-full resize-y rounded-xl border border-slate-200 bg-[#f8fafb] px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
                                 />
 
                               ) : (
@@ -3159,7 +3160,7 @@ const handleToggleStatus = async () => {
                                     )
                                   }
                                   placeholder={`Enter ${field.toLowerCase()}`}
-                                  className="h-12 w-full rounded-xl border border-slate-200 bg-[#f8fafb] px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                                  className="h-12 w-full rounded-xl border border-slate-200 bg-[#f8fafb] px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
                                 />
 
                               )}
@@ -3175,7 +3176,7 @@ const handleToggleStatus = async () => {
                                     onClick={(event) =>
                                       event.stopPropagation()
                                     }
-                                    className="inline-flex max-w-full items-center gap-2 rounded-lg bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-600 transition hover:bg-indigo-100 hover:text-indigo-800"
+                                    className="inline-flex max-w-full items-center gap-2 rounded-lg bg-teal-50 px-3 py-2 text-xs font-bold text-teal-600 transition hover:bg-teal-100 hover:text-teal-800"
                                   >
 
                                     <svg
@@ -3471,7 +3472,7 @@ const handleToggleStatus = async () => {
           text-white
           shadow-lg
           transition
-          hover:bg-indigo-600
+          hover:bg-teal-600
           disabled:cursor-not-allowed
           disabled:opacity-50
         "
@@ -3972,14 +3973,14 @@ const handleToggleStatus = async () => {
           HEADER
       ================================================= */}
 
-      <div className="relative shrink-0 overflow-hidden bg-gradient-to-br from-[#071a2d] via-indigo-950 to-slate-950 px-6 py-6 text-white sm:px-8">
-        <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
+      <div className="relative shrink-0 overflow-hidden bg-gradient-to-br from-[#071a2d] via-teal-950 to-slate-950 px-6 py-6 text-white sm:px-8">
+        <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-teal-400/15 blur-3xl" />
 
         <div className="absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-cyan-400/10 blur-3xl" />
 
         <div className="relative flex items-start justify-between gap-5">
           <div className="min-w-0">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-indigo-300/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-200">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-teal-200">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
               Funding Program
             </div>
@@ -4114,7 +4115,7 @@ const handleToggleStatus = async () => {
                   Description
                 </h3>
 
-                <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide text-indigo-600">
+                <span className="rounded-full bg-teal-50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide text-teal-600">
                   Overview
                 </span>
               </div>
@@ -4215,7 +4216,7 @@ const handleToggleStatus = async () => {
                           href={urlHref}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex max-w-full items-center gap-2 rounded-lg bg-indigo-50 px-3 py-2 font-semibold text-indigo-600 transition hover:bg-indigo-100 hover:text-indigo-800"
+                          className="inline-flex max-w-full items-center gap-2 rounded-lg bg-teal-50 px-3 py-2 font-semibold text-teal-600 transition hover:bg-teal-100 hover:text-teal-800"
                         >
                           <span className="truncate">
                             {displayValue}
@@ -4268,7 +4269,7 @@ const handleToggleStatus = async () => {
             font-bold
             text-white
             transition
-            hover:bg-indigo-600
+            hover:bg-teal-600
           "
         >
           Close
