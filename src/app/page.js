@@ -822,34 +822,35 @@ export default function Home() {
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#071a2d]/95 shadow-lg backdrop-blur-xl">
         <div className="mx-auto flex h-[74px] max-w-[1800px] items-center justify-between px-5 sm:px-6 lg:px-10 xl:px-12">
 
-          <button
-            type="button"
-            onClick={() =>
-              window.scrollTo({
-                top: 0,
-                behavior: "smooth",
-              })
-            }
-            className="flex items-center gap-3"
-          >
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg">
-              <img src={"\logo.jpg"}></img>
-            </div>
+<a
+  href="https://ibsgroupcanada.com/"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="flex items-center gap-3"
+>
+  <div className="flex h-15 w-15 items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg">
+    <img
+      src="/logo.jpg"
+      alt="Funding Management Logo"
+      className="h-full w-full rounded-xl object-cover"
+    />
+  </div>
 
-            <div className="text-left">
-              <div className="text-base font-black text-white sm:text-lg">
-                Funding Management
-              </div>
+  <div className="text-left">
+    <div className="text-base font-black text-white sm:text-lg">
+      IBS Funding Program
+    </div>
 
-              <div className="hidden text-[10px] font-bold uppercase tracking-[0.16em] text-teal-300 sm:block">
-                Funding Opportunities Portal
-              </div>
-            </div>
-          </button>
+    {/* <div className="hidden text-[10px] font-bold uppercase tracking-[0.16em] text-teal-300 sm:block">
+      IBS Funding Program
+    </div> */}
+  </div>
+</a>
+
 
           <nav className="hidden items-center gap-2 md:flex">
 
-            <button
+            {/* <button
               type="button"
               onClick={
                 scrollToOpportunities
@@ -857,14 +858,14 @@ export default function Home() {
               className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10 hover:text-white"
             >
               Opportunities
-            </button>
+            </button> */}
 
-            <a
+            {/* <a
               href="#how-it-works"
               className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10 hover:text-white"
             >
               How It Works
-            </a>
+            </a> */}
 
             <a
               href="/login"
@@ -1918,8 +1919,8 @@ export default function Home() {
 
       <footer className="bg-[#071a2d]">
 
-        <div className="mx-auto max-w-[1800px] px-5 py-12 sm:px-6 lg:px-10 xl:px-12">
-
+        <div className="mx-auto max-w-[1800px] px-5 py-4 sm:px-6 lg:px-10 xl:px-12">
+{/* 
           <div className="flex flex-col justify-between gap-8 md:flex-row">
 
             <div>
@@ -1981,9 +1982,9 @@ export default function Home() {
 
             </div>
 
-          </div>
+          </div> */}
 
-          <div className="mt-10 border-t border-white/10 pt-6 text-xs text-slate-500">
+          <div className="  pb-3 pt-3 text-xs text-slate-500">
             ©{" "}
             {new Date().getFullYear()}{" "}
             Funding Management.
