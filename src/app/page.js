@@ -1867,87 +1867,7 @@ export default function Home() {
           HOW IT WORKS
       ===================================================== */}
 
-      <section
-        id="how-it-works"
-        className="border-y border-slate-200 bg-white"
-      >
 
-        <div className="mx-auto max-w-[1800px] px-5 py-20 sm:px-6 lg:px-10 xl:px-12">
-
-          <div className="mx-auto max-w-2xl text-center">
-
-            <div className="text-xs font-black uppercase tracking-[0.16em] text-teal-600">
-              Simple Process
-            </div>
-
-            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-              Find. Review. Apply.
-            </h2>
-
-            <p className="mt-4 text-sm leading-6 text-slate-500 sm:text-base">
-              Discover funding opportunities,
-              review their details and submit
-              your application.
-            </p>
-
-          </div>
-
-          <div className="mt-12 grid gap-5 md:grid-cols-3">
-
-            {[
-              {
-                number: "01",
-                title: "Explore",
-                text: "Browse available funding opportunities and search across the customer-visible funding information.",
-              },
-              {
-                number: "02",
-                title: "Review",
-                text: "Open an opportunity to review its approved program information before applying.",
-              },
-              {
-                number: "03",
-                title: "Apply",
-                text: "Submit your details through the application form and our team will receive your request.",
-              },
-            ].map((step) => (
-
-              <div
-                key={
-                  step.number
-                }
-                className="rounded-3xl border border-slate-200 bg-slate-50 p-7 transition hover:-translate-y-1 hover:bg-white hover:shadow-xl"
-              >
-
-                <div className="flex items-center justify-between">
-
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#071a2d] text-sm font-black text-teal-300">
-                    {step.number}
-                  </div>
-
-                  <span className="text-4xl font-black text-slate-200">
-                    {step.number}
-                  </span>
-
-                </div>
-
-                <h3 className="mt-7 text-xl font-black text-slate-900">
-                  {step.title}
-                </h3>
-
-                <p className="mt-3 text-sm leading-6 text-slate-500">
-                  {step.text}
-                </p>
-
-              </div>
-
-            ))}
-
-          </div>
-
-        </div>
-
-      </section>
 
       {/* =====================================================
           FOOTER
@@ -1955,79 +1875,11 @@ export default function Home() {
 
       <footer className="bg-[#071a2d]">
 
-        <div className="mx-auto max-w-[1800px] px-5 py-4 sm:px-6 lg:px-10 xl:px-12">
-{/* 
-          <div className="flex flex-col justify-between gap-8 md:flex-row">
-
-            <div>
-
-              <div className="flex items-center gap-3">
-
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-400 text-lg font-black text-[#071a2d]">
-                  <img src={"\logo.jpg"}></img>
-                </div>
-
-                <div>
-
-                  <p className="font-black text-white">
-                    Funding Management
-                  </p>
-
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-teal-300">
-                    Funding Opportunities
-                    Portal
-                  </p>
-
-                </div>
-
-              </div>
-
-              <p className="mt-5 max-w-md text-sm leading-6 text-slate-400">
-                A centralized platform for
-                discovering and applying for
-                funding opportunities.
-              </p>
-
-            </div>
-
-            <div className="flex flex-col gap-3 text-sm">
-
-              <button
-                type="button"
-                onClick={
-                  scrollToOpportunities
-                }
-                className="text-left font-semibold text-slate-400 transition hover:text-teal-300"
-              >
-                Funding Opportunities
-              </button>
-
-              <a
-                href="#how-it-works"
-                className="font-semibold text-slate-400 transition hover:text-teal-300"
-              >
-                How It Works
-              </a>
-
-              <a
-                href="/login"
-                className="font-semibold text-slate-400 transition hover:text-teal-300"
-              >
-                Employee Login
-              </a>
-
-            </div>
-
-          </div> */}
-
-          <div className="  pb-3 pt-3 text-xs text-slate-500">
-            ©{" "}
-            {new Date().getFullYear()}{" "}
-            Funding Management.
-            All rights reserved.
-          </div>
-
-        </div>
+     <div className="mx-auto max-w-[1800px] px-5 py-4 text-center sm:px-6 lg:px-10 xl:px-12">
+  <div className="pb-3 pt-3 text-xs text-slate-500">
+    © {new Date().getFullYear()} IBS Funding Program. All rights reserved.
+  </div>
+</div>
 
       </footer>
 

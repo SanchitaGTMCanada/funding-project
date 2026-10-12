@@ -987,95 +987,89 @@ const handleToggleStatus = async () => {
           HEADER
       ===================================================== */}
 
-      <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1600px] items-center justify-between px-5 py-4 lg:px-8">
+  
+{/* =====================================================
+    DARK THEMED HEADER
+===================================================== */}
 
-      
-{/* Brand */}
-<div className="flex items-center gap-3">
-  {/* Brand Icon */}
-      <div className="flex h-18 w-18 shrink-0 items-center justify-center overflow-hidden rounded-2xl shadow-xl shadow-teal-900/30">
-  <img
-    src="/logo.jpg"
-    alt="IBS Funding Program Logo"
-    className="h-full w-full object-cover"
-  />
-</div>
+<header className="sticky top-0 z-40 border-b border-teal-400/15 bg-[#071a2d]/95 shadow-lg shadow-slate-950/10 backdrop-blur-xl">
+  <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 px-4 py-2 sm:px-6 sm:py-2 lg:px-8">
 
-  {/* Brand Name */}
-  <div>
-    <h1 className="text-lg font-black tracking-tight text-[#071a2d] sm:text-xl">
-      IBS Funding Program
-    </h1>
+    {/* Brand */}
+    <div className="flex min-w-0 items-center gap-3">
+      <div className="h-15 w-15 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white shadow-lg shadow-teal-950/20 sm:h-18 sm:w-18">
+        <img
+          src="/logo.jpg"
+          alt="IBS Funding Program Logo"
+          className="h-full w-full object-cover"
+        />
+      </div>
 
-    
+      <div className="min-w-0">
+        <h1 className="truncate text-base font-black tracking-tight text-white sm:text-xl">
+          IBS Funding Program
+        </h1>
+
+      </div>
+    </div>
+
+    {/* User area */}
+    <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+
+      {/* Role badge */}
+      <div
+        className={`rounded-lg border px-2 py-2 text-[9px] font-extrabold tracking-wider sm:rounded-xl sm:px-3 sm:text-xs ${
+          isSuperAdmin
+            ? "border-cyan-300/20 bg-cyan-300/10 text-cyan-200"
+            : "border-teal-300/20 bg-teal-300/10 text-teal-200"
+        }`}
+      >
+        {isSuperAdmin ? "SUPER ADMIN" : "EMPLOYEE"}
+      </div>
+
+      {/* Signed-in user */}
+      <div className="hidden rounded-xl border border-teal-400/20 bg-gradient-to-r from-[#071a2d] to-[#0b3b46] px-4 py-2.5 shadow-md shadow-teal-950/10 sm:block">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-teal-300">
+          Signed in as
+        </p>
+
+        <p className="mt-0.5 max-w-[220px] truncate text-sm font-semibold text-white">
+          {user?.email}
+        </p>
+      </div>
+
+      {/* Logout */}
+      <button
+        type="button"
+        onClick={handleLogout}
+        disabled={loggingOut}
+        className="group flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-semibold text-slate-200 shadow-sm transition duration-300 hover:border-rose-400/30 hover:bg-rose-500/10 hover:text-rose-300 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" y1="12" x2="9" y2="12" />
+        </svg>
+
+        <span className="hidden sm:inline">
+          {loggingOut ? "Logging out..." : "Logout"}
+        </span>
+      </button>
+
+    </div>
   </div>
-</div>
+</header>
 
-
-          {/* User area */}
-          <div className="flex items-center gap-2 sm:gap-3">
-
-             <div
-              className={`rounded-xl px-3 py-2 text-xs font-bold tracking-wide ${
-                isSuperAdmin
-                  ? "bg-cyan-50 text-cyan-800"
-                  : "bg-teal-50 text-teal-800"
-              }`}
-            >
-              {isSuperAdmin
-                ? "SUPER ADMIN"
-                : "EMPLOYEE"}
-            </div>
-
-        <div className="hidden rounded-xl border border-teal-400/20 bg-gradient-to-r from-[#071a2d] to-[#0b3b46] px-4 py-2.5 shadow-md shadow-teal-950/10 sm:block">
-  <p className="text-[10px] font-semibold uppercase tracking-wider text-teal-300">
-    Signed in as
-  </p>
-
-  <p className="mt-0.5 text-sm font-semibold text-white">
-    {user?.email}
-  </p>
-</div>
-
-           
-
-            <button
-              type="button"
-              onClick={handleLogout}
-              disabled={loggingOut}
-              className="group flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line
-                  x1="21"
-                  y1="12"
-                  x2="9"
-                  y2="12"
-                />
-              </svg>
-
-              <span className="hidden sm:inline">
-                {loggingOut
-                  ? "Logging out..."
-                  : "Logout"}
-              </span>
-            </button>
-
-          </div>
-        </div>
-      </header>
 
       {/* =====================================================
           MAIN
