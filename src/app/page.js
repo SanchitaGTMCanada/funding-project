@@ -819,294 +819,330 @@ export default function Home() {
           HEADER
       ===================================================== */}
 
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#071a2d]/95 shadow-lg backdrop-blur-xl">
-        <div className="mx-auto flex h-[74px] max-w-[1800px] items-center justify-between px-5 sm:px-6 lg:px-10 xl:px-12">
+<header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#071a2d] shadow-lg">
+  <div className="mx-auto flex min-h-[74px] w-full max-w-[1800px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-10 xl:px-12">
 
-<a
-  href="https://ibsgroupcanada.com/"
-  target="_blank"
-  rel="noopener noreferrer"
-  className="flex items-center gap-3"
->
-  <div className="flex h-15 w-15 items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg">
-    <img
-      src="/logo.jpg"
-      alt="Funding Management Logo"
-      className="h-full w-full rounded-xl object-cover"
-    />
-  </div>
-
-  <div className="text-left">
-    <div className="text-base font-black text-white sm:text-lg">
-      IBS Funding Program
-    </div>
-
-    {/* <div className="hidden text-[10px] font-bold uppercase tracking-[0.16em] text-teal-300 sm:block">
-      IBS Funding Program
-    </div> */}
-  </div>
-</a>
-
-
-          <nav className="hidden items-center gap-2 md:flex">
-
-            {/* <button
-              type="button"
-              onClick={
-                scrollToOpportunities
-              }
-              className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10 hover:text-white"
-            >
-              Opportunities
-            </button> */}
-
-            {/* <a
-              href="#how-it-works"
-              className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10 hover:text-white"
-            >
-              How It Works
-            </a> */}
-
-            <a
-              href="/login"
-              className="ml-2 rounded-xl border border-white/10 bg-white/10 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/20"
-            >
-              Employee Login
-            </a>
-
-          </nav>
-        </div>
-      </header>
-
-      {/* =====================================================
-          HERO
-      ===================================================== */}
-
-      <section className="relative overflow-hidden bg-[#071a2d]">
-
-        <div
-          className="absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,.7) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.7) 1px, transparent 1px)",
-            backgroundSize:
-              "42px 42px",
-          }}
+    {/* Logo and Brand */}
+    <a
+      href="https://ibsgroupcanada.com/"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex min-w-0 items-center gap-3"
+    >
+      <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl sm:h-14 sm:w-14">
+        <img
+          src="/logo.jpg"
+          alt="Funding Management Logo"
+          className="h-full w-full object-cover"
         />
+      </div>
 
-        <div className="absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-teal-500/20 blur-3xl" />
+      <span className="text-sm font-black leading-tight text-white sm:text-base md:text-lg">
+        IBS Funding Program
+      </span>
+    </a>
 
-        <div className="absolute -bottom-40 -left-40 h-[450px] w-[450px] rounded-full bg-blue-500/20 blur-3xl" />
+    {/* Employee Login — visible on all screen sizes */}
+    <a
+      href="/login"
+      className="shrink-0 rounded-xl border border-teal-400/30 bg-white/10 px-3 py-2.5 text-xs font-bold text-white transition hover:bg-white/20 sm:px-4 sm:text-sm"
+    >
+      <span className="sm:hidden">Login</span>
+      <span className="hidden sm:inline">Login</span>
+    </a>
 
-        <div className="relative mx-auto max-w-[1800px] px-5 py-20 sm:px-6 lg:px-10 lg:py-24 xl:px-12">
+  </div>
+</header>
 
-          <div className="flex flex-col items-center gap-12 lg:flex-row lg:items-center lg:gap-16">
 
-            {/* =================================================
-                IBS LOGO
-            ================================================= */}
+     
+{/* =====================================================
+    HERO + FULL-WIDTH STATISTICS
+===================================================== */}
 
-       
 
-            {/* =================================================
-                HERO CONTENT
-            ================================================= */}
+<section className="relative isolate overflow-hidden bg-[#061525] text-white">
+  {/* Background grid */}
+  <div
+    className="pointer-events-none absolute inset-0 opacity-[0.045]"
+    style={{
+      backgroundImage:
+        "linear-gradient(rgba(255,255,255,.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.8) 1px, transparent 1px)",
+      backgroundSize: "44px 44px",
+    }}
+  />
 
-            <div className="max-w-5xl flex-1">
+  {/* Ambient lighting */}
+  <div className="pointer-events-none absolute -right-32 -top-40 h-72 w-72 rounded-full bg-teal-400/15 blur-[90px] sm:h-96 sm:w-96" />
+  <div className="pointer-events-none absolute -bottom-32 -left-32 h-72 w-72 rounded-full bg-blue-500/10 blur-[90px] sm:h-96 sm:w-96" />
 
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-teal-400/10 px-4 py-2 text-xs font-bold uppercase tracking-wider text-teal-200">
+  <div className="relative mx-auto w-full max-w-[1800px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10 lg:py-20 xl:px-14">
 
-                <span className="h-2 w-2 rounded-full bg-teal-400" />
+    {/* Main responsive layout */}
+    <div className="grid min-w-0 grid-cols-1 items-center gap-9 sm:gap-12 lg:grid-cols-[minmax(0,1.25fr)_minmax(300px,0.8fr)] lg:gap-10 xl:grid-cols-[minmax(0,1.3fr)_minmax(360px,0.8fr)] xl:gap-16">
 
-                Funding Opportunities
+      {/* LEFT: HERO CONTENT */}
+      <div className="min-w-0">
+        {/* Eyebrow */}
+        <div className="mb-5 inline-flex max-w-full items-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/[0.07] px-3 py-2 sm:mb-6 sm:gap-2.5 sm:px-4">
+          <span className="relative flex h-2 w-2 shrink-0">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-40" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-teal-300" />
+          </span>
 
-              </div>
+          <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-teal-200 sm:text-xs sm:tracking-[0.2em]">
+            Funding Opportunities
+          </span>
+        </div>
 
-              <h1 className="text-4xl font-black leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl xl:text-7xl">
+        {/* Main heading */}
+        <h1 className="max-w-4xl break-words text-[2.45rem] font-black leading-[1.08] tracking-[-0.045em] sm:text-5xl md:text-6xl xl:text-[4.5rem]">
+          Find funding
+          <span className="mt-1 block bg-gradient-to-r from-teal-300 via-cyan-200 to-sky-300 bg-clip-text pb-1 text-transparent">
+            opportunities that fit.
+          </span>
+        </h1>
 
-                Find funding
+        {/* Description */}
+        <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-300 sm:mt-6 sm:text-base sm:leading-8 lg:text-lg">
+          Explore funding programs, grants and financial support
+          opportunities from government and partner organizations —
+          all in one convenient place.
+        </p>
 
-                <span className="block bg-gradient-to-r from-teal-300 via-cyan-200 to-blue-300 bg-clip-text text-transparent">
-                  opportunities that fit.
-                </span>
+        {/* CTA */}
+        <div className="mt-7 flex flex-col items-stretch gap-4 sm:mt-8 sm:flex-row sm:items-center">
+          <button
+            type="button"
+            onClick={scrollToOpportunities}
+            className="group inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-xl bg-teal-300 px-6 py-3.5 text-sm font-extrabold text-[#061525] shadow-lg shadow-teal-950/20 transition-all duration-300 hover:-translate-y-0.5 hover:bg-teal-200 hover:shadow-xl hover:shadow-teal-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#061525] sm:w-auto"
+          >
+            Explore Opportunities
+            <span
+              className="transition-transform duration-300 group-hover:translate-x-1"
+              aria-hidden="true"
+            >
+              →
+            </span>
+          </button>
 
-              </h1>
+          <div className="flex items-center gap-2 text-xs font-medium leading-5 text-slate-400 sm:text-sm">
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="shrink-0 text-teal-300"
+              aria-hidden="true"
+            >
+              <path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
 
-              <p className="mt-6 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg">
+            <span>Discover available funding programs</span>
+          </div>
+        </div>
 
-                Explore funding programs, grants and
-                financial support opportunities from
-                government and partner organizations —
-                all in one convenient place.
+        {/* Bottom decorative detail */}
+        <div className="mt-8 flex items-center gap-3 sm:mt-11">
+          <div className="h-px w-10 shrink-0 bg-gradient-to-r from-teal-300 to-transparent sm:w-12" />
+          <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-[10px] sm:tracking-[0.18em]">
+            Your next opportunity starts here
+          </span>
+        </div>
+      </div>
 
+      {/* RIGHT: STATISTICS PANEL */}
+      <div className="relative min-w-0">
+        {/* Background glow */}
+        <div className="pointer-events-none absolute -inset-3 rounded-[2rem] bg-teal-400/[0.04] blur-2xl sm:-inset-5" />
+
+        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] p-3.5 shadow-2xl shadow-black/20 backdrop-blur-xl sm:rounded-3xl sm:p-5 lg:p-5 xl:p-6">
+
+          {/* Panel header */}
+          <div className="mb-4 flex items-center justify-between gap-3 border-b border-white/10 pb-4 sm:mb-5">
+            <div className="min-w-0">
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-teal-300 sm:text-[10px]">
+                At a glance
               </p>
 
-              <button
-                type="button"
-                onClick={
-                  scrollToOpportunities
-                }
-                className="mt-8 rounded-xl bg-teal-400 px-6 py-3.5 text-sm font-black text-[#071a2d] shadow-xl transition hover:-translate-y-0.5 hover:bg-teal-300"
-              >
-                Explore Opportunities →
-              </button>
-
+              <h2 className="mt-1.5 text-lg font-bold tracking-tight text-white sm:text-xl">
+                Funding Overview
+              </h2>
             </div>
 
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-teal-300/15 bg-teal-300/[0.08] text-teal-300 sm:h-10 sm:w-10">
+              <svg
+                width="21"
+                height="21"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M3 3v18h18" />
+                <path d="m19 9-5 5-4-4-5 5" />
+              </svg>
+            </div>
           </div>
 
-        </div>
+          {/* Statistics data */}
+          <div className="flex flex-col gap-2.5 sm:gap-3">
+            {[
+              {
+                value: statistics.total,
+                label: "Total Opportunities",
+                description: "Available funding programs",
+                icon: (
+                  <svg
+                    width="21"
+                    height="21"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="3" y="3" width="18" height="18" rx="3" />
+                    <path d="M8 8h8M8 12h8M8 16h5" />
+                  </svg>
+                ),
+                iconBg: "bg-indigo-400/10",
+                iconColor: "text-indigo-300",
+                accent: "from-indigo-400 to-violet-400",
+              },
+              {
+                value: statistics.open,
+                label: "Open Programs",
+                description: "Currently accepting applications",
+                icon: (
+                  <svg
+                    width="21"
+                    height="21"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="m8 12 2.5 2.5L16 9" />
+                  </svg>
+                ),
+                iconBg: "bg-emerald-400/10",
+                iconColor: "text-emerald-300",
+                accent: "from-emerald-400 to-teal-300",
+              },
+              {
+                value: statistics.categories,
+                label: "Funding Categories",
+                description: "Distinct funding classifications",
+                icon: (
+                  <svg
+                    width="21"
+                    height="21"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M4 5h16M4 12h16M4 19h16" />
+                    <circle cx="8" cy="5" r="1" />
+                    <circle cx="16" cy="12" r="1" />
+                    <circle cx="10" cy="19" r="1" />
+                  </svg>
+                ),
+                iconBg: "bg-cyan-400/10",
+                iconColor: "text-cyan-300",
+                accent: "from-cyan-400 to-blue-400",
+              },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="group relative flex min-w-0 items-center gap-3 overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.045] p-3 transition-all duration-300 hover:border-white/15 hover:bg-white/[0.075] sm:gap-4 sm:p-4"
+              >
+                {/* Left accent */}
+                <div
+                  className={`absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b ${stat.accent}`}
+                />
 
-      </section>
+                {/* Icon */}
+                <div
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${stat.iconBg} ${stat.iconColor} transition-transform duration-300 group-hover:scale-105 sm:h-11 sm:w-11`}
+                >
+                  {stat.icon}
+                </div>
+
+                {/* Number and text */}
+                <div className="min-w-0 flex-1">
+                  <p className="text-2xl font-black leading-tight tracking-tight text-white sm:text-3xl">
+                    {loading ? "—" : stat.value}
+                  </p>
+
+                  <h3 className="mt-1 break-words text-xs font-bold leading-5 text-slate-200 sm:text-sm">
+                    {stat.label}
+                  </h3>
+
+                  <p className="mt-0.5 text-[10px] leading-4 text-slate-400 sm:text-xs">
+                    {stat.description}
+                  </p>
+                </div>
+
+                {/* Arrow */}
+                <svg
+                  className="h-4 w-4 shrink-0 text-slate-500 transition-all duration-300 group-hover:translate-x-1 group-hover:text-teal-300"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12h14m-7-7 7 7-7 7" />
+                </svg>
+
+                {/* Hover accent */}
+                <div
+                  className={`absolute bottom-0 left-0 h-px w-0 bg-gradient-to-r ${stat.accent} transition-all duration-500 group-hover:w-full`}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Panel footer */}
+          <div className="mt-4 flex items-center gap-2 px-1 pt-1">
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
+            <p className="text-[10px] leading-4 text-slate-400 sm:text-xs">
+              Your funding overview in one place
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+
+
 
       {/* =====================================================
           STATS
       ===================================================== */}
-<section className="relative z-10 -mt-8 px-5 sm:px-6 lg:px-10 xl:px-12">
 
-  <div className="mx-auto grid max-w-[1800px] gap-4 sm:grid-cols-2 lg:grid-cols-3">
-
-    {[
-      {
-        value: statistics.total,
-        label: "Total Opportunities",
-        description: "Available funding programs",
-        icon: (
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <rect x="3" y="3" width="18" height="18" rx="3" />
-            <path d="M8 8h8" />
-            <path d="M8 12h8" />
-            <path d="M8 16h5" />
-          </svg>
-        ),
-        iconBg: "bg-indigo-100",
-        iconColor: "text-indigo-600",
-        accent: "from-indigo-500 to-violet-500",
-      },
-
-      {
-        value: statistics.open,
-        label: "Open Programs",
-        description: "Currently accepting applications",
-        icon: (
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="12" cy="12" r="9" />
-            <path d="m8 12 2.5 2.5L16 9" />
-          </svg>
-        ),
-        iconBg: "bg-emerald-100",
-        iconColor: "text-emerald-600",
-        accent: "from-emerald-500 to-teal-500",
-      },
-
-      {
-        value: statistics.categories,
-        label: "Funding Categories",
-        description: "Distinct funding classifications",
-        icon: (
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M4 5h16" />
-            <path d="M4 12h16" />
-            <path d="M4 19h16" />
-            <circle cx="8" cy="5" r="1" />
-            <circle cx="16" cy="12" r="1" />
-            <circle cx="10" cy="19" r="1" />
-          </svg>
-        ),
-        iconBg: "bg-cyan-100",
-        iconColor: "text-cyan-600",
-        accent: "from-cyan-500 to-blue-500",
-      },
-    ].map((stat) => (
-
-      <div
-        key={stat.label}
-        className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-br from-slate-100 via-slate-50 to-white px-5 py-4 shadow-[0_4px_18px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_8px_25px_rgba(15,23,42,0.08)]"
-      >
-
-        {/* Subtle gradient accent */}
-        <div
-          className={`absolute left-0 top-0 h-full w-1 bg-gradient-to-b ${stat.accent}`}
-        />
-
-        {/* Very subtle background glow */}
-        <div
-          className={`pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-gradient-to-br ${stat.accent} opacity-[0.07] blur-2xl transition-opacity duration-300 group-hover:opacity-[0.12]`}
-        />
-
-        <div className="relative flex items-center gap-4">
-
-          {/* Icon */}
-          <div
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${stat.iconBg} ${stat.iconColor} border border-white shadow-sm transition-transform duration-300 group-hover:scale-105`}
-          >
-            {stat.icon}
-          </div>
-
-          {/* Main information */}
-          <div className="min-w-0">
-
-            <div className="flex items-center gap-3">
-
-              <p className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
-                {loading ? "—" : stat.value}
-              </p>
-
-            </div>
-
-            <p className="mt-0.5 truncate text-sm font-semibold text-slate-800">
-              {stat.label}
-            </p>
-
-            <p className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
-              {stat.description}
-            </p>
-
-          </div>
-
-        </div>
-
-        {/* Bottom progress accent */}
-        <div className="relative mt-4 h-[2px] overflow-hidden rounded-full bg-slate-200">
-          <div
-            className={`h-full w-1/3 rounded-full bg-gradient-to-r ${stat.accent} transition-all duration-500 group-hover:w-2/3`}
-          />
-        </div>
-
-      </div>
-
-    ))}
-
-  </div>
-
-</section>
 
       {/* =====================================================
           FUNDING OPPORTUNITIES
@@ -1114,14 +1150,14 @@ export default function Home() {
 
       <section
         id="funding-opportunities"
-        className="w-full scroll-mt-24 px-3 py-20 sm:px-5 lg:px-8 xl:px-10"
+        className="w-full scroll-mt-24 py-5 px-3 sm:px-5 lg:px-8 xl:px-10"
       >
 
         {/* ===================================================
             SECTION HEADER
         =================================================== */}
 
-        <div className="mx-auto mb-8 w-full max-w-[1900px]">
+        {/* <div className="mx-auto mb-8 w-full max-w-[1900px]">
 
           <div className="text-xs font-black uppercase tracking-[0.16em] text-teal-600">
             Funding Directory
@@ -1157,7 +1193,7 @@ export default function Home() {
 
           </div>
 
-        </div>
+        </div> */}
 
         {/* ===================================================
             SEARCH
