@@ -1014,7 +1014,7 @@ const handleToggleStatus = async () => {
 
   <div className="min-w-0">
     <h1 className="truncate text-base font-black tracking-tight text-white sm:text-xl">
-      IBS Funding Program
+      IBS Funding Program Portal
     </h1>
   </div>
 </a>
