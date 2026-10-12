@@ -875,13 +875,13 @@ export default function Home() {
 <section className="relative isolate overflow-hidden bg-[#061525] text-white">
   {/* Background grid */}
   <div
-    className="pointer-events-none absolute inset-0 opacity-[0.045]"
+    className="pointer-events-none absolute inset-0 -z-10 bg-cover bg-center"
     style={{
-      backgroundImage:
-        "linear-gradient(rgba(255,255,255,.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.8) 1px, transparent 1px)",
-      backgroundSize: "44px 44px",
+      backgroundImage: "url('/funding-hero.png')",
     }}
+    aria-hidden="true"
   />
+
 
   {/* Ambient lighting */}
   <div className="pointer-events-none absolute -right-32 -top-40 h-72 w-72 rounded-full bg-teal-400/15 blur-[90px] sm:h-96 sm:w-96" />
@@ -893,254 +893,51 @@ export default function Home() {
     <div className="grid min-w-0 grid-cols-1 items-center gap-9 sm:gap-12 lg:grid-cols-[minmax(0,1.25fr)_minmax(300px,0.8fr)] lg:gap-10 xl:grid-cols-[minmax(0,1.3fr)_minmax(360px,0.8fr)] xl:gap-16">
 
       {/* LEFT: HERO CONTENT */}
-      <div className="min-w-0">
-        {/* Eyebrow */}
-        <div className="mb-5 inline-flex max-w-full items-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/[0.07] px-3 py-2 sm:mb-6 sm:gap-2.5 sm:px-4">
-          <span className="relative flex h-2 w-2 shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-40" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-teal-300" />
-          </span>
+     
+<div className="min-w-0">
+  {/* Main heading */}
+  <h1 className="max-w-4xl break-words text-[2.45rem] font-black leading-[1.08] tracking-[-0.045em] text-[#0B2438] sm:text-5xl md:text-6xl xl:text-[4.5rem]">
+  Find the right 
+  <span className="mt-1 block pb-1 text-[#0B2438]">
+   funding for your business
+  </span>
+</h1>
+  {/* Description */}
+  <p className="mt-5 max-w-2xl text-sm leading-7 text-[#43515C] sm:mt-6 sm:text-base sm:leading-8 lg:text-lg">
+    Explore funding programs, grants and financial support
+    opportunities from government and partner organizations —
+    all in one convenient place.
+  </p>
 
-          <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-teal-200 sm:text-xs sm:tracking-[0.2em]">
-            Funding Opportunities
-          </span>
-        </div>
+  {/* CTA */}
+  <div className="mt-7 flex flex-col items-stretch gap-4 sm:mt-8 sm:flex-row sm:items-center">
+    <button
+      type="button"
+      onClick={scrollToOpportunities}
+      className="group inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-xl bg-[#2374A8] px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-[#0B2438]/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#0B2438] hover:shadow-xl hover:shadow-[#0B2438]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2374A8] focus-visible:ring-offset-2 sm:w-auto"
+    >
+      Explore Opportunities
+      <span
+        className="transition-transform duration-300 group-hover:translate-x-1"
+        aria-hidden="true"
+      >
+        →
+      </span>
+    </button>
+  </div>
 
-        {/* Main heading */}
-        <h1 className="max-w-4xl break-words text-[2.45rem] font-black leading-[1.08] tracking-[-0.045em] sm:text-5xl md:text-6xl xl:text-[4.5rem]">
-          Find funding
-          <span className="mt-1 block bg-gradient-to-r from-teal-300 via-cyan-200 to-sky-300 bg-clip-text pb-1 text-transparent">
-            opportunities that fit.
-          </span>
-        </h1>
+  {/* Bottom decorative detail */}
+  <div className="mt-8 flex items-center gap-3 sm:mt-11">
+    <div className="h-1 w-14 rounded-full bg-gradient-to-r from-[#2374A8] to-[#5B9BD5] sm:w-16" />
+  </div>
+</div>
 
-        {/* Description */}
-        <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-300 sm:mt-6 sm:text-base sm:leading-8 lg:text-lg">
-          Explore funding programs, grants and financial support
-          opportunities from government and partner organizations —
-          all in one convenient place.
-        </p>
-
-        {/* CTA */}
-        <div className="mt-7 flex flex-col items-stretch gap-4 sm:mt-8 sm:flex-row sm:items-center">
-          <button
-            type="button"
-            onClick={scrollToOpportunities}
-            className="group inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-xl bg-teal-300 px-6 py-3.5 text-sm font-extrabold text-[#061525] shadow-lg shadow-teal-950/20 transition-all duration-300 hover:-translate-y-0.5 hover:bg-teal-200 hover:shadow-xl hover:shadow-teal-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#061525] sm:w-auto"
-          >
-            Explore Opportunities
-            <span
-              className="transition-transform duration-300 group-hover:translate-x-1"
-              aria-hidden="true"
-            >
-              →
-            </span>
-          </button>
-
-          <div className="flex items-center gap-2 text-xs font-medium leading-5 text-slate-400 sm:text-sm">
-            <svg
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="shrink-0 text-teal-300"
-              aria-hidden="true"
-            >
-              <path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z" />
-              <path d="m9 12 2 2 4-4" />
-            </svg>
-
-            <span>Discover available funding programs</span>
-          </div>
-        </div>
-
-        {/* Bottom decorative detail */}
-        <div className="mt-8 flex items-center gap-3 sm:mt-11">
-          <div className="h-px w-10 shrink-0 bg-gradient-to-r from-teal-300 to-transparent sm:w-12" />
-          <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-[10px] sm:tracking-[0.18em]">
-            Your next opportunity starts here
-          </span>
-        </div>
-      </div>
 
       {/* RIGHT: STATISTICS PANEL */}
-      <div className="relative min-w-0">
-        {/* Background glow */}
-        <div className="pointer-events-none absolute -inset-3 rounded-[2rem] bg-teal-400/[0.04] blur-2xl sm:-inset-5" />
+    
+{/* Statistics row between hero and funding section */}
 
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] p-3.5 shadow-2xl shadow-black/20 backdrop-blur-xl sm:rounded-3xl sm:p-5 lg:p-5 xl:p-6">
 
-          {/* Panel header */}
-          <div className="mb-4 flex items-center justify-between gap-3 border-b border-white/10 pb-4 sm:mb-5">
-            <div className="min-w-0">
-              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-teal-300 sm:text-[10px]">
-                At a glance
-              </p>
-
-              <h2 className="mt-1.5 text-lg font-bold tracking-tight text-white sm:text-xl">
-                Funding Overview
-              </h2>
-            </div>
-
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-teal-300/15 bg-teal-300/[0.08] text-teal-300 sm:h-10 sm:w-10">
-              <svg
-                width="21"
-                height="21"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M3 3v18h18" />
-                <path d="m19 9-5 5-4-4-5 5" />
-              </svg>
-            </div>
-          </div>
-
-          {/* Statistics data */}
-          <div className="flex flex-col gap-2.5 sm:gap-3">
-            {[
-              {
-                value: statistics.total,
-                label: "Total Opportunities",
-                description: "Available funding programs",
-                icon: (
-                  <svg
-                    width="21"
-                    height="21"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="3" y="3" width="18" height="18" rx="3" />
-                    <path d="M8 8h8M8 12h8M8 16h5" />
-                  </svg>
-                ),
-                iconBg: "bg-indigo-400/10",
-                iconColor: "text-indigo-300",
-                accent: "from-indigo-400 to-violet-400",
-              },
-              {
-                value: statistics.open,
-                label: "Open Programs",
-                description: "Currently accepting applications",
-                icon: (
-                  <svg
-                    width="21"
-                    height="21"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="12" cy="12" r="9" />
-                    <path d="m8 12 2.5 2.5L16 9" />
-                  </svg>
-                ),
-                iconBg: "bg-emerald-400/10",
-                iconColor: "text-emerald-300",
-                accent: "from-emerald-400 to-teal-300",
-              },
-              {
-                value: statistics.categories,
-                label: "Funding Categories",
-                description: "Distinct funding classifications",
-                icon: (
-                  <svg
-                    width="21"
-                    height="21"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M4 5h16M4 12h16M4 19h16" />
-                    <circle cx="8" cy="5" r="1" />
-                    <circle cx="16" cy="12" r="1" />
-                    <circle cx="10" cy="19" r="1" />
-                  </svg>
-                ),
-                iconBg: "bg-cyan-400/10",
-                iconColor: "text-cyan-300",
-                accent: "from-cyan-400 to-blue-400",
-              },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                className="group relative flex min-w-0 items-center gap-3 overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.045] p-3 transition-all duration-300 hover:border-white/15 hover:bg-white/[0.075] sm:gap-4 sm:p-4"
-              >
-                {/* Left accent */}
-                <div
-                  className={`absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b ${stat.accent}`}
-                />
-
-                {/* Icon */}
-                <div
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${stat.iconBg} ${stat.iconColor} transition-transform duration-300 group-hover:scale-105 sm:h-11 sm:w-11`}
-                >
-                  {stat.icon}
-                </div>
-
-                {/* Number and text */}
-                <div className="min-w-0 flex-1">
-                  <p className="text-2xl font-black leading-tight tracking-tight text-white sm:text-3xl">
-                    {loading ? "—" : stat.value}
-                  </p>
-
-                  <h3 className="mt-1 break-words text-xs font-bold leading-5 text-slate-200 sm:text-sm">
-                    {stat.label}
-                  </h3>
-
-                  <p className="mt-0.5 text-[10px] leading-4 text-slate-400 sm:text-xs">
-                    {stat.description}
-                  </p>
-                </div>
-
-                {/* Arrow */}
-                <svg
-                  className="h-4 w-4 shrink-0 text-slate-500 transition-all duration-300 group-hover:translate-x-1 group-hover:text-teal-300"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M5 12h14m-7-7 7 7-7 7" />
-                </svg>
-
-                {/* Hover accent */}
-                <div
-                  className={`absolute bottom-0 left-0 h-px w-0 bg-gradient-to-r ${stat.accent} transition-all duration-500 group-hover:w-full`}
-                />
-              </div>
-            ))}
-          </div>
-
-          {/* Panel footer */}
-          <div className="mt-4 flex items-center gap-2 px-1 pt-1">
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
-            <p className="text-[10px] leading-4 text-slate-400 sm:text-xs">
-              Your funding overview in one place
-            </p>
-          </div>
-        </div>
-      </div>
 
     </div>
   </div>
@@ -1153,6 +950,131 @@ export default function Home() {
       {/* =====================================================
           STATS
       ===================================================== */}
+
+<div className="relative z-10 mx-auto -mt-10 w-full max-w-[1250px] px-4 sm:-mt-12 sm:px-6 lg:px-10">
+  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+    {[
+      {
+        value: statistics.total,
+        label: "Total Opportunities",
+        description: "Funding programs to explore",
+        icon: (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
+            className="h-6 w-6">
+            <rect x="5" y="3" width="14" height="18" rx="2.5" />
+            <path d="M9 8h6M9 12h6M9 16h3" />
+          </svg>
+        ),
+        color: "text-[#2374A8]",
+        iconBg: "bg-[#2374A8]/10",
+        accent: "bg-[#2374A8]",
+        border: "hover:border-[#2374A8]/40",
+        glow: "group-hover:shadow-blue-100",
+      },
+      {
+        value: statistics.open,
+        label: "Open Programs",
+        description: "Currently accepting applications",
+        icon: (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
+            className="h-6 w-6">
+            <circle cx="12" cy="12" r="9" />
+            <path d="m8 12 2.5 2.5L16 9" />
+          </svg>
+        ),
+        color: "text-[#0B2438]",
+        iconBg: "bg-[#0B2438]/[0.08]",
+        accent: "bg-[#0B2438]",
+        border: "hover:border-[#0B2438]/30",
+        glow: "group-hover:shadow-slate-200",
+      },
+      {
+        value: statistics.categories,
+        label: "Funding Categories",
+        description: "Support across different needs",
+        icon: (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
+            className="h-6 w-6">
+            <rect x="3" y="3" width="8" height="8" rx="2" />
+            <rect x="13" y="3" width="8" height="8" rx="2" />
+            <rect x="3" y="13" width="8" height="8" rx="2" />
+            <rect x="13" y="13" width="8" height="8" rx="2" />
+          </svg>
+        ),
+        color: "text-[#5B9BD5]",
+        iconBg: "bg-[#5B9BD5]/15",
+        accent: "bg-[#5B9BD5]",
+        border: "hover:border-[#5B9BD5]/40",
+        glow: "group-hover:shadow-sky-100",
+      },
+    ].map((stat) => (
+      <div
+        key={stat.label}
+        className={`group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_25px_-12px_rgba(11,36,56,0.20)] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-5 ${stat.border} ${stat.glow}`}
+      >
+        {/* Brand accent */}
+        <div className={`absolute inset-x-0 top-0 h-1 ${stat.accent}`} />
+
+        {/* Subtle ice-blue glow */}
+        <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[#EEF5F8] opacity-90 blur-2xl transition-transform duration-500 group-hover:scale-150" />
+
+        <div className="relative flex items-center gap-3.5">
+          {/* Premium icon */}
+          <div
+            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${stat.iconBg} ${stat.color} ring-1 ring-inset ring-black/[0.03] transition-transform duration-300 group-hover:scale-105`}
+          >
+            {stat.icon}
+          </div>
+
+          {/* Statistics */}
+          <div className="min-w-0 flex-1">
+            <p className="text-2xl font-extrabold leading-tight tracking-tight text-[#0B2438] sm:text-3xl">
+              {loading ? (
+                <span className="inline-block h-7 w-12 animate-pulse rounded-md bg-[#EEF5F8]" />
+              ) : (
+                stat.value
+              )}
+            </p>
+
+            <h3 className="mt-1 text-sm font-bold leading-5 text-[#0B2438]">
+              {stat.label}
+            </h3>
+
+            <p className="mt-1 text-xs leading-4 text-[#43515C]">
+              {stat.description}
+            </p>
+          </div>
+
+          {/* Arrow */}
+          <div
+            className={`hidden h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white ${stat.color} transition-all duration-300 group-hover:border-current group-hover:shadow-md sm:flex`}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5"
+              aria-hidden="true"
+            >
+              <path d="M5 12h14m-6-6 6 6-6 6" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Animated bottom accent */}
+        <div
+          className={`absolute inset-x-4 bottom-0 h-[2px] origin-left scale-x-0 ${stat.accent} opacity-70 transition-transform duration-300 group-hover:scale-x-100`}
+        />
+      </div>
+    ))}
+  </div>
+</div>
 
 
       {/* =====================================================
@@ -1888,7 +1810,7 @@ export default function Home() {
 
      <div className="mx-auto max-w-[1800px] px-5 py-4 text-center sm:px-6 lg:px-10 xl:px-12">
   <div className="pb-3 pt-3 text-xs text-slate-500">
-    © {new Date().getFullYear()} IBS Funding Program. All rights reserved.
+    © Copyright 2026 Innovative Business Solutions | All Rights Reserved
   </div>
 </div>
 

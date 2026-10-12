@@ -535,7 +535,7 @@ export default function LoginPage() {
 
      <div className="mx-auto max-w-[1800px] px-5 py-4 text-center sm:px-6 lg:px-10 xl:px-12">
   <div className="pb-3 pt-3 text-xs text-slate-500">
-    © {new Date().getFullYear()} IBS Funding Program. All rights reserved.
+    © Copyright 2026 Innovative Business Solutions | All Rights Reserved
   </div>
 </div>
 

@@ -94,6 +94,9 @@ const [viewingService, setViewingService] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
 
+
+
+
   // =========================================================
   // ROLE
   // =========================================================
@@ -334,6 +337,30 @@ const isEmployee = user?.role === "EMPLOYEE";
   // =========================================================
   // FORMAT VALUES
   // =========================================================
+
+
+
+const [currentPage, setCurrentPage] = useState(1);
+const [itemsPerPage, setItemsPerPage] = useState(10);
+
+const totalPages = Math.ceil(filteredServices.length / itemsPerPage);
+const startIndex = (currentPage - 1) * itemsPerPage;
+
+const paginatedServices = filteredServices.slice(
+  startIndex,
+  startIndex + itemsPerPage
+);
+
+const startItem = filteredServices.length === 0 ? 0 : startIndex + 1;
+const endItem = Math.min(
+  startIndex + itemsPerPage,
+  filteredServices.length
+);
+
+useEffect(() => {
+  setCurrentPage(1);
+}, [searchTerm, itemsPerPage]);
+
 
   const formatValue = (value) => {
     if (
@@ -1632,514 +1659,425 @@ const handleToggleStatus = async () => {
             FUNDING TABLE
         ===================================================== */}
 
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+      
+<div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+  {/* Table header */}
+  <div className="border-b border-slate-100 px-5 py-5 sm:px-7">
+    <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0B2438] text-white">
+          <svg
+            width="19"
+            height="19"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M3 9h18M9 21V9" />
+          </svg>
+        </div>
 
-          {/* Table top */}
-          <div className="border-b border-slate-100 px-6 py-5 sm:px-7">
+        <div>
+          <h3 className="text-xl font-bold text-[#0B2438]">
+            Funding Services
+          </h3>
+          <p className="mt-0.5 text-sm text-[#43515C]">
+            {filteredServices.length} of {fundingServices.length} opportunities
+          </p>
+        </div>
+      </div>
 
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+      {/* Search */}
+      <div className="relative w-full lg:max-w-sm">
+        <svg
+          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-4-4" />
+        </svg>
 
-              <div>
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          placeholder="Search funding programs..."
+          className="w-full rounded-xl border border-slate-200 bg-[#EEF5F8]/60 py-3 pl-11 pr-4 text-sm text-[#0B2438] outline-none transition placeholder:text-slate-400 focus:border-[#2374A8] focus:bg-white focus:ring-4 focus:ring-[#2374A8]/10"
+        />
+      </div>
+    </div>
+  </div>
 
-                <div className="flex items-center gap-3">
+  {/* Loading state */}
+  {loadingServices ? (
+    <div className="flex min-h-[300px] flex-col items-center justify-center px-6">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EEF5F8]">
+        <svg
+          className="animate-spin text-[#2374A8]"
+          width="26"
+          height="26"
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="9"
+            stroke="currentColor"
+            strokeWidth="3"
+            opacity="0.2"
+          />
+          <path
+            d="M21 12a9 9 0 0 0-9-9"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
+      <p className="mt-4 text-sm font-semibold text-[#43515C]">
+        Loading funding services...
+      </p>
+      <p className="mt-1 text-xs text-slate-400">Please wait a moment</p>
+    </div>
+  ) : fundingServices.length === 0 ? (
+    /* No services */
+    <div className="flex min-h-[300px] flex-col items-center justify-center px-6 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#EEF5F8] text-[#2374A8]">
+        <svg
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <path d="M8 8h8M8 12h8M8 16h5" />
+        </svg>
+      </div>
+      <h4 className="mt-5 font-bold text-[#0B2438]">
+        No funding programs yet
+      </h4>
+      <p className="mt-1 max-w-sm text-sm text-[#43515C]">
+        Upload an Excel file or use Add Data Manually above to create your first
+        funding opportunity.
+      </p>
+    </div>
+  ) : filteredServices.length === 0 ? (
+    /* No search matches */
+    <div className="flex min-h-[250px] flex-col items-center justify-center px-6 text-center">
+      <svg
+        width="30"
+        height="30"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        className="text-slate-400"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-4-4" />
+      </svg>
+      <p className="mt-4 font-semibold text-[#0B2438]">
+        No matching programs
+      </p>
+      <p className="mt-1 text-sm text-[#43515C]">
+        Try a different search term.
+      </p>
+    </div>
+  ) : (
+    <>
+      {/* Responsive table */}
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-max text-left text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 bg-[#EEF5F8]/70">
+              <th className="sticky left-0 z-20 border-r border-slate-200 bg-[#EEF5F8] px-5 py-4 text-xs font-bold uppercase tracking-wider text-[#43515C]">
+                ID
+              </th>
 
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white">
-                    <svg
-                      width="19"
-                      height="19"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <rect
-                        x="3"
-                        y="3"
-                        width="18"
-                        height="18"
-                        rx="2"
-                      />
+              <th className="px-5 py-4 text-xs font-bold uppercase tracking-wider text-[#43515C]">
+                Funding Service Title
+              </th>
 
-                      <path d="M3 9h18" />
-
-                      <path d="M9 21V9" />
-                    </svg>
-                  </div>
-
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-950">
-                      Funding Services
-                    </h3>
-
-                    <p className="mt-0.5 text-sm text-slate-500">
-                      {filteredServices.length} of{" "}
-                      {fundingServices.length} opportunities
-                    </p>
-                  </div>
-
-                </div>
-
-              </div>
-
-              {/* Search */}
-              <div className="relative w-full lg:max-w-sm">
-
-                <svg
-                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+              {dynamicColumns.map((column) => (
+                <th
+                  key={column}
+                  className="whitespace-nowrap px-5 py-4 text-xs font-bold uppercase tracking-wider text-[#43515C]"
                 >
-                  <circle
-                    cx="11"
-                    cy="11"
-                    r="7"
-                  />
+                  {column}
+                </th>
+              ))}
 
-                  <path d="m20 20-4-4" />
-                </svg>
+              <th className="whitespace-nowrap px-5 py-4 text-xs font-bold uppercase tracking-wider text-[#43515C]">
+                Status
+              </th>
 
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(event) =>
-                    setSearchTerm(
-                      event.target.value
-                    )
-                  }
-                  placeholder="Search funding programs..."
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
-                />
+              <th className="whitespace-nowrap px-5 py-4 text-xs font-bold uppercase tracking-wider text-[#43515C]">
+                Created
+              </th>
 
-              </div>
+              <th className="whitespace-nowrap px-5 py-4 text-xs font-bold uppercase tracking-wider text-[#43515C]">
+                Updated
+              </th>
 
-            </div>
+              <th className="sticky right-0 z-20 border-l border-slate-200 bg-[#EEF5F8] px-5 py-4 text-xs font-bold uppercase tracking-wider text-[#43515C]">
+                Actions
+              </th>
+            </tr>
+          </thead>
 
+          <tbody className="divide-y divide-slate-200/80">
+            {paginatedServices.map((service, index) => (
+              <tr
+                key={service.id}
+                className={`group transition ${
+                  index % 2 === 0
+                    ? "bg-white hover:bg-[#EEF5F8]/70"
+                    : "bg-slate-50/70 hover:bg-[#EEF5F8]"
+                }`}
+              >
+                {/* ID */}
+                <td
+                  className={`sticky left-0 z-10 border-r border-slate-200 px-5 py-4 ${
+                    index % 2 === 0
+                      ? "bg-white group-hover:bg-[#EEF5F8]/70"
+                      : "bg-slate-50/70 group-hover:bg-[#EEF5F8]"
+                  }`}
+                >
+                  <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg bg-[#EEF5F8] px-2 text-xs font-bold text-[#0B2438]">
+                    #{service.id}
+                  </span>
+                </td>
+
+                {/* Title */}
+                <td className="px-5 py-4 text-sm font-semibold text-[#0B2438]">
+                  {service.title || "-"}
+                </td>
+
+                {/* Dynamic columns */}
+                {dynamicColumns.map((column) => (
+                  <td
+                    key={`${service.id}-${column}`}
+                    className="max-w-[320px] whitespace-nowrap px-5 py-4 text-[#43515C]"
+                    title={formatValue(service.data?.[column])}
+                  >
+                    <div className="max-w-[320px] truncate">
+                      {renderValue(service.data?.[column])}
+                    </div>
+                  </td>
+                ))}
+
+                {/* Status */}
+                <td className="whitespace-nowrap px-5 py-4">
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold ${
+                      service.isActive
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                        : "border-slate-200 bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        service.isActive ? "bg-emerald-500" : "bg-slate-400"
+                      }`}
+                    />
+                    {service.isActive ? "Active" : "Inactive"}
+                  </span>
+                </td>
+
+                {/* Created */}
+                <td className="whitespace-nowrap px-5 py-4 text-xs text-[#43515C]">
+                  {service.createdAt
+                    ? new Date(service.createdAt).toLocaleString()
+                    : "-"}
+                </td>
+
+                {/* Updated */}
+                <td className="whitespace-nowrap px-5 py-4 text-xs text-[#43515C]">
+                  {service.updatedAt
+                    ? new Date(service.updatedAt).toLocaleString()
+                    : "-"}
+                </td>
+
+                {/* Actions */}
+                <td
+                  className={`sticky right-0 z-10 border-l border-slate-200 px-5 py-4 ${
+                    index % 2 === 0
+                      ? "bg-white group-hover:bg-[#EEF5F8]/70"
+                      : "bg-slate-50/70 group-hover:bg-[#EEF5F8]"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {/* View */}
+                    <button
+                      type="button"
+                      onClick={() => handleView(service)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-[#2374A8]/20 bg-[#2374A8]/5 px-3.5 py-2 text-xs font-bold text-[#2374A8] shadow-sm transition hover:border-[#2374A8] hover:bg-[#2374A8] hover:text-white"
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                      View
+                    </button>
+
+                    {/* Edit */}
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(service)}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#0B2438] px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[#2374A8]"
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
+                      </svg>
+                      Edit
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination footer */}
+      <div className="flex flex-col gap-4 border-t border-slate-200 bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <p className="text-sm text-[#43515C]">
+          Showing{" "}
+          <span className="font-bold text-[#0B2438]">{startItem}</span>
+          {" "}to{" "}
+          <span className="font-bold text-[#0B2438]">{endItem}</span>
+          {" "}of{" "}
+          <span className="font-bold text-[#0B2438]">
+            {filteredServices.length}
+          </span>{" "}
+          results
+        </p>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Page size */}
+          <select
+            value={itemsPerPage}
+            onChange={(event) => setItemsPerPage(Number(event.target.value))}
+            aria-label="Items per page"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-[#0B2438] outline-none focus:border-[#2374A8] focus:ring-2 focus:ring-[#2374A8]/10"
+          >
+            <option value={10}>10 / page</option>
+            <option value={25}>25 / page</option>
+            <option value={50}>50 / page</option>
+            <option value={100}>100 / page</option>
+          </select>
+
+          {/* Previous */}
+          <button
+            type="button"
+            onClick={() =>
+              setCurrentPage((page) => Math.max(1, page - 1))
+            }
+            disabled={currentPage === 1}
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-[#0B2438] transition hover:border-[#2374A8] hover:bg-[#EEF5F8] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            ← <span className="hidden sm:inline">Previous</span>
+          </button>
+
+          {/* Page numbers with ellipses */}
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalPages }, (_, index) => index + 1)
+              .filter(
+                (page) =>
+                  page === 1 ||
+                  page === totalPages ||
+                  Math.abs(page - currentPage) <= 1
+              )
+              .reduce((pages, page, index, visiblePages) => {
+                if (
+                  index > 0 &&
+                  page - visiblePages[index - 1] > 1
+                ) {
+                  pages.push(`ellipsis-${page}`);
+                }
+
+                pages.push(page);
+                return pages;
+              }, [])
+              .map((page) =>
+                typeof page === "string" ? (
+                  <span
+                    key={page}
+                    className="px-1 text-sm text-slate-400"
+                  >
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => setCurrentPage(page)}
+                    aria-label={`Go to page ${page}`}
+                    aria-current={currentPage === page ? "page" : undefined}
+                    className={`h-9 min-w-9 rounded-lg px-2 text-sm font-bold transition ${
+                      currentPage === page
+                        ? "bg-[#0B2438] text-white shadow-sm"
+                        : "text-[#43515C] hover:bg-[#EEF5F8] hover:text-[#2374A8]"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
           </div>
 
-          {/* Loading */}
-          {loadingServices ? (
-            <div className="flex min-h-[350px] flex-col items-center justify-center px-6">
-
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-50">
-
-                <svg
-                  className="animate-spin text-teal-600"
-                  width="26"
-                  height="26"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                >
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="9"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    opacity="0.2"
-                  />
-
-                  <path
-                    d="M21 12a9 9 0 0 0-9-9"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                  />
-                </svg>
-
-              </div>
-
-              <p className="mt-4 text-sm font-semibold text-slate-600">
-                Loading funding services...
-              </p>
-
-              <p className="mt-1 text-xs text-slate-400">
-                Please wait a moment
-              </p>
-
-            </div>
-
-          ) : fundingServices.length === 0 ? (
-
-            <div className="flex min-h-[350px] flex-col items-center justify-center px-6 text-center">
-
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-
-                <svg
-                  width="28"
-                  height="28"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect
-                    x="3"
-                    y="3"
-                    width="18"
-                    height="18"
-                    rx="2"
-                  />
-
-                  <path d="M8 8h8" />
-                  <path d="M8 12h8" />
-                  <path d="M8 16h5" />
-                </svg>
-
-              </div>
-
-              <h4 className="mt-5 font-bold text-slate-800">
-                No funding programs yet
-              </h4>
-
-              <p className="mt-1 max-w-sm text-sm text-slate-500">
-                Upload an Excel file or use Add Data Manually above to create your first funding opportunity.
-              </p>
-
-            </div>
-
-          ) : filteredServices.length === 0 ? (
-
-            <div className="flex min-h-[300px] flex-col items-center justify-center px-6 text-center">
-
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-
-                <svg
-                  width="25"
-                  height="25"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle
-                    cx="11"
-                    cy="11"
-                    r="7"
-                  />
-
-                  <path d="m20 20-4-4" />
-                </svg>
-
-              </div>
-
-              <p className="mt-4 font-semibold text-slate-700">
-                No matching programs
-              </p>
-
-              <p className="mt-1 text-sm text-slate-400">
-                Try a different search term.
-              </p>
-
-            </div>
-
-          ) : (
-
-            <div className="overflow-x-auto">
-
-              <table className="w-full min-w-max text-left text-sm">
-
-                <thead>
-
-                  <tr className="border-b border-slate-100 bg-slate-50/80">
-
-                    {/* ID */}
-                    <th className="sticky left-0 z-20 border-r border-slate-200 bg-slate-50 px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                      ID
-                    </th>
-
-                    {/* Funding Service */}
-                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600">
-                      Funding Service Title
-                    </th>
-
-                    {/* Dynamic columns */}
-                    {dynamicColumns.map(
-                      (column) => (
-                        <th
-                          key={column}
-                          className="whitespace-nowrap px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500"
-                        >
-                          {column}
-                        </th>
-                      )
-                    )}
-
-                    {/* Status */}
-                    <th className="whitespace-nowrap px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Status
-                    </th>
-
-                    {/* Created */}
-                    <th className="whitespace-nowrap px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Created
-                    </th>
-
-                    {/* Updated */}
-                    <th className="whitespace-nowrap px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Updated
-                    </th>
-
-                    {/* Actions */}
-                    <th className="sticky right-0 z-20 border-l border-slate-200 bg-slate-50 px-5 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Actions
-                    </th>
-
-                  </tr>
-
-                </thead>
-
-                <tbody className="divide-y divide-slate-200/80">
-
-                  {filteredServices.map(
-                    (service, index) => (
-
-                      <tr
-                        key={service.id}
-                        className={`group transition ${
-                          index % 2 === 0
-                            ? "bg-white hover:bg-slate-100/80"
-                            : "bg-slate-50/70 hover:bg-slate-100"
-                        }`}
-                      >
-
-                        {/* =================================================
-                            ID
-                        ================================================= */}
-
-                        <td
-                          className={`sticky left-0 z-10 border-r border-slate-200 px-5 py-4 ${
-                            index % 2 === 0
-                              ? "bg-white group-hover:bg-slate-100/80"
-                              : "bg-slate-50/70 group-hover:bg-slate-100"
-                          }`}
-                        >
-
-                          <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg bg-slate-100 px-2 text-xs font-bold text-slate-700">
-                            #{service.id}
-                          </span>
-
-                        </td>
-
-                        {/* =================================================
-                            FUNDING SERVICE TITLE
-                        ================================================= */}
-
-                        <td className="px-5 py-4 text-sm font-semibold text-slate-800">
-                          {service.title || "-"}
-                        </td>
-
-                        {/* =================================================
-                            DYNAMIC FIELDS
-                        ================================================= */}
-
-                        {dynamicColumns.map(
-                          (column) => (
-
-                            <td
-                              key={`${service.id}-${column}`}
-                              className="max-w-[320px] whitespace-nowrap px-5 py-4 text-slate-600"
-                              title={formatValue(
-                                service.data?.[column]
-                              )}
-                            >
-
-                              <div className="max-w-[320px] truncate">
-                                {renderValue(
-                                  service.data?.[column]
-                                )}
-                              </div>
-
-                            </td>
-
-                          )
-                        )}
-
-                        {/* =================================================
-                            STATUS
-                        ================================================= */}
-
-                        <td className="whitespace-nowrap px-5 py-4">
-
-                          <span
-                            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold ${
-                              service.isActive
-                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                : "border-slate-200 bg-slate-100 text-slate-600"
-                            }`}
-                          >
-
-                            <span
-                              className={`h-1.5 w-1.5 rounded-full ${
-                                service.isActive
-                                  ? "bg-emerald-500"
-                                  : "bg-slate-400"
-                              }`}
-                            />
-
-                            {service.isActive
-                              ? "Active"
-                              : "Inactive"}
-
-                          </span>
-
-                        </td>
-
-                        {/* =================================================
-                            CREATED
-                        ================================================= */}
-
-                        <td className="whitespace-nowrap px-5 py-4 text-xs text-slate-500">
-
-                          {service.createdAt
-                            ? new Date(
-                                service.createdAt
-                              ).toLocaleString()
-                            : "-"}
-
-                        </td>
-
-                        {/* =================================================
-                            UPDATED
-                        ================================================= */}
-
-                        <td className="whitespace-nowrap px-5 py-4 text-xs text-slate-500">
-
-                          {service.updatedAt
-                            ? new Date(
-                                service.updatedAt
-                              ).toLocaleString()
-                            : "-"}
-
-                        </td>
-
-                        {/* =================================================
-                            ACTIONS
-                        ================================================= */}
-
-                       {/* =================================================
-    ACTIONS
-================================================= */}
-
-{/* =================================================
-    ACTIONS
-================================================= */}
-
-<td
-  className={`sticky right-0 z-10 border-l border-slate-200 px-5 py-4 ${
-    index % 2 === 0
-      ? "bg-white group-hover:bg-slate-100/80"
-      : "bg-slate-50/70 group-hover:bg-slate-100"
-  }`}
->
-  <div className="flex items-center gap-2">
-    
-    {/* VIEW */}
-    <button
-      type="button"
-      onClick={() => handleView(service)}
-      className="
-        inline-flex
-        items-center
-        gap-1.5
-        rounded-lg
-        border
-        border-teal-200
-        bg-teal-50
-        px-3.5
-        py-2
-        text-xs
-        font-bold
-        text-teal-700
-        shadow-sm
-        transition
-        hover:border-teal-300
-        hover:bg-teal-600
-        hover:text-white
-      "
-    >
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
-        <circle cx="12" cy="12" r="3" />
-      </svg>
-
-      View
-    </button>
-
-    {/* EDIT */}
-    <button
-      type="button"
-      onClick={() => handleEdit(service)}
-      className="
-        inline-flex
-        items-center
-        gap-1.5
-        rounded-lg
-        bg-slate-900
-        px-3.5
-        py-2
-        text-xs
-        font-bold
-        text-white
-        shadow-sm
-        transition
-        hover:bg-teal-600
-      "
-    >
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M12 20h9" />
-        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
-      </svg>
-
-      Edit
-    </button>
-
-  </div>
-</td>
-
-                      </tr>
-
-                    )
-                  )}
-
-                </tbody>
-
-              </table>
-
-            </div>
-
-          )}
-
+          {/* Next */}
+          <button
+            type="button"
+            onClick={() =>
+              setCurrentPage((page) => Math.min(totalPages, page + 1))
+            }
+            disabled={currentPage >= totalPages}
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-[#0B2438] transition hover:border-[#2374A8] hover:bg-[#EEF5F8] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <span className="hidden sm:inline">Next</span> →
+          </button>
         </div>
+      </div>
+    </>
+  )}
+</div>
+
 
      
 
@@ -2152,7 +2090,7 @@ const handleToggleStatus = async () => {
 
      <div className="mx-auto max-w-[1800px] px-5 py-4 text-center sm:px-6 lg:px-10 xl:px-12">
   <div className="pb-3 pt-3 text-xs text-slate-500">
-    © {new Date().getFullYear()} IBS Funding Program. All rights reserved.
+    © Copyright 2026 Innovative Business Solutions | All Rights Reserved
   </div>
 </div>
 
