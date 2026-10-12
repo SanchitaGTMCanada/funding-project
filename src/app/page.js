@@ -116,6 +116,8 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] =
     useState("All");
 
+    const [isHuman, setIsHuman] = useState(false);
+
   /* =======================================================
      PAGINATION
      ======================================================= */
@@ -667,6 +669,7 @@ export default function Home() {
 
     setApplicationMessage("");
     setApplicationError("");
+    setIsHuman(false);
 
     setFormData({
       name: "",
@@ -694,6 +697,7 @@ export default function Home() {
 
     setApplicationMessage("");
     setApplicationError("");
+    setIsHuman(false);
 
     document.body.style.overflow =
       "";
@@ -725,6 +729,13 @@ export default function Home() {
     event
   ) => {
     event.preventDefault();
+
+    if (!isHuman) {
+  setApplicationError(
+    "Please confirm that you are human."
+  );
+  return;
+}
 
     if (!selectedService) {
       return;
@@ -2141,308 +2152,288 @@ export default function Home() {
           APPLICATION MODAL
       ===================================================== */}
 
-      {selectedService &&
-        showApplication && (
+{/* =====================================================
+    APPLICATION MODAL
+===================================================== */}
 
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-[#020b15]/80 p-4 backdrop-blur-md"
-          onClick={closeModal}
-        >
-
-          <div
-            className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
-          >
-
-            <div className="bg-[#071a2d] px-6 py-6 sm:px-8">
-
-              <div className="flex items-start justify-between gap-5">
-
-                <div>
-
-                  <div className="mb-3 inline-flex rounded-full bg-teal-400/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-teal-300">
-                    Application
-                  </div>
-
-                  <h2 className="text-2xl font-black text-white">
-                    Apply for Funding
-                  </h2>
-
-                  <p className="mt-1 text-sm text-slate-300">
-                    {getProgramName(
-                      selectedService
-                    )}
-                  </p>
-
-                </div>
-
-                <button
-                  type="button"
-                  onClick={
-                    closeModal
-                  }
-                  disabled={
-                    submitting
-                  }
-                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-xl text-white transition hover:bg-white/20 disabled:opacity-50"
-                >
-                  ×
-                </button>
-
-              </div>
-
+{selectedService && showApplication && (
+  <div
+    className="fixed inset-0 z-[100] flex items-center justify-center bg-[#020b15]/80 p-4 backdrop-blur-md"
+    onClick={closeModal}
+  >
+    <div
+      className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl"
+      onClick={(event) => event.stopPropagation()}
+    >
+      {/* HEADER */}
+      <div className="bg-[#071a2d] px-6 py-6 sm:px-8">
+        <div className="flex items-start justify-between gap-5">
+          <div>
+            <div className="mb-3 inline-flex rounded-full bg-teal-400/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-teal-300">
+              Application
             </div>
 
-            <form
-              onSubmit={
-                handleSubmit
-              }
-              className="flex-1 overflow-y-auto p-5 sm:p-8"
-            >
+            <h2 className="text-2xl font-black text-white">
+              Apply for Funding
+            </h2>
 
-              <div className="mb-6 rounded-2xl border border-teal-100 bg-teal-50 p-4">
-
-                <p className="text-[10px] font-black uppercase tracking-wider text-teal-600">
-                  Applying For
-                </p>
-
-                <p className="mt-1 text-sm font-black text-slate-900">
-                  {getProgramName(
-                    selectedService
-                  )}
-                </p>
-
-                <p className="mt-1 text-xs text-slate-500">
-                  Program ID:{" "}
-                  {getProgramId(
-                    selectedService
-                  )}
-                </p>
-
-              </div>
-
-              {applicationMessage && (
-
-                <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
-                  {applicationMessage}
-                </div>
-
-              )}
-
-              {applicationError && (
-
-                <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-                  {applicationError}
-                </div>
-
-              )}
-
-              <div className="grid gap-5 sm:grid-cols-2">
-
-                {/* NAME */}
-
-                <div>
-
-                  <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                    Full Name *
-                  </label>
-
-                  <input
-                    type="text"
-                    name="name"
-                    value={
-                      formData.name
-                    }
-                    onChange={
-                      handleInputChange
-                    }
-                    required
-                    placeholder="Enter your full name"
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-                  />
-
-                </div>
-
-                {/* PHONE */}
-
-                <div>
-
-                  <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                    Phone Number *
-                  </label>
-
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={
-                      formData.phone
-                    }
-                    onChange={
-                      handleInputChange
-                    }
-                    required
-                    placeholder="Enter phone number"
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-                  />
-
-                </div>
-
-                {/* EMAIL */}
-
-                <div>
-
-                  <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                    Email Address *
-                  </label>
-
-                  <input
-                    type="email"
-                    name="email"
-                    value={
-                      formData.email
-                    }
-                    onChange={
-                      handleInputChange
-                    }
-                    required
-                    placeholder="Enter email address"
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-                  />
-
-                </div>
-
-                {/* COMPANY */}
-
-                <div>
-
-                  <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                    Company / Organization
-                  </label>
-
-                  <input
-                    type="text"
-                    name="company"
-                    value={
-                      formData.company
-                    }
-                    onChange={
-                      handleInputChange
-                    }
-                    placeholder="Company or organization"
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-                  />
-
-                </div>
-
-                {/* CITY */}
-
-                <div>
-
-                  <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                    City
-                  </label>
-
-                  <input
-                    type="text"
-                    name="city"
-                    value={
-                      formData.city
-                    }
-                    onChange={
-                      handleInputChange
-                    }
-                    placeholder="City"
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-                  />
-
-                </div>
-
-                {/* ADDRESS */}
-
-                <div>
-
-                  <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                    Address
-                  </label>
-
-                  <input
-                    type="text"
-                    name="address"
-                    value={
-                      formData.address
-                    }
-                    onChange={
-                      handleInputChange
-                    }
-                    placeholder="Address"
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-                  />
-
-                </div>
-
-                {/* MESSAGE */}
-
-                <div className="sm:col-span-2">
-
-                  <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                    Message / Reason for Applying
-                  </label>
-
-                  <textarea
-                    name="message"
-                    value={
-                      formData.message
-                    }
-                    onChange={
-                      handleInputChange
-                    }
-                    rows={5}
-                    placeholder="Tell us about your funding requirement..."
-                    className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-                  />
-
-                </div>
-
-              </div>
-
-              <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-
-                <button
-                  type="button"
-                  onClick={
-                    closeModal
-                  }
-                  disabled={
-                    submitting
-                  }
-                  className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={
-                    submitting
-                  }
-                  className="rounded-xl bg-[#071a2d] px-7 py-3 text-sm font-black text-white shadow-lg transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {submitting
-                    ? "Submitting..."
-                    : "Submit Application →"}
-                </button>
-
-              </div>
-
-            </form>
-
+            <p className="mt-1 text-sm text-slate-300">
+              {getProgramName(selectedService)}
+            </p>
           </div>
 
+          <button
+            type="button"
+            onClick={closeModal}
+            disabled={submitting}
+            aria-label="Close application form"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-xl text-white transition hover:bg-white/20 disabled:opacity-50"
+          >
+            ×
+          </button>
+        </div>
+      </div>
+
+      {/* APPLICATION FORM */}
+      <form
+        onSubmit={handleSubmit}
+        className="flex-1 overflow-y-auto p-5 sm:p-8"
+      >
+        {/* SELECTED PROGRAM */}
+        <div className="mb-6 rounded-2xl border border-teal-100 bg-teal-50 p-4">
+          <p className="text-[10px] font-black uppercase tracking-wider text-teal-600">
+            Applying For
+          </p>
+
+          <p className="mt-1 text-sm font-black text-slate-900">
+            {getProgramName(selectedService)}
+          </p>
+
+          <p className="mt-1 text-xs text-slate-500">
+            Program ID: {getProgramId(selectedService)}
+          </p>
         </div>
 
-      )}
+        {/* SUCCESS MESSAGE */}
+        {applicationMessage && (
+          <div
+            role="status"
+            className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700"
+          >
+            {applicationMessage}
+          </div>
+        )}
+
+        {/* ERROR MESSAGE */}
+        {applicationError && (
+          <div
+            role="alert"
+            className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+          >
+            {applicationError}
+          </div>
+        )}
+
+        {/* FORM FIELDS */}
+        <div className="grid gap-5 sm:grid-cols-2">
+          {/* NAME */}
+          <div>
+            <label
+              htmlFor="application-name"
+              className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
+            >
+              Full Name *
+            </label>
+
+            <input
+              id="application-name"
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
+              placeholder="Enter your full name"
+              autoComplete="name"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+            />
+          </div>
+
+          {/* PHONE */}
+          <div>
+            <label
+              htmlFor="application-phone"
+              className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
+            >
+              Phone Number *
+            </label>
+
+            <input
+              id="application-phone"
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleInputChange}
+              required
+              placeholder="Enter phone number"
+              autoComplete="tel"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+            />
+          </div>
+
+          {/* EMAIL */}
+          <div>
+            <label
+              htmlFor="application-email"
+              className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
+            >
+              Email Address *
+            </label>
+
+            <input
+              id="application-email"
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
+              placeholder="Enter email address"
+              autoComplete="email"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+            />
+          </div>
+
+          {/* COMPANY */}
+          <div>
+            <label
+              htmlFor="application-company"
+              className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
+            >
+              Company / Organization
+            </label>
+
+            <input
+              id="application-company"
+              type="text"
+              name="company"
+              value={formData.company}
+              onChange={handleInputChange}
+              placeholder="Company or organization"
+              autoComplete="organization"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+            />
+          </div>
+
+          {/* CITY */}
+          <div>
+            <label
+              htmlFor="application-city"
+              className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
+            >
+              City
+            </label>
+
+            <input
+              id="application-city"
+              type="text"
+              name="city"
+              value={formData.city}
+              onChange={handleInputChange}
+              placeholder="City"
+              autoComplete="address-level2"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+            />
+          </div>
+
+          {/* ADDRESS */}
+          <div>
+            <label
+              htmlFor="application-address"
+              className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
+            >
+              Address
+            </label>
+
+            <input
+              id="application-address"
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
+              placeholder="Address"
+              autoComplete="street-address"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+            />
+          </div>
+
+          {/* MESSAGE */}
+          <div className="sm:col-span-2">
+            <label
+              htmlFor="application-message"
+              className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
+            >
+              Message / Reason for Applying
+            </label>
+
+            <textarea
+              id="application-message"
+              name="message"
+              value={formData.message}
+              onChange={handleInputChange}
+              rows={5}
+              placeholder="Tell us about your funding requirement..."
+              className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+            />
+          </div>
+        </div>
+
+        {/* I'M HUMAN CHECKBOX */}
+        <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <label className="flex cursor-pointer items-center gap-3">
+            <input
+              type="checkbox"
+              checked={isHuman}
+              onChange={(event) => {
+                setIsHuman(event.target.checked);
+
+                if (event.target.checked) {
+                  setApplicationError("");
+                }
+              }}
+              className="h-5 w-5 shrink-0 cursor-pointer accent-teal-600"
+            />
+
+            <span className="text-sm font-semibold text-slate-700">
+              I'm human
+            </span>
+          </label>
+        </div>
+
+        {/* ACTION BUTTONS */}
+        <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={closeModal}
+            disabled={submitting}
+            className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            disabled={submitting || !isHuman}
+            className="rounded-xl bg-[#071a2d] px-7 py-3 text-sm font-black text-white shadow-lg transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {submitting
+              ? "Submitting..."
+              : "Submit Application →"}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
 
     </main>
   );
