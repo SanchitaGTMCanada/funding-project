@@ -1,8 +1,33 @@
+
 import { prisma } from "@/lib/prisma";
 import { Resend } from "resend";
 import { requireAuth } from "@/lib/auth/requireAuth";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+// =====================================================
+// HTML ESCAPING
+// Prevent applicant-provided text from injecting HTML
+// into notification emails.
+// =====================================================
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (character) => {
+    const entities = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
+
+    return entities[character];
+  });
+}
+
+// =====================================================
+// POST - Submit funding application
+// =====================================================
 
 export async function POST(request) {
   try {
@@ -37,12 +62,18 @@ export async function POST(request) {
     // Validate required applicant fields
     // =====================================================
 
-    if (!name || !phone || !email) {
+    if (
+      typeof name !== "string" ||
+      typeof phone !== "string" ||
+      typeof email !== "string" ||
+      !name.trim() ||
+      !phone.trim() ||
+      !email.trim()
+    ) {
       return Response.json(
         {
           success: false,
-          message:
-            "Name, phone number and email are required",
+          message: "Name, phone number and email are required",
         },
         { status: 400 }
       );
@@ -52,8 +83,7 @@ export async function POST(request) {
     // Validate funding service ID
     // =====================================================
 
-    const parsedFundingServiceId =
-      Number(fundingServiceId);
+    const parsedFundingServiceId = Number(fundingServiceId);
 
     if (
       !Number.isInteger(parsedFundingServiceId) ||
@@ -72,12 +102,11 @@ export async function POST(request) {
     // Check that the funding service exists
     // =====================================================
 
-    const fundingService =
-      await prisma.fundingService.findUnique({
-        where: {
-          id: parsedFundingServiceId,
-        },
-      });
+    const fundingService = await prisma.fundingService.findUnique({
+      where: {
+        id: parsedFundingServiceId,
+      },
+    });
 
     if (!fundingService) {
       return Response.json(
@@ -90,7 +119,6 @@ export async function POST(request) {
     }
 
     // =====================================================
-    // IMPORTANT:
     // Prevent applications for inactive programs
     // =====================================================
 
@@ -109,33 +137,37 @@ export async function POST(request) {
     // Save application
     // =====================================================
 
-    const application =
-      await prisma.application.create({
-        data: {
-          fundingServiceId:
-            parsedFundingServiceId,
+    const application = await prisma.application.create({
+      data: {
+        fundingServiceId: parsedFundingServiceId,
 
-          name: name.trim(),
+        name: name.trim(),
 
-          phone: phone.trim(),
+        phone: phone.trim(),
 
-          email: email
-            .trim()
-            .toLowerCase(),
+        email: email.trim().toLowerCase(),
 
-          company:
-            company?.trim() || null,
+        company:
+          typeof company === "string"
+            ? company.trim() || null
+            : null,
 
-          address:
-            address?.trim() || null,
+        address:
+          typeof address === "string"
+            ? address.trim() || null
+            : null,
 
-          city:
-            city?.trim() || null,
+        city:
+          typeof city === "string"
+            ? city.trim() || null
+            : null,
 
-          message:
-            message?.trim() || null,
-        },
-      });
+        message:
+          typeof message === "string"
+            ? message.trim() || null
+            : null,
+      },
+    });
 
     // =====================================================
     // Get configured email recipients
@@ -144,142 +176,184 @@ export async function POST(request) {
     const recipients = [
       process.env.APPLICATION_EMAIL_1,
       process.env.APPLICATION_EMAIL_2,
-    ].filter(Boolean);
+      process.env.APPLICATION_EMAIL_3,
+    ]
+      .map((recipient) => recipient?.trim())
+      .filter(Boolean);
+
+    // =====================================================
+    // Prepare email-safe values
+    // =====================================================
+
+    const safeFundingTitle = escapeHtml(fundingService.title);
+    const safeName = escapeHtml(name.trim());
+    const safePhone = escapeHtml(phone.trim());
+    const safeEmail = escapeHtml(email.trim().toLowerCase());
+    const safeCompany = escapeHtml(company || "Not provided");
+    const safeCity = escapeHtml(city || "Not provided");
+    const safeAddress = escapeHtml(address || "Not provided");
+    const safeMessage = escapeHtml(message || "Not provided");
+    const safeApplicationId = escapeHtml(application.id);
+    const safeStatus = escapeHtml(application.status);
+    const safeCreatedAt = escapeHtml(
+      application.createdAt.toISOString()
+    );
 
     // =====================================================
     // Send application notification email
     // =====================================================
 
-    if (recipients.length > 0) {
-      await resend.emails.send({
-        from: "Funding Management <onboarding@resend.dev>",
+    let emailNotificationSent = false;
 
-        to: recipients,
+    if (recipients.length > 0 && process.env.RESEND_API_KEY) {
+      try {
+        const { error } = await resend.emails.send({
+          from: "Funding Management <onboarding@resend.dev>",
 
-        subject: `New Funding Application - ${fundingService.title}`,
+          to: recipients,
 
-        html: `
-          <div
-            style="
-              font-family: Arial, sans-serif;
-              line-height: 1.6;
-              color: #222;
-            "
-          >
-            <h2>New Funding Application</h2>
+          subject: `New Funding Application - ${fundingService.title}`,
 
-            <p>
-              A new customer has submitted a funding application.
-            </p>
+          html: `
+            <div
+              style="
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                color: #222;
+                max-width: 680px;
+                margin: 0 auto;
+              "
+            >
+              <h2>New Funding Application</h2>
 
-            <hr />
+              <p>
+                A new customer has submitted a funding application.
+              </p>
 
-            <h3>Funding Details</h3>
+              <hr />
 
-            <p>
-              <strong>Funding Service:</strong>
-              ${fundingService.title}
-            </p>
+              <h3>Funding Details</h3>
 
-            <h3>Applicant Details</h3>
+              <p>
+                <strong>Funding Service:</strong>
+                ${safeFundingTitle}
+              </p>
 
-            <p>
-              <strong>Name:</strong>
-              ${name}
-            </p>
+              <h3>Applicant Details</h3>
 
-            <p>
-              <strong>Phone:</strong>
-              ${phone}
-            </p>
+              <p>
+                <strong>Name:</strong>
+                ${safeName}
+              </p>
 
-            <p>
-              <strong>Email:</strong>
-              ${email}
-            </p>
+              <p>
+                <strong>Phone:</strong>
+                ${safePhone}
+              </p>
 
-            <p>
-              <strong>Company:</strong>
-              ${company || "Not provided"}
-            </p>
+              <p>
+                <strong>Email:</strong>
+                ${safeEmail}
+              </p>
 
-            <p>
-              <strong>City:</strong>
-              ${city || "Not provided"}
-            </p>
+              <p>
+                <strong>Company:</strong>
+                ${safeCompany}
+              </p>
 
-            <p>
-              <strong>Address:</strong>
-              ${address || "Not provided"}
-            </p>
+              <p>
+                <strong>City:</strong>
+                ${safeCity}
+              </p>
 
-            <p>
-              <strong>Message:</strong>
-              ${message || "Not provided"}
-            </p>
+              <p>
+                <strong>Address:</strong>
+                ${safeAddress}
+              </p>
 
-            <hr />
+              <p>
+                <strong>Message:</strong>
+                ${safeMessage}
+              </p>
 
-            <p>
-              <strong>Application ID:</strong>
-              ${application.id}
-            </p>
+              <hr />
 
-            <p>
-              <strong>Status:</strong>
-              ${application.status}
-            </p>
+              <p>
+                <strong>Application ID:</strong>
+                ${safeApplicationId}
+              </p>
 
-            <p>
-              <strong>Submitted:</strong>
-              ${application.createdAt}
-            </p>
-          </div>
-        `,
-      });
+              <p>
+                <strong>Status:</strong>
+                ${safeStatus}
+              </p>
+
+              <p>
+                <strong>Submitted:</strong>
+                ${safeCreatedAt}
+              </p>
+            </div>
+          `,
+        });
+
+        if (error) {
+          console.error(
+            "Application notification email failed:",
+            error
+          );
+        } else {
+          emailNotificationSent = true;
+        }
+      } catch (emailError) {
+        console.error(
+          "Application notification email failed:",
+          emailError
+        );
+      }
+    } else {
+      console.warn(
+        "Application saved, but email was not sent: " +
+          "no recipients are configured or RESEND_API_KEY is missing."
+      );
     }
 
     // =====================================================
     // Success response
+    // The application is saved even if email delivery fails.
     // =====================================================
 
     return Response.json(
       {
         success: true,
-        message:
-          "Application submitted successfully",
+        message: emailNotificationSent
+          ? "Application submitted successfully."
+          : "Application submitted successfully, but email notification could not be confirmed.",
+
+        emailNotificationSent,
 
         application: {
           id: application.id,
           status: application.status,
-          createdAt:
-            application.createdAt,
+          createdAt: application.createdAt,
         },
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error(
-      "Application submission error:",
-      error
-    );
+    console.error("Application submission error:", error);
 
     return Response.json(
       {
         success: false,
-        message:
-          "Application was saved, but email notification could not be completed.",
-        error: error.message,
+        message: "Failed to submit the application.",
       },
       { status: 500 }
     );
   }
 }
 
-
 // =========================================================
 // GET - Fetch applications
-// =========================================================
 // Protected because applications contain customer information.
 // =========================================================
 
@@ -304,16 +378,15 @@ export async function GET() {
       );
     }
 
-    const applications =
-      await prisma.application.findMany({
-        include: {
-          fundingService: true,
-        },
+    const applications = await prisma.application.findMany({
+      include: {
+        fundingService: true,
+      },
 
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
     console.log(
       `Applications viewed by ${user.email} (${user.role})`
@@ -324,16 +397,12 @@ export async function GET() {
       applications,
     });
   } catch (error) {
-    console.error(
-      "Fetch applications error:",
-      error
-    );
+    console.error("Fetch applications error:", error);
 
     return Response.json(
       {
         success: false,
-        message:
-          "Failed to fetch applications",
+        message: "Failed to fetch applications",
       },
       { status: 500 }
     );
