@@ -116,19 +116,23 @@ export default function LoginPage() {
 
           <div className="mb-8 flex items-center gap-4">
 
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-300 to-cyan-500 text-2xl font-black text-[#061727] shadow-xl shadow-teal-900/30">
-              $
-            </div>
+           <div className="flex h-18 w-18 shrink-0 items-center justify-center overflow-hidden rounded-2xl shadow-xl shadow-teal-900/30">
+  <img
+    src="/logo.jpg"
+    alt="IBS Funding Program Logo"
+    className="h-full w-full object-cover"
+  />
+</div>
 
             <div>
 
-              <h1 className="text-xl font-black tracking-tight text-white">
-                Funding Management
+              <h1 className="text-3xl font-black tracking-tight text-white">
+                IBS Funding Program
               </h1>
 
-              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-teal-300">
+              {/* <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-teal-300">
                 Funding Opportunities Portal
-              </p>
+              </p> */}
 
             </div>
 
@@ -469,19 +473,29 @@ export default function LoginPage() {
 
               </form>
 
-              {/* Back link */}
+           
 
-              <div className="mt-7 border-t border-slate-100 pt-6 text-center">
 
-                <a
-                  href="/"
-                  className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 transition hover:text-teal-600"
-                >
-                  <span>←</span>
-                  Back to Funding Opportunities
-                </a>
+{/* Back link */}
+<div className=" border-t border-slate-200/70 pt-6">
+  <a
+    href="/"
+    className="group relative flex h-13 w-full items-center justify-center gap-3 overflow-hidden rounded-xl bg-[#079fa2] px-5 text-sm font-black text-white shadow-xl shadow-slate-900/10 transition duration-300 hover:bg-teal-600"
+  >
+    <span className="relative z-10 flex items-center gap-2">
+      <span className="transition-transform duration-300 group-hover:-translate-x-1">
+        ←
+      </span>
 
-              </div>
+      Back to Funding Opportunities
+    </span>
+
+    {!loading && (
+      <span className="absolute inset-y-0 right-0 w-20 translate-x-full bg-teal-400/20 transition-transform duration-300 group-hover:translate-x-0" />
+    )}
+  </a>
+</div>
+
 
             </div>
 
