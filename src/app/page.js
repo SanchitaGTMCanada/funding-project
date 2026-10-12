@@ -2403,7 +2403,7 @@ export default function Home() {
             />
 
             <span className="text-sm font-semibold text-slate-700">
-              I'm human
+              I'm not a robot
             </span>
           </label>
         </div>
