@@ -996,22 +996,29 @@ const handleToggleStatus = async () => {
   <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 px-4 py-2 sm:px-6 sm:py-2 lg:px-8">
 
     {/* Brand */}
-    <div className="flex min-w-0 items-center gap-3">
-      <div className="h-15 w-15 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white shadow-lg shadow-teal-950/20 sm:h-18 sm:w-18">
-        <img
-          src="/logo.jpg"
-          alt="IBS Funding Program Logo"
-          className="h-full w-full object-cover"
-        />
-      </div>
+  
+<a
+  href="https://ibsgroupcanada.com"
+  target="_blank"
+  rel="noopener noreferrer"
+  aria-label="Visit IBS Group Canada website"
+  className="flex min-w-0 items-center gap-3 transition-opacity hover:opacity-85"
+>
+  <div className="h-15 w-15 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white shadow-lg shadow-teal-950/20 sm:h-18 sm:w-18">
+    <img
+      src="/logo.jpg"
+      alt="IBS Funding Program Logo"
+      className="h-full w-full object-cover"
+    />
+  </div>
 
-      <div className="min-w-0">
-        <h1 className="truncate text-base font-black tracking-tight text-white sm:text-xl">
-          IBS Funding Program
-        </h1>
+  <div className="min-w-0">
+    <h1 className="truncate text-base font-black tracking-tight text-white sm:text-xl">
+      IBS Funding Program
+    </h1>
+  </div>
+</a>
 
-      </div>
-    </div>
 
     {/* User area */}
     <div className="flex shrink-0 items-center gap-2 sm:gap-3">
@@ -2134,7 +2141,22 @@ const handleToggleStatus = async () => {
 
         </div>
 
+     
+
+
       </section>
+
+
+ 
+      <footer className="bg-[#071a2d]">
+
+     <div className="mx-auto max-w-[1800px] px-5 py-4 text-center sm:px-6 lg:px-10 xl:px-12">
+  <div className="pb-3 pt-3 text-xs text-slate-500">
+    © {new Date().getFullYear()} IBS Funding Program. All rights reserved.
+  </div>
+</div>
+
+      </footer>
 
       {/* =====================================================
           ADD DATA MODAL
@@ -4272,6 +4294,8 @@ const handleToggleStatus = async () => {
     </div>
   </div>
 )}
+
+
 
       </main>
   );

@@ -70,7 +70,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen overflow-hidden bg-[#061727]">
+    <main className="relative flex min-h-screen overflow-hidden bg-[#061727] pb-16">
 
       {/* =====================================================
           BACKGROUND
@@ -114,29 +114,24 @@ export default function LoginPage() {
 
           {/* Logo */}
 
-          <div className="mb-8 flex items-center gap-4">
+             <a
+      href="https://ibsgroupcanada.com/"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex min-w-0 items-center gap-3"
+    >
+      <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl sm:h-14 sm:w-14">
+        <img
+          src="/logo.jpg"
+          alt="Funding Management Logo"
+          className="h-full w-full object-cover"
+        />
+      </div>
 
-           <div className="flex h-18 w-18 shrink-0 items-center justify-center overflow-hidden rounded-2xl shadow-xl shadow-teal-900/30">
-  <img
-    src="/logo.jpg"
-    alt="IBS Funding Program Logo"
-    className="h-full w-full object-cover"
-  />
-</div>
-
-            <div>
-
-              <h1 className="text-3xl font-black tracking-tight text-white">
-                IBS Funding Program
-              </h1>
-
-              {/* <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-teal-300">
-                Funding Opportunities Portal
-              </p> */}
-
-            </div>
-
-          </div>
+      <span className="text-sm font-black leading-tight text-white sm:text-base md:text-lg">
+        IBS Funding Program Portal
+      </span>
+    </a>
 
           {/* Heading */}
 
@@ -193,21 +188,29 @@ export default function LoginPage() {
 
           {/* Mobile Logo */}
 
-          <div className="mb-7 text-center lg:hidden">
+       
+{/* Mobile Branding */}
+<div className="mb-7 text-center lg:hidden">
+  {/* IBS Logo */}
+  <div className="mx-auto h-16 w-16 overflow-hidden rounded-2xl border border-white/15 bg-white shadow-xl shadow-teal-950/30">
+    <img
+      src="/logo.jpg"
+      alt="IBS Funding Program Logo"
+      className="h-full w-full object-contain"
+    />
+  </div>
 
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-300 to-cyan-500 text-2xl font-black text-[#061727] shadow-xl">
-              $
-            </div>
+  {/* Brand Name */}
+  <h1 className="mt-4 text-xl font-black tracking-tight text-white sm:text-2xl">
+    IBS Funding Program Portal
+  </h1>
 
-            <h1 className="mt-4 text-xl font-black text-white">
-              Funding Management
-            </h1>
+  {/* Subtitle */}
+  <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-teal-300">
+    Funding Opportunities Portal
+  </p>
+</div>
 
-            <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-teal-300">
-              Funding Opportunities Portal
-            </p>
-
-          </div>
 
           {/* Login Card */}
 
@@ -523,7 +526,21 @@ export default function LoginPage() {
 
         </div>
 
+        
+
       </div>
+
+  
+      <footer className="absolute bottom-0 left-0 right-0 z-20 border-t border-white/10 bg-[#061727]/90 backdrop-blur-xl">
+
+     <div className="mx-auto max-w-[1800px] px-5 py-4 text-center sm:px-6 lg:px-10 xl:px-12">
+  <div className="pb-3 pt-3 text-xs text-slate-500">
+    © {new Date().getFullYear()} IBS Funding Program. All rights reserved.
+  </div>
+</div>
+
+      </footer>
+
 
     </main>
   );

@@ -838,7 +838,7 @@ export default function Home() {
       </div>
 
       <span className="text-sm font-black leading-tight text-white sm:text-base md:text-lg">
-        IBS Funding Program
+        IBS Funding Program Portal
       </span>
     </a>
 
@@ -847,8 +847,8 @@ export default function Home() {
       href="/login"
       className="shrink-0 rounded-xl border border-teal-400/30 bg-white/10 px-3 py-2.5 text-xs font-bold text-white transition hover:bg-white/20 sm:px-4 sm:text-sm"
     >
-      <span className="sm:hidden">Login</span>
-      <span className="hidden sm:inline">Login</span>
+      <span className="sm:hidden">Employee Login</span>
+      <span className="hidden sm:inline">Employee Login</span>
     </a>
 
   </div>
