@@ -183,9 +183,23 @@ export default function Home() {
           );
         }
 
-        setFundingServices(
-          result.fundingServices || []
-        );
+       
+const customerVisibleServices = (
+  result.fundingServices || []
+).filter((service) => {
+  const status = String(getValue(service, [
+    "Status",
+    "status",
+    "Program Status",
+  ]) || "Open")
+    .trim()
+    .toLowerCase();
+
+  return status !== "closed";
+});
+
+setFundingServices(customerVisibleServices);
+
       } catch (error) {
         console.error(
           "Funding services error:",
