@@ -158,6 +158,8 @@ export default function Home() {
   const [applicationError, setApplicationError] =
     useState("");
 
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+
   /* =========================================================
      FETCH FUNDING SERVICES
      ========================================================= */
@@ -684,6 +686,7 @@ setFundingServices(customerVisibleServices);
     setApplicationMessage("");
     setApplicationError("");
     setIsHuman(false);
+    setShowSuccessPopup(false);
 
     setFormData({
       name: "",
@@ -739,86 +742,69 @@ setFundingServices(customerVisibleServices);
      SUBMIT APPLICATION
      ========================================================= */
 
-  const handleSubmit = async (
-    event
-  ) => {
-    event.preventDefault();
+const handleSubmit = async (event) => {
+  event.preventDefault();
 
-    if (!isHuman) {
-  setApplicationError(
-    "Please confirm that you are human."
-  );
-  return;
-}
+  if (!isHuman) {
+    setApplicationError("Please confirm that you are human.");
+    return;
+  }
 
-    if (!selectedService) {
+  if (!selectedService) {
+    return;
+  }
+
+  setSubmitting(true);
+  setApplicationMessage("");
+  setApplicationError("");
+
+  try {
+    const response = await fetch("/api/applications", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        fundingServiceId: selectedService.id,
+        ...formData,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      setApplicationError(
+        result.message || "Failed to submit application."
+      );
       return;
     }
 
-    setSubmitting(true);
+    // Show the success popup after successful submission
     setApplicationMessage("");
     setApplicationError("");
+    setShowSuccessPopup(true);
 
-    try {
-      const response = await fetch(
-        "/api/applications",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            fundingServiceId:
-              selectedService.id,
-            ...formData,
-          }),
-        }
-      );
+    // Reset the form fields
+    setFormData({
+      name: "",
+      phone: "",
+      email: "",
+      company: "",
+      address: "",
+      city: "",
+      message: "",
+    });
 
-      const result =
-        await response.json();
+  } catch (error) {
+    console.error("Application error:", error);
 
-      if (!response.ok) {
-        setApplicationError(
-          result.message ||
-            "Failed to submit application."
-        );
-
-        return;
-      }
-
-      setApplicationMessage(
-        "Application submitted successfully!"
-      );
-
-      setFormData({
-        name: "",
-        phone: "",
-        email: "",
-        company: "",
-        address: "",
-        city: "",
-        message: "",
-      });
-
-      setTimeout(() => {
-        closeModal();
-      }, 1500);
-    } catch (error) {
-      console.error(
-        "Application error:",
-        error
-      );
-
-      setApplicationError(
-        "Something went wrong. Please try again."
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
+    setApplicationError(
+      "Something went wrong. Please try again."
+    );
+  } finally {
+    setSubmitting(false);
+  }
+};
   /* =========================================================
      SCROLL
      ========================================================= */
@@ -2163,16 +2149,6 @@ setFundingServices(customerVisibleServices);
           </p>
         </div>
 
-        {/* SUCCESS MESSAGE */}
-        {applicationMessage && (
-          <div
-            role="status"
-            className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700"
-          >
-            {applicationMessage}
-          </div>
-        )}
-
         {/* ERROR MESSAGE */}
         {applicationError && (
           <div
@@ -2383,6 +2359,65 @@ setFundingServices(customerVisibleServices);
   </div>
 )}
 
+
+      {/* SUCCESS POPUP */}
+      {showSuccessPopup && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#020b15]/75 p-4 backdrop-blur-sm">
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="success-popup-title"
+            aria-describedby="success-popup-description"
+            className="w-full max-w-md overflow-hidden rounded-3xl border border-[#D6E3ED] bg-white shadow-2xl"
+          >
+            <div className="h-1.5 w-full bg-gradient-to-r from-[#0B2438] via-[#2374A8] to-[#7DD3FC]" />
+
+            <div className="px-6 py-9 text-center sm:px-9">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-8 w-8 text-emerald-600"
+                  aria-hidden="true"
+                >
+                  <path d="m5 12 4 4L19 6" />
+                </svg>
+              </div>
+
+              <h2
+                id="success-popup-title"
+                className="mt-6 text-2xl font-extrabold tracking-tight text-[#0B2438] sm:text-3xl"
+              >
+                Thank you for reaching out!
+              </h2>
+
+              <p
+                id="success-popup-description"
+                className="mx-auto mt-4 max-w-sm text-sm leading-7 text-[#43515C] sm:text-base"
+              >
+                Your form has been submitted successfully. We’ve received your
+                message, and our team will get back to you soon.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSuccessPopup(false);
+                  closeModal();
+                }}
+                className="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#0B2438] px-6 py-3 text-sm font-bold text-white transition duration-300 hover:bg-[#2374A8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2374A8] focus-visible:ring-offset-2"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </main>
   );
