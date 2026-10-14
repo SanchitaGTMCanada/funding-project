@@ -858,13 +858,10 @@ const handleSubmit = async (event) => {
 
       
       <span className="block text-sm font-extrabold leading-tight tracking-[-0.02em] text-white transition-colors duration-300 group-hover:text-[#7DD3FC] sm:text-base md:text-lg">
-        IBS Funding Program
+        IBS Funding Program Portal
       </span>
 
-      <span className="mt-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7DD3FC] transition-colors duration-300 group-hover:text-white sm:text-[11px]">
-        <span className="h-1.5 w-1.5 rounded-full bg-[#7DD3FC]" />
-        Portal
-      </span>
+     
     </a>
   </div>
 

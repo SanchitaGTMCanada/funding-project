@@ -1052,9 +1052,7 @@ const handleToggleStatus = async () => {
       IBS Funding Program Portal
     </h1>
 
-    <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.16em] text-[#7DD3FC] transition-colors duration-300 group-hover:text-white sm:text-[10px]">
-      Funding Opportunities Portal
-    </p>
+ 
   </a>
 
 </div>

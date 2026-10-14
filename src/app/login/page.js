@@ -141,12 +141,10 @@ export default function LoginPage() {
         className="group min-w-0"
       >
         <span className="block text-base font-black leading-tight tracking-tight text-white transition-colors duration-300 group-hover:text-[#7DD3FC] sm:text-lg">
-          IBS Funding Program
+          IBS Funding Program Portal
         </span>
 
-        <span className="mt-1 block text-[10px] font-bold uppercase tracking-[0.18em] text-[#7DD3FC] transition-colors duration-300 group-hover:text-white">
-          Portal
-        </span>
+       
       </a>
 
     </div>
