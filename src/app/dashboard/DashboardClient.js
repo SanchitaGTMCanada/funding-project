@@ -1020,32 +1020,44 @@ const handleToggleStatus = async () => {
 ===================================================== */}
 
 <header className="sticky top-0 z-40 border-b border-teal-400/15 bg-[#071a2d]/95 shadow-lg shadow-slate-950/10 backdrop-blur-xl">
-  <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 px-4 py-2 sm:px-6 sm:py-2 lg:px-8">
+ <div className="bg-[#0B2438]">
+  <div className="mx-auto flex min-h-[76px] max-w-[1600px] items-center justify-between gap-3 px-4 py-2 sm:px-6 sm:py-2 lg:px-8">
 
     {/* Brand */}
-  
-<a
-  href="https://ibsgroupcanada.com"
-  target="_blank"
-  rel="noopener noreferrer"
-  aria-label="Visit IBS Group Canada website"
-  className="flex min-w-0 items-center gap-3 transition-opacity hover:opacity-85"
->
-  <div className="h-15 w-15 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white shadow-lg shadow-teal-950/20 sm:h-18 sm:w-18">
+   {/* Brand */}
+<div className="flex min-w-0 items-center gap-4 sm:gap-5">
+
+  {/* Logo — IBS Group Canada website */}
+  <a
+    href="https://ibsgroupcanada.com"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Visit IBS Group Canada website"
+    className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-white/15 bg-white shadow-lg shadow-[#071a2d]/30 transition-opacity hover:opacity-85 sm:h-16 sm:w-16"
+  >
     <img
       src="/logo.jpg"
-      alt="IBS Funding Program Logo"
+      alt="IBS Logo"
       className="h-full w-full object-cover"
     />
-  </div>
+  </a>
 
-  <div className="min-w-0">
-    <h1 className="truncate text-base font-black tracking-tight text-white sm:text-xl">
+  {/* Brand Name — Funding homepage */}
+  <a
+    href="/"
+    aria-label="Go to Funding Program Portal homepage"
+    className="group min-w-0"
+  >
+    <h1 className="truncate text-base font-black tracking-tight text-white transition-colors duration-300 group-hover:text-[#7DD3FC] sm:text-xl">
       IBS Funding Program Portal
     </h1>
-  </div>
-</a>
 
+    <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.16em] text-[#7DD3FC] transition-colors duration-300 group-hover:text-white sm:text-[10px]">
+      Funding Opportunities Portal
+    </p>
+  </a>
+
+</div>
 
     {/* User area */}
     <div className="flex shrink-0 items-center gap-2 sm:gap-3">
@@ -1055,15 +1067,15 @@ const handleToggleStatus = async () => {
         className={`rounded-lg border px-2 py-2 text-[9px] font-extrabold tracking-wider sm:rounded-xl sm:px-3 sm:text-xs ${
           isSuperAdmin
             ? "border-cyan-300/20 bg-cyan-300/10 text-cyan-200"
-            : "border-teal-300/20 bg-teal-300/10 text-teal-200"
+            : "border-[#7DD3FC]/20 bg-[#7DD3FC]/10 text-[#7DD3FC]"
         }`}
       >
         {isSuperAdmin ? "SUPER ADMIN" : "EMPLOYEE"}
       </div>
 
       {/* Signed-in user */}
-      <div className="hidden rounded-xl border border-teal-400/20 bg-gradient-to-r from-[#071a2d] to-[#0b3b46] px-4 py-2.5 shadow-md shadow-teal-950/10 sm:block">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-teal-300">
+      <div className="hidden rounded-xl border border-[#7DD3FC]/20 bg-[#12334D] px-4 py-2.5 shadow-md sm:block">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-[#7DD3FC]">
           Signed in as
         </p>
 
@@ -1077,7 +1089,7 @@ const handleToggleStatus = async () => {
         type="button"
         onClick={handleLogout}
         disabled={loggingOut}
-        className="group flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-semibold text-slate-200 shadow-sm transition duration-300 hover:border-rose-400/30 hover:bg-rose-500/10 hover:text-rose-300 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
+        className="group flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-sm font-semibold text-slate-200 shadow-sm transition duration-300 hover:border-[#7DD3FC]/40 hover:bg-[#2374A8]/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
       >
         <svg
           width="18"
@@ -1102,6 +1114,7 @@ const handleToggleStatus = async () => {
 
     </div>
   </div>
+</div>
 </header>
 
 

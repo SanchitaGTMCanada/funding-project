@@ -845,38 +845,51 @@ setFundingServices(customerVisibleServices);
       ===================================================== */}
 
 <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#071a2d] shadow-lg">
-  <div className="mx-auto flex min-h-[74px] w-full max-w-[1800px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-10 xl:px-12">
-
-    {/* Logo and Brand */}
+ <div className="mx-auto flex min-h-[74px] w-full max-w-[1800px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-10 xl:px-12">
+  {/* Logo and Brand */}
+  <div className="flex min-w-0 items-center gap-5 sm:gap-6">
+    {/* Logo */}
     <a
       href="https://ibsgroupcanada.com/"
       target="_blank"
       rel="noopener noreferrer"
-      className="flex min-w-0 items-center gap-3"
+      aria-label="Visit IBS Group Canada website"
+      className="h-11 w-11 shrink-0 overflow-hidden rounded-xl sm:h-14 sm:w-14"
     >
-      <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl sm:h-14 sm:w-14">
-        <img
-          src="/logo.jpg"
-          alt="Funding Management Logo"
-          className="h-full w-full object-cover"
-        />
-      </div>
+      <img
+        src="/logo.jpg"
+        alt="IBS Logo"
+        className="h-full w-full object-cover"
+      />
+    </a>
 
-      <span className="text-sm font-black leading-tight text-white sm:text-base md:text-lg">
-        IBS Funding Program Portal
+    {/* Portal Name */}
+    <a
+      href="/"
+      aria-label="Go to Funding Program Portal homepage"
+      className="group min-w-0"
+    >
+
+      
+      <span className="block text-sm font-extrabold leading-tight tracking-[-0.02em] text-white transition-colors duration-300 group-hover:text-[#7DD3FC] sm:text-base md:text-lg">
+        IBS Funding Program
+      </span>
+
+      <span className="mt-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7DD3FC] transition-colors duration-300 group-hover:text-white sm:text-[11px]">
+        <span className="h-1.5 w-1.5 rounded-full bg-[#7DD3FC]" />
+        Portal
       </span>
     </a>
-
-    {/* Employee Login — visible on all screen sizes */}
-    <a
-      href="/login"
-      className="shrink-0 rounded-xl border border-teal-400/30 bg-white/10 px-3 py-2.5 text-xs font-bold text-white transition hover:bg-white/20 sm:px-4 sm:text-sm"
-    >
-      <span className="sm:hidden">Employee Login</span>
-      <span className="hidden sm:inline">Employee Login</span>
-    </a>
-
   </div>
+
+  {/* Employee Login */}
+  <a
+    href="/login"
+    className="shrink-0 rounded-xl border border-[#7DD3FC]/30 bg-[#2374A8]/20 px-3 py-2.5 text-xs font-bold text-white transition-all duration-300 hover:border-[#7DD3FC]/70 hover:bg-[#2374A8]/40 sm:px-4 sm:text-sm"
+  >
+    Employee Login
+  </a>
+</div>
 </header>
 
 

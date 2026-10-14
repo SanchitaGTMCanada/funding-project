@@ -108,75 +108,88 @@ export default function LoginPage() {
           LEFT BRAND PANEL
       ===================================================== */}
 
-      <div className="relative hidden w-1/2 items-center justify-center px-12 lg:flex">
+<div className="relative hidden w-1/2 items-center justify-center overflow-hidden bg-[#0B2438] px-10 py-10 xl:px-12 lg:flex">
 
-        <div className="relative z-10 max-w-xl">
+  {/* Background glow */}
+  <div className="pointer-events-none absolute -left-24 top-20 h-64 w-64 rounded-full bg-[#2374A8]/15 blur-[90px]" />
+  <div className="pointer-events-none absolute -bottom-24 right-0 h-64 w-64 rounded-full bg-[#7DD3FC]/10 blur-[90px]" />
 
-          {/* Logo */}
+  <div className="relative z-10 w-full max-w-xl">
 
-             <a
-      href="https://ibsgroupcanada.com/"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex min-w-0 items-center gap-3"
-    >
-      <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl sm:h-14 sm:w-14">
+    {/* Logo and Portal Brand */}
+    <div className="mb-10 flex items-center gap-5">
+
+      {/* Logo — IBS Group Canada website */}
+      <a
+        href="https://ibsgroupcanada.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Visit IBS Group Canada website"
+        className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-white/15 bg-white shadow-lg transition-transform duration-300 hover:scale-105 sm:h-16 sm:w-16"
+      >
         <img
           src="/logo.jpg"
-          alt="Funding Management Logo"
+          alt="IBS Logo"
           className="h-full w-full object-cover"
         />
-      </div>
+      </a>
 
-      <span className="text-sm font-black leading-tight text-white sm:text-base md:text-lg">
-        IBS Funding Program Portal
+      {/* Portal Name — Funding homepage */}
+      <a
+        href="/"
+        aria-label="Go to Funding Program Portal homepage"
+        className="group min-w-0"
+      >
+        <span className="block text-base font-black leading-tight tracking-tight text-white transition-colors duration-300 group-hover:text-[#7DD3FC] sm:text-lg">
+          IBS Funding Program
+        </span>
+
+        <span className="mt-1 block text-[10px] font-bold uppercase tracking-[0.18em] text-[#7DD3FC] transition-colors duration-300 group-hover:text-white">
+          Portal
+        </span>
+      </a>
+
+    </div>
+
+    {/* Heading */}
+    <h2 className="text-5xl font-black leading-[1.05] tracking-tight text-white xl:text-6xl">
+      Manage funding
+      <span className="mt-1 block bg-gradient-to-r from-[#7DD3FC] via-[#B9F0E8] to-white bg-clip-text text-transparent">
+        opportunities.
       </span>
-    </a>
+    </h2>
 
-          {/* Heading */}
+    {/* Description */}
+    <p className="mt-6 max-w-lg text-base leading-7 text-[#C1D0DF]">
+      Access the Funding Management portal to manage funding services,
+      review opportunities and maintain your funding database.
+    </p>
 
-          <h2 className="text-5xl font-black leading-[1.05] tracking-tight text-white xl:text-6xl">
+    {/* Feature Cards */}
+    <div className="mt-9 space-y-3">
 
-            Manage funding
-            <span className="block bg-gradient-to-r from-teal-300 via-cyan-200 to-blue-300 bg-clip-text text-transparent">
-              opportunities.
-            </span>
+      <Feature
+        number="01"
+        title="Manage Funding Programs"
+        text="Create, update and maintain funding opportunities."
+      />
 
-          </h2>
+      <Feature
+        number="02"
+        title="Review Applications"
+        text="Keep track of funding requests submitted through the portal."
+      />
 
-          <p className="mt-7 max-w-lg text-base leading-7 text-slate-300">
-            Access the Funding Management portal to
-            manage funding services, review opportunities
-            and maintain your funding database.
-          </p>
+      <Feature
+        number="03"
+        title="Secure Access"
+        text="Role-based access keeps administrative operations protected."
+      />
 
-          {/* Feature cards */}
+    </div>
 
-          <div className="mt-10 space-y-3">
-
-            <Feature
-              number="01"
-              title="Manage Funding Programs"
-              text="Create, update and maintain funding opportunities."
-            />
-
-            <Feature
-              number="02"
-              title="Review Applications"
-              text="Keep track of funding requests submitted through the portal."
-            />
-
-            <Feature
-              number="03"
-              title="Secure Access"
-              text="Role-based access keeps administrative operations protected."
-            />
-
-          </div>
-
-        </div>
-
-      </div>
+  </div>
+</div>
 
       {/* =====================================================
           RIGHT LOGIN AREA
@@ -190,9 +203,9 @@ export default function LoginPage() {
 
        
 {/* Mobile Branding */}
-<div className="mb-7 text-center lg:hidden">
+<div className="mb-7 rounded-2xl bg-[#0B2438] px-4 py-6 text-center lg:hidden">
   {/* IBS Logo */}
-  <div className="mx-auto h-16 w-16 overflow-hidden rounded-2xl border border-white/15 bg-white shadow-xl shadow-teal-950/30">
+  <div className="mx-auto h-16 w-16 overflow-hidden rounded-2xl border border-white/15 bg-white shadow-xl shadow-[#0B2438]/30">
     <img
       src="/logo.jpg"
       alt="IBS Funding Program Logo"
@@ -206,7 +219,7 @@ export default function LoginPage() {
   </h1>
 
   {/* Subtitle */}
-  <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-teal-300">
+  <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#7DD3FC]">
     Funding Opportunities Portal
   </p>
 </div>
