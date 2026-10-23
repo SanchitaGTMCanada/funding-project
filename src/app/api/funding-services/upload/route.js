@@ -53,11 +53,10 @@ export async function POST(request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Decode CSV as UTF-8 to preserve emoji and Unicode symbols.
-    // Excel files continue to use the binary parser.
+    // Parse CSV as UTF-8 and Excel as a binary workbook.
     const workbook = isCsv
       ? XLSX.read(
-          new TextDecoder("utf-8").decode(bytes),
+          new TextDecoder("utf-8").decode(bytes).replace(/^\uFEFF/, ""),
           {
             type: "string",
             codepage: 65001,
@@ -94,6 +93,33 @@ export async function POST(request) {
       );
     }
 
+    // Replace every literal question mark in string values.
+    // Applies recursively to nested objects and arrays.
+    const replaceQuestionMarks = (value) => {
+      if (typeof value === "string") {
+        return value.replace(/\?/g, "-");
+      }
+
+      if (Array.isArray(value)) {
+        return value.map(replaceQuestionMarks);
+      }
+
+      if (
+        value &&
+        typeof value === "object" &&
+        !(value instanceof Date)
+      ) {
+        return Object.fromEntries(
+          Object.entries(value).map(([key, item]) => [
+            key,
+            replaceQuestionMarks(item),
+          ])
+        );
+      }
+
+      return value;
+    };
+
     const normalizeValue = (value) =>
       value == null
         ? ""
@@ -126,22 +152,15 @@ export async function POST(request) {
       return "";
     };
 
-const getTitle = (row) => {
-  const title =
-    row.title ||
-    row.Title ||
-    row["Funding Service"] ||
-    row["Funding Service Name"] ||
-    row["Service Name"] ||
-    row["Program Name"] ||
-    row["program name"] ||
-    "Funding Opportunity";
-
-  return String(title)
-    .trim()
-    .replace(/\?/g, "-");
-};
-
+    const getTitle = (row) =>
+      row.title ||
+      row.Title ||
+      row["Funding Service"] ||
+      row["Funding Service Name"] ||
+      row["Service Name"] ||
+      row["Program Name"] ||
+      row["program name"] ||
+      "Funding Opportunity";
 
     const getDescription = (row) =>
       row.description ||
@@ -191,6 +210,8 @@ const getTitle = (row) => {
     let skippedMissingId = 0;
 
     for (const row of rows) {
+      // Read Program ID from the original row so normalization
+      // doesn't accidentally change the identifier.
       const programId = getProgramId(row);
 
       if (!programId) {
@@ -206,17 +227,17 @@ const getTitle = (row) => {
 
       processedIds.add(programId);
 
-      // Preserve every column and its Unicode characters.
-      const normalizedRow = { ...row };
+      // Clean all imported values before saving.
+      const normalizedRow = replaceQuestionMarks(row);
 
-      const title = String(getTitle(row)).trim();
-      const description = getDescription(row);
+      const title = String(getTitle(normalizedRow)).trim();
+      const description = getDescription(normalizedRow);
 
       const existingService =
         existingServicesByProgramId.get(programId);
 
       if (existingService) {
-        // Replace existing program data with the uploaded row.
+        // Replace the existing record with the cleaned row.
         const updatedService =
           await prisma.fundingService.update({
             where: {
@@ -237,7 +258,7 @@ const getTitle = (row) => {
           programId,
         });
       } else {
-        // Create a new program if its ID doesn't exist.
+        // Create a new record if its Program ID doesn't exist.
         const createdService =
           await prisma.fundingService.create({
             data: {
@@ -255,6 +276,7 @@ const getTitle = (row) => {
           programId,
         });
 
+        // Prevent another insert for this ID during this upload.
         existingServicesByProgramId.set(programId, {
           id: createdService.id,
           title: createdService.title,
