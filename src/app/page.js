@@ -1429,77 +1429,59 @@ const handleSubmit = async (event) => {
 
           {/* ACTIONS */}
 
-          <td
-            className={`
-              sticky right-0 z-20
-              border-l border-slate-200
-              px-6 py-5
-              align-top
-              ${
-                isEvenRow
-                  ? "bg-white group-hover:bg-teal-50"
-                  : "bg-[#eaf4f7] group-hover:bg-teal-100"
-              }
-            `}
-            style={{
-              width: "190px",
-              minWidth: "190px",
-            }}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() =>
-                  handleView(
-                    service
-                  )
-                }
-                className="
-                  whitespace-nowrap
-                  rounded-lg
-                  border
-                  border-slate-300
-                  bg-white
-                  px-3.5
-                  py-2
-                  text-xs
-                  font-bold
-                  text-slate-700
-                  shadow-sm
-                  transition
-                  hover:border-teal-400
-                  hover:bg-teal-50
-                  hover:text-teal-700
-                "
-              >
-                View
-              </button>
+<td
+  className="
+    sticky right-0 
+    border-l border-slate-200
+    bg-white
+    px-6 py-5
+    align-top
+  "
+  style={{
+    width: "190px",
+    minWidth: "190px",
+    backgroundColor: "#ffffff",
+    zIndex: 9999,
+  }}
+>
+  <div className="flex items-center justify-center gap-2">
+    <button
+      type="button"
+      onClick={() => handleView(service)}
+      className="
+        whitespace-nowrap
+        rounded-lg
+        border border-slate-300
+        bg-white
+        px-3.5 py-2
+        text-xs font-bold text-slate-700
+        shadow-sm transition
+        hover:border-teal-400
+        hover:bg-teal-50
+        hover:text-teal-700
+      "
+    >
+      View
+    </button>
 
-              <button
-                type="button"
-                onClick={() =>
-                  handleApply(
-                    service
-                  )
-                }
-                className="
-                  whitespace-nowrap
-                  rounded-lg
-                  bg-[#071a2d]
-                  px-3.5
-                  py-2
-                  text-xs
-                  font-bold
-                  text-white
-                  shadow-sm
-                  transition
-                  hover:bg-teal-600
-                "
-              >
-                Apply
-              </button>
-            </div>
-          </td>
+    <button
+      type="button"
+      onClick={() => handleApply(service)}
+      className="
+        whitespace-nowrap
+        rounded-lg
+        bg-[#071a2d]
+        px-3.5 py-2
+        text-xs font-bold text-white
+        shadow-sm transition
+        hover:bg-teal-600
+      "
+    >
+      Apply
+    </button>
+  </div>
+</td>
+
         </tr>
       );
     }

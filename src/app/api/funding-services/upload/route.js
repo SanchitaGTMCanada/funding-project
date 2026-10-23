@@ -31,9 +31,11 @@ export async function POST(request) {
     }
 
     const fileName = file.name.toLowerCase();
+
     const isExcel =
       fileName.endsWith(".xls") ||
       fileName.endsWith(".xlsx");
+
     const isCsv = fileName.endsWith(".csv");
 
     if (!isExcel && !isCsv) {
@@ -47,9 +49,23 @@ export async function POST(request) {
       );
     }
 
+    // Read uploaded file bytes.
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const workbook = XLSX.read(buffer, { type: "buffer" });
+
+    // Decode CSV as UTF-8 to preserve emoji and Unicode symbols.
+    // Excel files continue to use the binary parser.
+    const workbook = isCsv
+      ? XLSX.read(
+          new TextDecoder("utf-8").decode(bytes),
+          {
+            type: "string",
+            codepage: 65001,
+          }
+        )
+      : XLSX.read(buffer, {
+          type: "buffer",
+        });
 
     if (!workbook.SheetNames.length) {
       return Response.json(
@@ -79,7 +95,9 @@ export async function POST(request) {
     }
 
     const normalizeValue = (value) =>
-      value == null ? "" : String(value).trim().toLowerCase();
+      value == null
+        ? ""
+        : String(value).trim().toLowerCase();
 
     const getProgramId = (row) => {
       const identifierKeys = [
@@ -108,15 +126,22 @@ export async function POST(request) {
       return "";
     };
 
-    const getTitle = (row) =>
-      row.title ||
-      row.Title ||
-      row["Funding Service"] ||
-      row["Funding Service Name"] ||
-      row["Service Name"] ||
-      row["Program Name"] ||
-      row["program name"] ||
-      "Funding Opportunity";
+const getTitle = (row) => {
+  const title =
+    row.title ||
+    row.Title ||
+    row["Funding Service"] ||
+    row["Funding Service Name"] ||
+    row["Service Name"] ||
+    row["Program Name"] ||
+    row["program name"] ||
+    "Funding Opportunity";
+
+  return String(title)
+    .trim()
+    .replace(/\?/g, "-");
+};
+
 
     const getDescription = (row) =>
       row.description ||
@@ -134,8 +159,7 @@ export async function POST(request) {
         },
       });
 
-    // Map each existing Program ID to its database record.
-    // If older duplicate records exist, update the first matching record.
+    // Map existing Program IDs to their database records.
     const existingServicesByProgramId = new Map();
 
     for (const service of existingServices) {
@@ -169,13 +193,12 @@ export async function POST(request) {
     for (const row of rows) {
       const programId = getProgramId(row);
 
-      // Skip rows without a Program ID.
       if (!programId) {
         skippedMissingId++;
         continue;
       }
 
-      // Process each Program ID only once per uploaded file.
+      // Process each Program ID only once per upload.
       if (processedIds.has(programId)) {
         skippedInFile++;
         continue;
@@ -183,7 +206,9 @@ export async function POST(request) {
 
       processedIds.add(programId);
 
+      // Preserve every column and its Unicode characters.
       const normalizedRow = { ...row };
+
       const title = String(getTitle(row)).trim();
       const description = getDescription(row);
 
@@ -191,7 +216,7 @@ export async function POST(request) {
         existingServicesByProgramId.get(programId);
 
       if (existingService) {
-        // Replace the existing record with the uploaded row.
+        // Replace existing program data with the uploaded row.
         const updatedService =
           await prisma.fundingService.update({
             where: {
@@ -212,7 +237,7 @@ export async function POST(request) {
           programId,
         });
       } else {
-        // Insert a new record when the Program ID doesn't exist.
+        // Create a new program if its ID doesn't exist.
         const createdService =
           await prisma.fundingService.create({
             data: {
@@ -230,7 +255,6 @@ export async function POST(request) {
           programId,
         });
 
-        // Prevent another insert for this ID during this upload.
         existingServicesByProgramId.set(programId, {
           id: createdService.id,
           title: createdService.title,

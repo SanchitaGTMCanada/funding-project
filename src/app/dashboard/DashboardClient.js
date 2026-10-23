@@ -1926,59 +1926,85 @@ const handleToggleStatus = async () => {
                 </td>
 
                 {/* Actions */}
-                <td
-                  className={`sticky right-0 z-10 border-l border-slate-200 px-5 py-4 ${
-                    index % 2 === 0
-                      ? "bg-white group-hover:bg-[#EEF5F8]/70"
-                      : "bg-slate-50/70 group-hover:bg-[#EEF5F8]"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    {/* View */}
-                    <button
-                      type="button"
-                      onClick={() => handleView(service)}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-[#2374A8]/20 bg-[#2374A8]/5 px-3.5 py-2 text-xs font-bold text-[#2374A8] shadow-sm transition hover:border-[#2374A8] hover:bg-[#2374A8] hover:text-white"
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                      View
-                    </button>
+              
+<td
+  className="
+    sticky right-0 
+    border-l border-slate-200
+    bg-white
+    px-5 py-4
+  "
+  style={{
+    backgroundColor: "#ffffff",
+   
+  }}
+>
+  <div className="flex items-center gap-2">
+    {/* View */}
+    <button
+      type="button"
+      onClick={() => handleView(service)}
+      className="
+        inline-flex items-center gap-1.5
+        rounded-lg
+        border border-[#2374A8]/20
+        bg-[#2374A8]/5
+        px-3.5 py-2
+        text-xs font-bold text-[#2374A8]
+        shadow-sm transition
+        hover:border-[#2374A8]
+        hover:bg-[#2374A8]
+        hover:text-white
+      "
+    >
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+      View
+    </button>
 
-                    {/* Edit */}
-                    <button
-                      type="button"
-                      onClick={() => handleEdit(service)}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#0B2438] px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[#2374A8]"
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M12 20h9" />
-                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
-                      </svg>
-                      Edit
-                    </button>
-                  </div>
-                </td>
+    {/* Edit */}
+    <button
+      type="button"
+      onClick={() => handleEdit(service)}
+      className="
+        inline-flex items-center gap-1.5
+        rounded-lg
+        bg-[#0B2438]
+        px-3.5 py-2
+        text-xs font-bold text-white
+        shadow-sm transition
+        hover:bg-[#2374A8]
+      "
+    >
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
+      </svg>
+      Edit
+    </button>
+  </div>
+</td>
+
               </tr>
             ))}
           </tbody>
