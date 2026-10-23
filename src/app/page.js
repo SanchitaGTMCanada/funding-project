@@ -1020,69 +1020,53 @@ const handleSubmit = async (event) => {
         border: "hover:border-[#5B9BD5]/40",
         glow: "group-hover:shadow-sky-100",
       },
-    ].map((stat) => (
+].map((stat) => (
+  <div
+    key={stat.label}
+    className={`relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_25px_-12px_rgba(11,36,56,0.20)] sm:p-5 ${stat.border} ${stat.glow}`}
+  >
+    {/* Brand accent */}
+    <div
+      className={`absolute inset-x-0 top-0 h-1 ${stat.accent}`}
+    />
+
+    {/* Subtle ice-blue glow — static */}
+    <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[#EEF5F8] opacity-90 blur-2xl" />
+
+    <div className="relative flex items-center gap-3.5">
+      {/* Premium icon */}
       <div
-        key={stat.label}
-        className={`group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_25px_-12px_rgba(11,36,56,0.20)] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-5 ${stat.border} ${stat.glow}`}
+        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${stat.iconBg} ${stat.color} ring-1 ring-inset ring-black/[0.03]`}
       >
-        {/* Brand accent */}
-        <div className={`absolute inset-x-0 top-0 h-1 ${stat.accent}`} />
-
-        {/* Subtle ice-blue glow */}
-        <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[#EEF5F8] opacity-90 blur-2xl transition-transform duration-500 group-hover:scale-150" />
-
-        <div className="relative flex items-center gap-3.5">
-          {/* Premium icon */}
-          <div
-            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${stat.iconBg} ${stat.color} ring-1 ring-inset ring-black/[0.03] transition-transform duration-300 group-hover:scale-105`}
-          >
-            {stat.icon}
-          </div>
-
-          {/* Statistics */}
-          <div className="min-w-0 flex-1">
-            <p className="text-2xl font-extrabold leading-tight tracking-tight text-[#0B2438] sm:text-3xl">
-              {loading ? (
-                <span className="inline-block h-7 w-12 animate-pulse rounded-md bg-[#EEF5F8]" />
-              ) : (
-                stat.value
-              )}
-            </p>
-
-            <h3 className="mt-1 text-sm font-bold leading-5 text-[#0B2438]">
-              {stat.label}
-            </h3>
-
-            <p className="mt-1 text-xs leading-4 text-[#43515C]">
-              {stat.description}
-            </p>
-          </div>
-
-          {/* Arrow */}
-          <div
-            className={`hidden h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white ${stat.color} transition-all duration-300 group-hover:border-current group-hover:shadow-md sm:flex`}
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5"
-              aria-hidden="true"
-            >
-              <path d="M5 12h14m-6-6 6 6-6 6" />
-            </svg>
-          </div>
-        </div>
-
-        {/* Animated bottom accent */}
-        <div
-          className={`absolute inset-x-4 bottom-0 h-[2px] origin-left scale-x-0 ${stat.accent} opacity-70 transition-transform duration-300 group-hover:scale-x-100`}
-        />
+        {stat.icon}
       </div>
-    ))}
+
+      {/* Statistics */}
+      <div className="min-w-0 flex-1">
+        <p className="text-2xl font-extrabold leading-tight tracking-tight text-[#0B2438] sm:text-3xl">
+          {loading ? (
+            <span className="inline-block h-7 w-12 animate-pulse rounded-md bg-[#EEF5F8]" />
+          ) : (
+            stat.value
+          )}
+        </p>
+
+        <h3 className="mt-1 text-sm font-bold leading-5 text-[#0B2438]">
+          {stat.label}
+        </h3>
+
+        <p className="mt-1 text-xs leading-4 text-[#43515C]">
+          {stat.description}
+        </p>
+      </div>
+    </div>
+
+    {/* Static bottom accent */}
+    <div
+      className={`absolute inset-x-4 bottom-0 h-[2px] ${stat.accent} opacity-70`}
+    />
+  </div>
+))}
   </div>
 </div>
 
