@@ -34,7 +34,115 @@ const COLUMN_WIDTHS = {
 };
 
 /* =========================================================
-   HELPERS
+   FILTER OPTIONS
+   ========================================================= */
+
+const APPLICANT_TYPES = [
+  "First Nation / Indigenous government or band, including tribal councils",
+  "Inuit organization (NTI, Regional Inuit Associations, development corporations)",
+  "Métis organization or council",
+  "Community or municipal government (cities, towns, villages, hamlets, charter communities)",
+  "Indigenous-owned business",
+  "Small business / entrepreneur",
+  "Non-profit / society / charity, including co-operatives",
+  "Housing provider or developer",
+  "School, college or post-secondary institution",
+  "Individual / youth / student / senior",
+  "Not sure",
+];
+
+const TERRITORIES = [
+  "Canada-wide",
+  "Northwest Territories",
+  "Nunavut",
+  "Yukon",
+  "Alberta",
+  "British Columbia",
+  "Manitoba",
+  "New Brunswick",
+  "Newfoundland and Labrador",
+  "Nova Scotia",
+  "Ontario",
+  "Prince Edward Island",
+  "Quebec",
+  "Saskatchewan",
+];
+
+/* Community options are curated only for NWT and Nunavut for now.
+   Other provinces and territories use a free-text community field. */
+const TERRITORY_COMMUNITIES = {
+  "Northwest Territories": [
+    "Aklavik", "Fort McPherson", "Inuvik", "Paulatuk", "Sachs Harbour",
+    "Tsiigehtchic", "Tuktoyaktuk", "Ulukhaktok", "Colville Lake", "Délı̨nę",
+    "Fort Good Hope", "Norman Wells", "Tulita", "Fort Liard", "Fort Simpson",
+    "Jean Marie River", "Nahanni Butte", "Sambaa K'e", "Wrigley", "Behchokǫ̀",
+    "Dettah", "Gamètì", "Łutselk'e", "Wekweètì", "Whatì", "Yellowknife",
+    "Enterprise", "Fort Providence", "Fort Resolution", "Fort Smith", "Hay River",
+    "Kakisa", "Kátł'odeeche",
+  ],
+  Nunavut: [
+    "Iqaluit", "Arctic Bay", "Clyde River", "Grise Fiord", "Igloolik",
+    "Kimmirut", "Kinngait", "Pangnirtung", "Pond Inlet", "Qikiqtarjuaq",
+    "Resolute Bay", "Sanikiluaq", "Sanirajak", "Arviat", "Baker Lake",
+    "Chesterfield Inlet", "Coral Harbour", "Naujaat", "Rankin Inlet", "Whale Cove",
+    "Cambridge Bay", "Gjoa Haven", "Kugaaruk", "Kugluktuk", "Taloyoak",
+  ],
+};
+
+const TOP_LEVEL_CATEGORIES = [
+  "Business Development",
+  "Community Development",
+  "Capacity Building",
+  "Education & Training",
+  "Financial & Income Assistance",
+  "Environment & Energy",
+  "Housing",
+  "Arts & Culture",
+  "Infrastructure & Transportation",
+  "Health & Wellness",
+  "Research & Innovation",
+  "Agriculture & Food",
+  "Jobs & Employment",
+  "Gender Equity, Justice & Victim Support",
+  "Land, Natural Resources & Harvesting",
+  "Emergencies & Public Safety",
+  "Early Learning & Childcare",
+  "Sports & Recreation",
+];
+
+/* =========================================================
+   FILTER HELPERS
+   ========================================================= */
+
+const splitTags = (value) => {
+  if (Array.isArray(value)) return value.flatMap(splitTags);
+
+  if (value === null || value === undefined || value === "") {
+    return [];
+  }
+
+  if (typeof value === "object") {
+    return Object.values(value).flatMap(splitTags);
+  }
+
+  return String(value)
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+};
+
+const valuesMatch = (left, right) =>
+  String(left ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "") ===
+  String(right ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
+/* =========================================================
+   GENERAL HELPERS
    ========================================================= */
 
 const normalizeKey = (value) =>
@@ -80,11 +188,8 @@ const getValue = (service, possibleKeys) => {
   const normalizedPossibleKeys =
     possibleKeys.map(normalizeKey);
 
-  const matchingKey = Object.keys(data).find(
-    (key) =>
-      normalizedPossibleKeys.includes(
-        normalizeKey(key)
-      )
+  const matchingKey = Object.keys(data).find((key) =>
+    normalizedPossibleKeys.includes(normalizeKey(key))
   );
 
   if (matchingKey) {
@@ -99,8 +204,7 @@ const getValue = (service, possibleKeys) => {
    ========================================================= */
 
 export default function Home() {
-  const [fundingServices, setFundingServices] =
-    useState([]);
+  const [fundingServices, setFundingServices] = useState([]);
 
   const featuredCarouselRef = useRef(null);
 
@@ -116,41 +220,29 @@ export default function Home() {
 
   const [loading, setLoading] = useState(true);
 
-  const [selectedService, setSelectedService] =
-    useState(null);
+  const [selectedService, setSelectedService] = useState(null);
 
-  const [showApplication, setShowApplication] =
-    useState(false);
+  const [showApplication, setShowApplication] = useState(false);
 
-  const [searchTerm, setSearchTerm] =
-    useState("");
+  /* FILTER STATE */
+  const [selectedApplicantTypes, setSelectedApplicantTypes] =
+    useState([]);
 
-  const [selectedCategory, setSelectedCategory] =
-    useState("All");
+  const [selectedTerritory, setSelectedTerritory] = useState("");
+  const [selectedCommunity, setSelectedCommunity] = useState("");
 
-    const [isHuman, setIsHuman] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState([]);
 
-  /* =======================================================
-     PAGINATION
-     ======================================================= */
+  const [isHuman, setIsHuman] = useState(false);
 
-  const [currentPage, setCurrentPage] =
-    useState(1);
+  /* PAGINATION */
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const [itemsPerPage, setItemsPerPage] =
-    useState(10);
+  /* EXPANDED CELLS */
+  const [expandedCells, setExpandedCells] = useState({});
 
-  /* =======================================================
-     EXPANDED CELLS
-     ======================================================= */
-
-  const [expandedCells, setExpandedCells] =
-    useState({});
-
-  /* =======================================================
-     APPLICATION FORM
-     ======================================================= */
-
+  /* APPLICATION FORM */
   // Keep legacy address/city keys for compatibility with the existing API.
   const initialFormData = {
     name: "",
@@ -167,16 +259,9 @@ export default function Home() {
   };
 
   const [formData, setFormData] = useState({ ...initialFormData });
-
-  const [submitting, setSubmitting] =
-    useState(false);
-
-  const [applicationMessage, setApplicationMessage] =
-    useState("");
-
-  const [applicationError, setApplicationError] =
-    useState("");
-
+  const [submitting, setSubmitting] = useState(false);
+  const [applicationMessage, setApplicationMessage] = useState("");
+  const [applicationError, setApplicationError] = useState("");
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   /* =========================================================
@@ -189,7 +274,7 @@ export default function Home() {
         setLoading(true);
 
         const response = await fetch(
-       "/api/funding-services?public=true",
+          "/api/funding-services?public=true",
           {
             cache: "no-store",
           }
@@ -199,34 +284,29 @@ export default function Home() {
 
         if (!response.ok) {
           throw new Error(
-            result.message ||
-              "Failed to load funding services"
+            result.message || "Failed to load funding services"
           );
         }
 
-       
-const customerVisibleServices = (
-  result.fundingServices || []
-).filter((service) => {
-  const status = String(getValue(service, [
-    "Status",
-    "status",
-    "Program Status",
-  ]) || "Open")
-    .trim()
-    .toLowerCase();
+        const customerVisibleServices = (
+          result.fundingServices || []
+        ).filter((service) => {
+          const status = String(
+            getValue(service, [
+              "Status",
+              "status",
+              "Program Status",
+            ]) || "Open"
+          )
+            .trim()
+            .toLowerCase();
 
-  return status !== "closed";
-});
+          return status !== "closed";
+        });
 
-setFundingServices(customerVisibleServices);
-
+        setFundingServices(customerVisibleServices);
       } catch (error) {
-        console.error(
-          "Funding services error:",
-          error
-        );
-
+        console.error("Funding services error:", error);
         setFundingServices([]);
       } finally {
         setLoading(false);
@@ -286,76 +366,256 @@ setFundingServices(customerVisibleServices);
   };
 
   /* =========================================================
-     CATEGORIES
-     ========================================================= */
-
-  const categories = useMemo(() => {
-    const categoryValues = fundingServices
-      .map((service) => getCategory(service))
-      .filter(Boolean)
-      .map((value) => String(value));
-
-    return [
-      "All",
-      ...new Set(categoryValues),
-    ];
-  }, [fundingServices]);
-
-  /* =========================================================
      FILTER DATA
-     ONLY CUSTOMER-VISIBLE DATA IS SEARCHED
      ========================================================= */
 
-  const filteredServices = useMemo(() => {
-    const search = searchTerm
-      .toLowerCase()
-      .trim();
+  const getApplicantTypes = (service) => {
+    const raw = getValue(service, [
+      "Who you are",
+      "Who You Are",
+      "Applicant Type",
+      "Applicant Types",
+      "Eligible Applicant",
+      "Eligible Applicants",
+      "Applicant",
+      "Who Can Apply",
+    ]);
 
-    return fundingServices.filter((service) => {
-      const category = String(
-        getCategory(service)
+    if (typeof raw === "string") {
+      const normalizedRaw = raw.toLowerCase();
+
+      const exactKnownOptions = APPLICANT_TYPES.filter(
+        (option) =>
+          option !== "Not sure" &&
+          normalizedRaw.includes(option.toLowerCase())
       );
 
-      const matchesCategory =
-        selectedCategory === "All" ||
-        category.toLowerCase() ===
-          selectedCategory.toLowerCase();
-
-      if (!matchesCategory) {
-        return false;
+      if (exactKnownOptions.length) {
+        return exactKnownOptions;
       }
+    }
 
-      if (!search) {
-        return true;
-      }
+    return splitTags(raw);
+  };
 
-      const searchableData =
-        CUSTOMER_COLUMNS.map((column) => {
-          if (column === "Program Name") {
-            return getProgramName(service);
-          }
+  const getTerritories = (service) =>
+    splitTags(
+      getValue(service, [
+        "Territory/Province",
+        "Territory / Province",
+        "Territory",
+        "Province",
+        "Location",
+        "Geographic Eligibility",
+        "Eligible Provinces",
+        "Eligible Territory",
+      ])
+    );
 
-          return getValue(service, [column]);
-        })
-          .map(formatValue)
-          .join(" ")
-          .toLowerCase();
+  const getCommunityTags = (service) =>
+    splitTags(
+      getValue(service, [
+        "Communities",
+        "Community",
+        "Eligible Communities",
+        "Community Tags",
+      ])
+    );
 
-      return searchableData.includes(search);
+  const getCategoryTags = (service) =>
+    splitTags(
+      getValue(service, [
+        "Category",
+        "category",
+        "Funding Category",
+        "Categories",
+      ])
+    );
+
+  /* Build category/subcategory options from the program data. */
+  const categoryTree = useMemo(() => {
+    const childrenByParent = new Map(
+      TOP_LEVEL_CATEGORIES.map((category) => [
+        category,
+        new Set(),
+      ])
+    );
+
+    fundingServices.forEach((service) => {
+      const tags = getCategoryTags(service);
+
+      const parent = tags.find((tag) =>
+        TOP_LEVEL_CATEGORIES.some((top) =>
+          valuesMatch(top, tag)
+        )
+      );
+
+      if (!parent) return;
+
+      tags.forEach((tag) => {
+        if (
+          !valuesMatch(tag, parent) &&
+          !TOP_LEVEL_CATEGORIES.some((top) =>
+            valuesMatch(top, tag)
+          )
+        ) {
+          childrenByParent.get(parent).add(tag);
+        }
+      });
     });
-  }, [
-    fundingServices,
-    searchTerm,
-    selectedCategory,
-  ]);
 
-  /* =========================================================
-     RESET PAGE WHEN FILTER CHANGES
-     ========================================================= */
+    return TOP_LEVEL_CATEGORIES.map((category) => ({
+      name: category,
+      children: [
+        ...(childrenByParent.get(category) || []),
+      ].sort((a, b) => a.localeCompare(b)),
+    }));
+  }, [fundingServices]);
+
+  const hasActiveApplicantFilter =
+    selectedApplicantTypes.length > 0 &&
+    !selectedApplicantTypes.includes("Not sure");
+
+ 
+
+const filteredServices = useMemo(() => {
+  return fundingServices.filter((service) => {
+    const applicantTypes = getApplicantTypes(service);
+    const territoryTags = getTerritories(service);
+    const communityTags = getCommunityTags(service);
+    const categoryTags = getCategoryTags(service);
+
+    /* Who you are: match any selected applicant type. */
+    const matchesApplicant =
+      !hasActiveApplicantFilter ||
+      applicantTypes.some((tag) =>
+        selectedApplicantTypes.some((selected) =>
+          valuesMatch(tag, selected)
+        )
+      );
+
+    if (!matchesApplicant) return false;
+
+    /* Territory: include Canada-wide programs
+       when a specific province or territory is selected. */
+    const isCanadaWide = territoryTags.some((tag) =>
+      [
+        "Canada-wide",
+        "Canada wide",
+        "National",
+        "All Canada",
+        "All Provinces & Territories",
+      ].some((national) => valuesMatch(tag, national))
+    );
+
+    /* This special location excludes Nunavut, so it applies to every
+       selected province/territory except Nunavut, but is not Canada-wide. */
+    const availableExceptNunavut = territoryTags.some((tag) =>
+      valuesMatch(tag, "All Provinces & Territories except Nunavut")
+    );
+
+    const isNunavutSelected = valuesMatch(selectedTerritory, "Nunavut");
+
+    const matchesTerritory =
+      !selectedTerritory ||
+      (valuesMatch(selectedTerritory, "Canada-wide")
+        ? isCanadaWide
+        : isCanadaWide ||
+          (!isNunavutSelected && availableExceptNunavut) ||
+          territoryTags.some((tag) =>
+            valuesMatch(tag, selectedTerritory)
+          ));
+
+    if (!matchesTerritory) return false;
+
+    /* Community: include community-specific programs and programs that
+       apply broadly across the selected territory or Canada-wide.
+       An empty Communities field means the program is not community-restricted. */
+    const matchesCommunity =
+      !selectedCommunity ||
+      communityTags.length === 0 ||
+      communityTags.some((tag) => valuesMatch(tag, selectedCommunity));
+
+    if (!matchesCommunity) return false;
+
+    /* Category: decode parent-specific subcategory keys.
+       Example: "Infrastructure & Transportation::Highways"
+       matches the tag "Highways", not another parent's
+       subcategory with the same label. */
+    const selectedCategoryLabels = selectedCategories.map(
+      (selected) => {
+        const separatorIndex = selected.indexOf("::");
+
+        if (separatorIndex === -1) {
+          // A top-level category was selected.
+          return selected;
+        }
+
+        // A parent-specific subcategory was selected.
+        return selected.slice(separatorIndex + 2);
+      }
+    );
+
+    const matchesCategory =
+      selectedCategories.length === 0 ||
+      categoryTags.some((tag) =>
+        selectedCategoryLabels.some((selected) =>
+          valuesMatch(tag, selected)
+        )
+      );
+
+    return matchesCategory;
+  });
+}, [
+  fundingServices,
+  selectedApplicantTypes,
+  selectedTerritory,
+  selectedCommunity,
+  selectedCategories,
+  hasActiveApplicantFilter,
+]);
+
+
+
+  const toggleApplicantType = (type) => {
+    if (type === "Not sure") {
+      setSelectedApplicantTypes([]);
+      return;
+    }
+
+    setSelectedApplicantTypes((previous) =>
+      previous.includes(type)
+        ? previous.filter((item) => item !== type)
+        : [
+            ...previous.filter((item) => item !== "Not sure"),
+            type,
+          ]
+    );
+  };
+
+const toggleCategory = (categoryKey) => {
+  setSelectedCategories((previous) =>
+    previous.includes(categoryKey)
+      ? previous.filter((item) => item !== categoryKey)
+      : [...previous, categoryKey]
+  );
+};
+
+  const clearFilters = () => {
+    setSelectedApplicantTypes([]);
+    setSelectedTerritory("");
+    setSelectedCommunity("");
+    setSelectedCategories([]);
+  };
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedCategory]);
+  }, [
+    selectedApplicantTypes,
+    selectedTerritory,
+    selectedCommunity,
+    selectedCategories,
+  ]);
 
   /* =========================================================
      PAGINATION
@@ -363,29 +623,15 @@ setFundingServices(customerVisibleServices);
 
   const totalPages = Math.max(
     1,
-    Math.ceil(
-      filteredServices.length /
-        itemsPerPage
-    )
+    Math.ceil(filteredServices.length / itemsPerPage)
   );
 
   const paginatedServices = useMemo(() => {
-    const startIndex =
-      (currentPage - 1) *
-      itemsPerPage;
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
 
-    const endIndex =
-      startIndex + itemsPerPage;
-
-    return filteredServices.slice(
-      startIndex,
-      endIndex
-    );
-  }, [
-    filteredServices,
-    currentPage,
-    itemsPerPage,
-  ]);
+    return filteredServices.slice(startIndex, endIndex);
+  }, [filteredServices, currentPage, itemsPerPage]);
 
   /* =========================================================
      PAGE NUMBERS
@@ -395,11 +641,7 @@ setFundingServices(customerVisibleServices);
     const pages = [];
 
     if (totalPages <= 7) {
-      for (
-        let i = 1;
-        i <= totalPages;
-        i++
-      ) {
+      for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
 
@@ -412,67 +654,39 @@ setFundingServices(customerVisibleServices);
       pages.push("...");
     }
 
-    const start = Math.max(
-      2,
-      currentPage - 1
-    );
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
 
-    const end = Math.min(
-      totalPages - 1,
-      currentPage + 1
-    );
-
-    for (
-      let i = start;
-      i <= end;
-      i++
-    ) {
+    for (let i = start; i <= end; i++) {
       pages.push(i);
     }
 
-    if (
-      currentPage <
-      totalPages - 3
-    ) {
+    if (currentPage < totalPages - 3) {
       pages.push("...");
     }
 
     pages.push(totalPages);
 
     return pages;
-  }, [
-    currentPage,
-    totalPages,
-  ]);
+  }, [currentPage, totalPages]);
 
   /* =========================================================
      STATISTICS
      ========================================================= */
 
   const statistics = useMemo(() => {
-    const openCount =
-      fundingServices.filter((service) => {
-        const status = String(
-          getStatus(service)
-        ).toLowerCase();
+    const openCount = fundingServices.filter((service) => {
+      const status = String(getStatus(service)).toLowerCase();
 
-        return (
-          status.includes("open") ||
-          status.includes("active")
-        );
-      }).length;
+      return status.includes("open") || status.includes("active");
+    }).length;
 
-    const categoryCount =
-      new Set(
-        fundingServices
-          .map((service) =>
-            getCategory(service)
-          )
-          .filter(Boolean)
-          .map((value) =>
-            String(value)
-          )
-      ).size;
+    const categoryCount = new Set(
+      fundingServices
+        .map((service) => getCategory(service))
+        .filter(Boolean)
+        .map((value) => String(value))
+    ).size;
 
     return {
       total: fundingServices.length,
@@ -481,15 +695,12 @@ setFundingServices(customerVisibleServices);
       columns: CUSTOMER_COLUMNS.length,
     };
   }, [fundingServices]);
-
-  /* =========================================================
+    /* =========================================================
      STATUS STYLE
      ========================================================= */
 
   const getStatusStyle = (status) => {
-    const value = String(
-      status || ""
-    )
+    const value = String(status || "")
       .toLowerCase()
       .trim();
 
@@ -530,21 +741,12 @@ setFundingServices(customerVisibleServices);
      CELL EXPANSION
      ========================================================= */
 
-  const getCellKey = (
-    serviceId,
-    column
-  ) => {
+  const getCellKey = (serviceId, column) => {
     return `${serviceId}-${column}`;
   };
 
-  const toggleCell = (
-    serviceId,
-    column
-  ) => {
-    const key = getCellKey(
-      serviceId,
-      column
-    );
+  const toggleCell = (serviceId, column) => {
+    const key = getCellKey(serviceId, column);
 
     setExpandedCells((previous) => ({
       ...previous,
@@ -564,58 +766,38 @@ setFundingServices(customerVisibleServices);
     let rawValue;
 
     if (column === "Program Name") {
-      rawValue =
-        getProgramName(service);
+      rawValue = getProgramName(service);
     } else {
-      rawValue = getValue(
-        service,
-        [column]
-      );
+      rawValue = getValue(service, [column]);
     }
 
-    const value =
-      formatValue(rawValue);
+    const value = formatValue(rawValue);
 
-    const cellKey = getCellKey(
-      service.id,
-      column
-    );
-
-    const isExpanded =
-      expandedCells[cellKey];
+    const cellKey = getCellKey(service.id, column);
+    const isExpanded = expandedCells[cellKey];
 
     const isStatusColumn =
-      column.toLowerCase() ===
-      "status";
+      column.toLowerCase() === "status";
 
-    const shouldShowMore =
-      value.length > 100;
-
-    const status =
-      getStatusStyle(value);
+    const shouldShowMore = value.length > 100;
+    const status = getStatusStyle(value);
 
     /* STATUS */
 
-    if (
-      isStatusColumn &&
-      value !== "-"
-    ) {
+    if (isStatusColumn && value !== "-") {
       return (
         <span
           className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-bold"
           style={{
-            backgroundColor:
-              status.background,
+            backgroundColor: status.background,
             color: status.color,
-            borderColor:
-              status.border,
+            borderColor: status.border,
           }}
         >
           <span
             className="h-1.5 w-1.5 rounded-full"
             style={{
-              backgroundColor:
-                status.dot,
+              backgroundColor: status.dot,
             }}
           />
 
@@ -642,13 +824,9 @@ setFundingServices(customerVisibleServices);
 
     /* LONG VALUE */
 
-    const visibleValue =
-      isExpanded
-        ? value
-        : `${value.slice(
-            0,
-            100
-          )}...`;
+    const visibleValue = isExpanded
+      ? value
+      : `${value.slice(0, 100)}...`;
 
     return (
       <div className="max-w-[420px]">
@@ -665,16 +843,11 @@ setFundingServices(customerVisibleServices);
         <button
           type="button"
           onClick={() =>
-            toggleCell(
-              service.id,
-              column
-            )
+            toggleCell(service.id, column)
           }
           className="ml-2 whitespace-nowrap text-xs font-bold text-teal-600 underline decoration-teal-200 underline-offset-2 transition hover:text-teal-800"
         >
-          {isExpanded
-            ? "See Less"
-            : "See More"}
+          {isExpanded ? "See Less" : "See More"}
         </button>
       </div>
     );
@@ -691,8 +864,7 @@ setFundingServices(customerVisibleServices);
     setApplicationMessage("");
     setApplicationError("");
 
-    document.body.style.overflow =
-      "hidden";
+    document.body.style.overflow = "hidden";
   };
 
   /* =========================================================
@@ -711,8 +883,7 @@ setFundingServices(customerVisibleServices);
 
     setShowApplication(true);
 
-    document.body.style.overflow =
-      "hidden";
+    document.body.style.overflow = "hidden";
   };
 
   /* =========================================================
@@ -727,25 +898,20 @@ setFundingServices(customerVisibleServices);
     setApplicationError("");
     setIsHuman(false);
 
-    document.body.style.overflow =
-      "";
+    document.body.style.overflow = "";
   };
 
   /* =========================================================
      FORM INPUT
      ========================================================= */
 
-  const handleInputChange = (
-    event
-  ) => {
-    const {
-      name,
-      value,
-    } = event.target;
+  const handleInputChange = (event) => {
+    const { name, value, type, checked } =
+      event.target;
 
     setFormData((previous) => ({
       ...previous,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -753,76 +919,80 @@ setFundingServices(customerVisibleServices);
      SUBMIT APPLICATION
      ========================================================= */
 
-const handleSubmit = async (event) => {
-  event.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-  if (!isHuman) {
-    setApplicationError("Please confirm that you are human.");
-    return;
-  }
-
-  if (!formData.consent) {
-    setApplicationError("Please provide consent before submitting your application.");
-    return;
-  }
-
-  if (!selectedService) {
-    return;
-  }
-
-  setSubmitting(true);
-  setApplicationMessage("");
-  setApplicationError("");
-
-  try {
-    const response = await fetch("/api/applications", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        fundingServiceId: selectedService.id,
-        ...formData,
-      }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
+    if (!isHuman) {
       setApplicationError(
-        result.message || "Failed to submit application."
+        "Please confirm that you are human."
       );
       return;
     }
-// Close the application form and show the success popup
-setApplicationMessage("");
-setApplicationError("");
-setShowApplication(false);
-setShowSuccessPopup(true);
 
-// Reset the form fields
-setFormData({ ...initialFormData });
-setIsHuman(false);
+    if (!formData.consent) {
+      setApplicationError(
+        "Please provide consent before submitting your application."
+      );
+      return;
+    }
 
-  } catch (error) {
-    console.error("Application error:", error);
+    if (!selectedService) {
+      return;
+    }
 
-    setApplicationError(
-      "Something went wrong. Please try again."
-    );
-  } finally {
-    setSubmitting(false);
-  }
-};
+    setSubmitting(true);
+    setApplicationMessage("");
+    setApplicationError("");
+
+    try {
+      const response = await fetch("/api/applications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fundingServiceId: selectedService.id,
+          ...formData,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setApplicationError(
+          result.message ||
+            "Failed to submit application."
+        );
+        return;
+      }
+
+      // Close the application form and show success popup.
+      setApplicationMessage("");
+      setApplicationError("");
+      setShowApplication(false);
+      setShowSuccessPopup(true);
+
+      // Reset the form.
+      setFormData({ ...initialFormData });
+      setIsHuman(false);
+    } catch (error) {
+      console.error("Application error:", error);
+
+      setApplicationError(
+        "Something went wrong. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   /* =========================================================
      SCROLL
      ========================================================= */
 
   const scrollToOpportunities = () => {
     document
-      .getElementById(
-        "funding-opportunities"
-      )
+      .getElementById("funding-opportunities")
       ?.scrollIntoView({
         behavior: "smooth",
       });
@@ -834,320 +1004,269 @@ setIsHuman(false);
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#f5f8fb] text-slate-900">
-
-      {/* =====================================================
+            {/* =====================================================
           HEADER
       ===================================================== */}
 
-<header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#071a2d] shadow-lg">
-  <div className="mx-auto flex w-full max-w-[1800px] flex-col items-stretch gap-3 px-4 py-3 sm:px-6 lg:px-8 xl:min-h-[74px] xl:flex-row xl:items-center xl:justify-between xl:gap-5 xl:py-0 2xl:px-12">
+      <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#071a2d] shadow-lg">
+        <div className="mx-auto flex w-full max-w-[1800px] flex-col items-stretch gap-3 px-4 py-3 sm:px-6 lg:px-8 xl:min-h-[74px] xl:flex-row xl:items-center xl:justify-between xl:gap-5 xl:py-0 2xl:px-12">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4 lg:gap-5">
+            <a
+              href="https://ibsgroupcanada.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit IBS Group Canada website"
+              className="h-10 w-10 shrink-0 overflow-hidden rounded-xl sm:h-12 sm:w-12"
+            >
+              <img
+                src="/logo.jpg"
+                alt="IBS Logo"
+                className="h-full w-full object-cover"
+              />
+            </a>
 
-    {/* Logo and Brand */}
-    <div className="flex min-w-0 items-center gap-3 sm:gap-4 lg:gap-5">
-      {/* Logo */}
-      <a
-        href="https://ibsgroupcanada.com/"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Visit IBS Group Canada website"
-        className="h-10 w-10 shrink-0 overflow-hidden rounded-xl sm:h-12 sm:w-12"
-      >
-        <img
-          src="/logo.jpg"
-          alt="IBS Logo"
-          className="h-full w-full object-cover"
-        />
-      </a>
+            <a
+              href="/"
+              aria-label="Go to Funding Program Portal homepage"
+              className="group flex min-w-0 flex-col gap-1"
+            >
+              <span className="text-xs font-extrabold leading-tight tracking-[-0.02em] text-white transition-colors duration-300 group-hover:text-[#7DD3FC] min-[380px]:text-sm sm:text-base md:text-lg">
+                Innovative Business Solutions Ltd.
+              </span>
 
-      {/* Portal Name */}
-      <a
-        href="/"
-        aria-label="Go to Funding Program Portal homepage"
-        className="group flex min-w-0 flex-col gap-1"
-      >
-        <span className="text-xs font-extrabold leading-tight tracking-[-0.02em] text-white transition-colors duration-300 group-hover:text-[#7DD3FC] min-[380px]:text-sm sm:text-base md:text-lg">
-          Innovative Business Solutions Ltd.
-        </span>
+              <span className="text-[10px] font-medium leading-relaxed tracking-[0.01em] text-slate-400 min-[380px]:text-xs sm:text-sm">
+                Funding found. Applications supported by IBS.
+              </span>
+            </a>
+          </div>
 
-        <span className="text-[10px] font-medium leading-relaxed tracking-[0.01em] text-slate-400 min-[380px]:text-xs sm:text-sm">
-          Funding found. Applications supported by IBS.
-        </span>
-      </a>
-    </div>
+          <nav className="flex w-full flex-wrap items-center justify-start gap-x-7 gap-y-3 border-t border-white/10 pt-4 sm:justify-center sm:gap-x-9 xl:w-auto xl:shrink-0 xl:flex-nowrap xl:justify-end xl:gap-x-8 xl:border-0 xl:pt-0 2xl:gap-x-10">
+            <a
+              href="/"
+              className="inline-flex shrink-0 flex-col items-start gap-2 whitespace-nowrap text-xs font-semibold text-slate-300 transition-colors duration-300 hover:text-[#7DD3FC] sm:text-sm"
+            >
+              <span>Funding Programs</span>
+              <span className="h-[2px] w-full rounded-full bg-[#7DD3FC]" />
+            </a>
 
-{/* Navigation and Staff Login */}
+            <a
+              href="/news"
+              className="inline-flex shrink-0 flex-col items-start gap-2 whitespace-nowrap text-xs font-semibold text-slate-300 transition-colors duration-300 hover:text-[#7DD3FC] sm:text-sm"
+            >
+              <span>News & Updates</span>
+              <span className="h-[2px] w-full rounded-full bg-[#7DD3FC]" />
+            </a>
 
+            <a
+              href="https://ibsgroupcanada.com/about/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex shrink-0 flex-col items-start gap-2 whitespace-nowrap text-xs font-semibold text-slate-300 transition-colors duration-300 hover:text-[#7DD3FC] sm:text-sm"
+            >
+              <span>About Us</span>
+              <span className="h-[2px] w-full rounded-full bg-[#7DD3FC]" />
+            </a>
 
-
-<nav className="flex w-full flex-wrap items-center justify-start gap-x-7 gap-y-3 border-t border-white/10 pt-4 sm:justify-center sm:gap-x-9 xl:w-auto xl:shrink-0 xl:flex-nowrap xl:justify-end xl:gap-x-8 xl:border-0 xl:pt-0 2xl:gap-x-10">
-
-  {/* Funding Programs */}
-  <a
-    href="/"
-    className="inline-flex shrink-0 flex-col items-start gap-2 whitespace-nowrap text-xs font-semibold text-slate-300 transition-colors duration-300 hover:text-[#7DD3FC] sm:text-sm"
-  >
-    <span>Funding Programs</span>
-    <span className="h-[2px] w-full rounded-full bg-[#7DD3FC]" />
-  </a>
-
-  {/* News & Updates */}
-  <a
-    href="/news"
-    className="inline-flex shrink-0 flex-col items-start gap-2 whitespace-nowrap text-xs font-semibold text-slate-300 transition-colors duration-300 hover:text-[#7DD3FC] sm:text-sm"
-  >
-    <span>News & Updates</span>
-    <span className="h-[2px] w-full rounded-full bg-[#7DD3FC]" />
-  </a>
-
-  {/* About Us */}
-  <a
-    href="https://ibsgroupcanada.com/about/"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="inline-flex shrink-0 flex-col items-start gap-2 whitespace-nowrap text-xs font-semibold text-slate-300 transition-colors duration-300 hover:text-[#7DD3FC] sm:text-sm"
-  >
-    <span>About Us</span>
-    <span className="h-[2px] w-full rounded-full bg-[#7DD3FC]" />
-  </a>
-
-  {/* Staff Login */}
-  <a
-    href="/login"
-    className="shrink-0 rounded-lg border border-[#7DD3FC]/30 bg-[#2374A8]/20 px-3 py-2 text-xs font-bold text-white transition-all duration-300 hover:border-[#7DD3FC]/70 hover:bg-[#2374A8]/40 sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-sm"
-  >
-    Staff Login
-  </a>
-
-</nav>
-
-
-
-
-
-  </div>
-</header>
-
-
-
-
-     
-{/* =====================================================
-    HERO + FULL-WIDTH STATISTICS
-===================================================== */}
-
-
-<section className="relative isolate overflow-hidden bg-[#061525] text-white">
-  {/* Background grid */}
-  <div
-    className="pointer-events-none absolute inset-0 -z-10 bg-cover bg-center"
-    style={{
-      backgroundImage: "url('/funding-hero.png')",
-    }}
-    aria-hidden="true"
-  />
-
-
-  {/* Ambient lighting */}
-  <div className="pointer-events-none absolute -right-32 -top-40 h-72 w-72 rounded-full bg-teal-400/15 blur-[90px] sm:h-96 sm:w-96" />
-  <div className="pointer-events-none absolute -bottom-32 -left-32 h-72 w-72 rounded-full bg-blue-500/10 blur-[90px] sm:h-96 sm:w-96" />
-
-  <div className="relative mx-auto w-full max-w-[1800px] px-4 py-10 sm:px-6 sm:py-12 md:py-16 lg:px-10 lg:py-20 xl:px-14">
-
-    {/* Main responsive layout */}
-    <div className="grid min-w-0 grid-cols-1 items-center gap-9 sm:gap-12 lg:grid-cols-[minmax(0,1.25fr)_minmax(300px,0.8fr)] lg:gap-10 xl:grid-cols-[minmax(0,1.3fr)_minmax(360px,0.8fr)] xl:gap-16">
-
-      {/* LEFT: HERO CONTENT */}
-     
-<div className="min-w-0">
-  {/* Main heading */}
-  <h1 className="max-w-4xl break-words text-[clamp(2rem,7vw,4.5rem)] font-black leading-[1.08] tracking-[-0.045em] text-[#0B2438]">
-  Find the right 
-  <span className="mt-1 block pb-1 text-[#0B2438]">
-   funding for your business
-  </span>
-</h1>
-  {/* Description */}
-  <p className="mt-5 max-w-2xl text-sm leading-7 text-[#43515C] sm:mt-6 sm:text-base sm:leading-8 lg:text-lg">
-    Explore funding programs, grants and financial support
-    opportunities from government and partner organizations —
-    all in one convenient place.
-  </p>
-
-  {/* CTA */}
-  <div className="mt-7 flex flex-col items-stretch gap-4 sm:mt-8 sm:flex-row sm:items-center">
-    <button
-      type="button"
-      onClick={scrollToOpportunities}
-      className="group inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-xl bg-[#2374A8] px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-[#0B2438]/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#0B2438] hover:shadow-xl hover:shadow-[#0B2438]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2374A8] focus-visible:ring-offset-2 sm:w-auto"
-    >
-      Explore Opportunities
-      <span
-        className="transition-transform duration-300 group-hover:translate-x-1"
-        aria-hidden="true"
-      >
-        →
-      </span>
-    </button>
-  </div>
-
-  {/* Bottom decorative detail */}
-  <div className="mt-8 flex items-center gap-3 sm:mt-11">
-    <div className="h-1 w-14 rounded-full bg-gradient-to-r from-[#2374A8] to-[#5B9BD5] sm:w-16" />
-  </div>
-</div>
-
-
-      {/* RIGHT: STATISTICS PANEL */}
-    
-{/* Statistics row between hero and funding section */}
-
-
-
-    </div>
-  </div>
-</section>
-
-
-
-
+            <a
+              href="/login"
+              className="shrink-0 rounded-lg border border-[#7DD3FC]/30 bg-[#2374A8]/20 px-3 py-2 text-xs font-bold text-white transition-all duration-300 hover:border-[#7DD3FC]/70 hover:bg-[#2374A8]/40 sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-sm"
+            >
+              Staff Login
+            </a>
+          </nav>
+        </div>
+      </header>
 
       {/* =====================================================
-          STATS
+          HERO
       ===================================================== */}
 
-<div className="relative z-10 mx-auto -mt-10 w-full max-w-[1250px] px-4 sm:-mt-12 sm:px-6 lg:px-10">
-  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-{[
-  {
-    value: statistics.total,
-    label: "New this week",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="h-5 w-5"
-      >
-        <rect x="5" y="3" width="14" height="18" rx="2.5" />
-        <path d="M9 8h6M9 12h6M9 16h3" />
-      </svg>
-    ),
-    color: "text-[#2374A8]",
-    iconBg: "bg-[#2374A8]/10",
-    accent: "bg-[#2374A8]",
-    border: "hover:border-[#2374A8]/50",
-  },
-  {
-    value: statistics.open,
-    label: "Open now",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="h-5 w-5"
-      >
-        <circle cx="12" cy="12" r="9" />
-        <path d="m8 12 2.5 2.5L16 9" />
-      </svg>
-    ),
-    color: "text-[#2374A8]",
-iconBg: "bg-[#2374A8]/10",
-accent: "bg-[#2374A8]",
-border: "hover:border-[#2374A8]/50",
-  },
-  {
-    value: statistics.categories,
-    label: "Closing in 14 days",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="h-5 w-5"
-      >
-        <rect x="3" y="3" width="8" height="8" rx="2" />
-        <rect x="13" y="3" width="8" height="8" rx="2" />
-        <rect x="3" y="13" width="8" height="8" rx="2" />
-        <rect x="13" y="13" width="8" height="8" rx="2" />
-      </svg>
-    ),
-    color: "text-[#0B6FB3]",
-    iconBg: "bg-[#7DD3FC]/20",
-    accent: "bg-[#7DD3FC]",
-    border: "hover:border-[#7DD3FC]",
-  },
-].map((stat) => (
-  <div
-    key={stat.label}
-    className={`group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_8px_25px_-12px_rgba(11,36,56,0.20)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg sm:p-4 ${stat.border}`}
-  >
-    {/* Brand accent */}
-    <div
-      className={`absolute inset-x-0 top-0 h-1 ${stat.accent}`}
-    />
+      <section className="relative isolate overflow-hidden bg-[#061525] text-white">
+        <div
+          className="pointer-events-none absolute inset-0 -z-10 bg-cover bg-center"
+          style={{
+            backgroundImage: "url('/funding-hero.png')",
+          }}
+          aria-hidden="true"
+        />
 
-    {/* Soft ice-blue glow */}
-    <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#EEF5F8] opacity-90 blur-2xl" />
+        <div className="pointer-events-none absolute -right-32 -top-40 h-72 w-72 rounded-full bg-teal-400/15 blur-[90px] sm:h-96 sm:w-96" />
+        <div className="pointer-events-none absolute -bottom-32 -left-32 h-72 w-72 rounded-full bg-blue-500/10 blur-[90px] sm:h-96 sm:w-96" />
 
-    <div className="relative flex items-center gap-3">
-      {/* Icon */}
-      <div
-        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${stat.iconBg} ${stat.color} ring-1 ring-inset ring-black/[0.03] transition-transform duration-300 group-hover:scale-105 sm:h-11 sm:w-11`}
-      >
-        {stat.icon}
+        <div className="relative mx-auto w-full max-w-[1800px] px-4 py-10 sm:px-6 sm:py-12 md:py-16 lg:px-10 lg:py-20 xl:px-14">
+          <div className="grid min-w-0 grid-cols-1 items-center gap-9 sm:gap-12 lg:grid-cols-[minmax(0,1.25fr)_minmax(300px,0.8fr)] lg:gap-10 xl:grid-cols-[minmax(0,1.3fr)_minmax(360px,0.8fr)] xl:gap-16">
+            <div className="min-w-0">
+              <h1 className="max-w-4xl break-words text-[clamp(2rem,7vw,4.5rem)] font-black leading-[1.08] tracking-[-0.045em] text-[#0B2438]">
+                Find the right
+                <span className="mt-1 block pb-1 text-[#0B2438]">
+                  funding for your business
+                </span>
+              </h1>
+
+              <p className="mt-5 max-w-2xl text-sm leading-7 text-[#43515C] sm:mt-6 sm:text-base sm:leading-8 lg:text-lg">
+                Explore funding programs, grants and financial support
+                opportunities from government and partner organizations —
+                all in one convenient place.
+              </p>
+
+              <div className="mt-7 flex flex-col items-stretch gap-4 sm:mt-8 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={scrollToOpportunities}
+                  className="group inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-xl bg-[#2374A8] px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-[#0B2438]/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#0B2438] hover:shadow-xl hover:shadow-[#0B2438]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2374A8] focus-visible:ring-offset-2 sm:w-auto"
+                >
+                  Explore Opportunities
+                  <span
+                    className="transition-transform duration-300 group-hover:translate-x-1"
+                    aria-hidden="true"
+                  >
+                    →
+                  </span>
+                </button>
+              </div>
+
+              <div className="mt-8 flex items-center gap-3 sm:mt-11">
+                <div className="h-1 w-14 rounded-full bg-gradient-to-r from-[#2374A8] to-[#5B9BD5] sm:w-16" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          STATISTICS
+      ===================================================== */}
+
+      <div className="relative z-10 mx-auto -mt-10 w-full max-w-[1250px] px-4 sm:-mt-12 sm:px-6 lg:px-10">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+          {[
+            {
+              value: statistics.total,
+              label: "New this week",
+              icon: (
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-5 w-5"
+                >
+                  <rect x="5" y="3" width="14" height="18" rx="2.5" />
+                  <path d="M9 8h6M9 12h6M9 16h3" />
+                </svg>
+              ),
+              color: "text-[#2374A8]",
+              iconBg: "bg-[#2374A8]/10",
+              accent: "bg-[#2374A8]",
+              border: "hover:border-[#2374A8]/50",
+            },
+            {
+              value: statistics.open,
+              label: "Open now",
+              icon: (
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-5 w-5"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="m8 12 2.5 2.5L16 9" />
+                </svg>
+              ),
+              color: "text-[#2374A8]",
+              iconBg: "bg-[#2374A8]/10",
+              accent: "bg-[#2374A8]",
+              border: "hover:border-[#2374A8]/50",
+            },
+            {
+              value: statistics.categories,
+              label: "Closing in 14 days",
+              icon: (
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-5 w-5"
+                >
+                  <rect x="3" y="3" width="8" height="8" rx="2" />
+                  <rect x="13" y="3" width="8" height="8" rx="2" />
+                  <rect x="3" y="13" width="8" height="8" rx="2" />
+                  <rect x="13" y="13" width="8" height="8" rx="2" />
+                </svg>
+              ),
+              color: "text-[#0B6FB3]",
+              iconBg: "bg-[#7DD3FC]/20",
+              accent: "bg-[#7DD3FC]",
+              border: "hover:border-[#7DD3FC]",
+            },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className={`group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_8px_25px_-12px_rgba(11,36,56,0.20)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg sm:p-4 ${stat.border}`}
+            >
+              <div
+                className={`absolute inset-x-0 top-0 h-1 ${stat.accent}`}
+              />
+
+              <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#EEF5F8] opacity-90 blur-2xl" />
+
+              <div className="relative flex items-center gap-3">
+                <div
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${stat.iconBg} ${stat.color} ring-1 ring-inset ring-black/[0.03] transition-transform duration-300 group-hover:scale-105 sm:h-11 sm:w-11`}
+                >
+                  {stat.icon}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={`text-2xl font-extrabold leading-tight tracking-tight ${stat.color} sm:text-3xl`}
+                  >
+                    {loading ? (
+                      <span className="inline-block h-7 w-12 animate-pulse rounded-md bg-[#EEF5F8]" />
+                    ) : (
+                      stat.value
+                    )}
+                  </p>
+
+                  <h3 className="mt-1 break-words text-sm font-bold leading-snug text-[#0B2438] sm:text-base">
+                    {stat.label}
+                  </h3>
+                </div>
+              </div>
+
+              <div
+                className={`absolute inset-x-4 bottom-0 h-[2px] ${stat.accent} opacity-80`}
+              />
+            </div>
+          ))}
+        </div>
       </div>
-
-      {/* Value and title */}
-      <div className="min-w-0 flex-1">
-        <p
-          className={`text-2xl font-extrabold leading-tight tracking-tight ${stat.color} sm:text-3xl`}
-        >
-          {loading ? (
-            <span className="inline-block h-7 w-12 animate-pulse rounded-md bg-[#EEF5F8]" />
-          ) : (
-            stat.value
-          )}
-        </p>
-
-        <h3 className="mt-1 break-words text-sm font-bold leading-snug text-[#0B2438] sm:text-base">
-          {stat.label}
-        </h3>
-      </div>
-    </div>
-
-    {/* Bottom accent */}
-    <div
-      className={`absolute inset-x-4 bottom-0 h-[2px] ${stat.accent} opacity-80`}
-    />
-  </div>
-))}
-  </div>
-</div>
-
 
       {/* =====================================================
           FEATURED FUNDING PROGRAMS
       ===================================================== */}
+
       {!loading && fundingServices.length > 0 && (
-        <section className="mx-auto w-full max-w-[1800px] px-4 py-2 sm:px-6 lg:px-10 xl:px-12 pt-10 sm:pt-12 lg:pt-16">
+        <section className="mx-auto w-full max-w-[1800px] px-4 pt-10 py-2 sm:px-6 sm:pt-12 lg:px-10 lg:pt-16 xl:px-12">
           <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#2374A8]">
                 Explore opportunities
               </p>
+
               <h2 className="mt-1 text-xl font-extrabold tracking-tight text-[#0B2438] sm:text-2xl">
                 Featured Funding Programs
               </h2>
+
               <p className="mt-1 text-sm text-[#43515C]">
                 Discover selected opportunities and find the right support for your needs.
               </p>
@@ -1163,7 +1282,6 @@ border: "hover:border-[#2374A8]/50",
           </div>
 
           <div className="relative">
-            {/* Previous arrow */}
             <button
               type="button"
               onClick={() => moveFeaturedCarousel(-1)}
@@ -1173,105 +1291,113 @@ border: "hover:border-[#2374A8]/50",
               <span aria-hidden="true">‹</span>
             </button>
 
-            {/* Carousel track */}
             <div
               ref={featuredCarouselRef}
               className="flex items-stretch snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-1 pb-4 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-            {fundingServices.map((service) => {
-              const deadline = getValue(service, [
-                "Deadline",
-                "Application Deadline",
-                "Closing Date",
-                "End Date",
-              ]);
-              const amount = getValue(service, [
-                "Amount Max",
-                "Maximum Amount",
-                "Max Amount",
-                "Funding Amount",
-              ]);
-              const purpose = getValue(service, [
-                "Purpose",
-                "Program Purpose",
-                "Description",
-              ]);
-              const status = getStatus(service);
+              {fundingServices.map((service) => {
+                const deadline = getValue(service, [
+                  "Deadline",
+                  "Application Deadline",
+                  "Closing Date",
+                  "End Date",
+                ]);
 
-              return (
-                <article
-                  key={service.id}
-                  className="group relative flex h-[400px] w-full min-w-0 shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_25px_-16px_rgba(11,36,56,0.35)] transition duration-300 hover:-translate-y-1 hover:border-[#2374A8]/40 hover:shadow-lg sm:h-[400px] sm:w-[calc(50%-8px)] xl:h-[400px] xl:w-[calc(25%-12px)]"
-                >
-                  <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-2 pl-0">
-                    <span
-                      className="inline-flex items-center gap-1.5 bg-[#2374A8] py-2 pl-3 pr-5 text-[11px] font-bold text-white shadow-sm"
-                      style={{
-                        clipPath:
-                          "polygon(0 0, calc(100% - 9px) 0, 100% 50%, calc(100% - 9px) 100%, 0 100%)",
-                      }}
-                    >
-                      <span aria-hidden="true">★</span>
-                      Featured
-                    </span>
-                   <span className="max-w-[50%] truncate rounded-md border border-[#2374A8] bg-[#2374A8] px-2.5 py-1 text-[10px] font-extrabold text-white shadow-sm">
-  {status}
-</span>
-                  </div>
+                const amount = getValue(service, [
+                  "Amount Max",
+                  "Maximum Amount",
+                  "Max Amount",
+                  "Funding Amount",
+                ]);
 
-                  <div className="flex flex-1 flex-col p-4">
-                    <h3 className="line-clamp-2 min-h-[2.75rem] text-base font-extrabold leading-snug text-[#0B2438] sm:text-lg">
-                      {getProgramName(service)}
-                    </h3>
+                const purpose = getValue(service, [
+                  "Purpose",
+                  "Program Purpose",
+                  "Description",
+                ]);
 
-                    <span className="mt-3 w-fit max-w-full truncate rounded-md border border-[#2374A8]/20 bg-[#EEF5F8] px-2 py-1 text-[11px] font-semibold text-[#0B2438]">
-                      {getCategory(service)}
-                    </span>
+                const status = getStatus(service);
 
-                    {purpose && formatValue(purpose) !== "-" && (
-                      <p className="mt-3 line-clamp-2 min-h-[2.5rem] text-xs leading-5 text-[#43515C]">
-                        {formatValue(purpose)}
-                      </p>
-                    )}
+                return (
+                  <article
+                    key={service.id}
+                    className="group relative flex h-[400px] w-full min-w-0 shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_25px_-16px_rgba(11,36,56,0.35)] transition duration-300 hover:-translate-y-1 hover:border-[#2374A8]/40 hover:shadow-lg sm:h-[400px] sm:w-[calc(50%-8px)] xl:h-[400px] xl:w-[calc(25%-12px)]"
+                  >
+                    <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-2 pl-0">
+                      <span
+                        className="inline-flex items-center gap-1.5 bg-[#2374A8] py-2 pl-3 pr-5 text-[11px] font-bold text-white shadow-sm"
+                        style={{
+                          clipPath:
+                            "polygon(0 0, calc(100% - 9px) 0, 100% 50%, calc(100% - 9px) 100%, 0 100%)",
+                        }}
+                      >
+                        <span aria-hidden="true">★</span>
+                        Featured
+                      </span>
 
-                    <div className="mt-4 space-y-1.5 text-xs text-[#43515C]">
-                      {deadline && formatValue(deadline) !== "-" && (
-                        <p className="break-words">
-                          <span className="font-bold text-[#0B2438]">Deadline:</span>{" "}
-                          {formatValue(deadline)}
-                        </p>
-                      )}
-                      {amount && formatValue(amount) !== "-" && (
-                        <p className="break-words">
-                          <span className="font-bold text-[#0B2438]">Maximum amount:</span>{" "}
-                          {formatValue(amount)}
-                        </p>
-                      )}
+                      <span className="max-w-[50%] truncate rounded-md border border-[#2374A8] bg-[#2374A8] px-2.5 py-1 text-[10px] font-extrabold text-white shadow-sm">
+                        {status}
+                      </span>
                     </div>
 
-                    <div className="mt-10 grid grid-cols-1 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleApply(service)}
-                        className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#0B7285] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#075B6B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2374A8] focus-visible:ring-offset-2"
-                      >
-                        Get help applying
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleView(service)}
-                        className="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#0B7285]/50 bg-white px-3 py-2 text-xs font-bold text-[#0B2438] transition hover:bg-[#EEF5F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2374A8] focus-visible:ring-offset-2"
-                      >
-                        View details
-                      </button>
+                    <div className="flex flex-1 flex-col p-4">
+                      <h3 className="line-clamp-2 min-h-[2.75rem] text-base font-extrabold leading-snug text-[#0B2438] sm:text-lg">
+                        {getProgramName(service)}
+                      </h3>
+
+                      <span className="mt-3 w-fit max-w-full truncate rounded-md border border-[#2374A8]/20 bg-[#EEF5F8] px-2 py-1 text-[11px] font-semibold text-[#0B2438]">
+                        {getCategory(service)}
+                      </span>
+
+                      {purpose && formatValue(purpose) !== "-" && (
+                        <p className="mt-3 line-clamp-2 min-h-[2.5rem] text-xs leading-5 text-[#43515C]">
+                          {formatValue(purpose)}
+                        </p>
+                      )}
+
+                      <div className="mt-4 space-y-1.5 text-xs text-[#43515C]">
+                        {deadline && formatValue(deadline) !== "-" && (
+                          <p className="break-words">
+                            <span className="font-bold text-[#0B2438]">
+                              Deadline:
+                            </span>{" "}
+                            {formatValue(deadline)}
+                          </p>
+                        )}
+
+                        {amount && formatValue(amount) !== "-" && (
+                          <p className="break-words">
+                            <span className="font-bold text-[#0B2438]">
+                              Maximum amount:
+                            </span>{" "}
+                            {formatValue(amount)}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="mt-10 grid grid-cols-1 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleApply(service)}
+                          className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#0B7285] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#075B6B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2374A8] focus-visible:ring-offset-2"
+                        >
+                          Get help applying
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleView(service)}
+                          className="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#0B7285]/50 bg-white px-3 py-2 text-xs font-bold text-[#0B2438] transition hover:bg-[#EEF5F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2374A8] focus-visible:ring-offset-2"
+                        >
+                          View details
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              );
-            })}
+                  </article>
+                );
+              })}
             </div>
 
-            {/* Next arrow */}
             <button
               type="button"
               onClick={() => moveFeaturedCarousel(1)}
@@ -1293,531 +1419,566 @@ border: "hover:border-[#2374A8]/50",
         className="w-full scroll-mt-24 px-3 py-5 sm:px-5 sm:py-7 lg:px-8 xl:px-10"
       >
 
-        {/* ===================================================
-            SECTION HEADER
+
+                {/* ===================================================
+            APPLICANT, TERRITORY AND CATEGORY FILTERS
         =================================================== */}
 
-        {/* <div className="mx-auto mb-8 w-full max-w-[1900px]">
+    
+<div className="mx-auto mb-6 w-full max-w-[1900px]">
+  <div className="overflow-hidden rounded-2xl border border-[#C8D8E2] bg-white shadow-xl shadow-[#0B2438]/[0.08] sm:rounded-3xl">
 
-          <div className="text-xs font-black uppercase tracking-[0.16em] text-teal-600">
-            Funding Directory
-          </div>
+    {/* HEADER */}
+    <div className="relative overflow-hidden bg-gradient-to-r from-[#0B2438] via-[#123D59] to-[#2374A8] px-5 py-6 sm:px-7 sm:py-7">
+      <div className="pointer-events-none absolute -right-12 -top-20 h-52 w-52 rounded-full bg-white/[0.07] blur-2xl" />
+      <div className="pointer-events-none absolute bottom-0 right-1/3 h-24 w-48 rounded-full bg-[#D52B1E]/20 blur-3xl" />
 
-          <div className="mt-3 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#DCECF6]">
+            <span className="h-2 w-2 rounded-full bg-[#FF9B8F]" />
+            Find the right program
+          </span>
 
-            <div>
+          <h2 className="mt-3 text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+            Filter funding opportunities
+          </h2>
 
-              <h2 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-                Funding Opportunities
-              </h2>
-
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-500 sm:text-base">
-                Browse available funding opportunities
-                and explore the key information you
-                need before applying.
-              </p>
-
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-
-              <p className="text-xs font-semibold text-slate-400">
-                Results
-              </p>
-
-              <p className="mt-1 text-2xl font-black text-teal-600">
-                {filteredServices.length}
-              </p>
-
-            </div>
-
-          </div>
-
-        </div> */}
-
-        {/* ===================================================
-            SEARCH
-        =================================================== */}
-
-        <div className="mx-auto mb-6 w-full max-w-[1900px]">
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-lg shadow-slate-900/[0.03] sm:rounded-3xl sm:p-4">
-
-            <div className="flex flex-col gap-4 lg:flex-row">
-
-              <div className="relative flex-1">
-
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl text-slate-400">
-                  ⌕
-                </span>
-
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(event) =>
-                    setSearchTerm(
-                      event.target.value
-                    )
-                  }
-                  placeholder="Search funding opportunities..."
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-                />
-
-              </div>
-
-              <div className="relative lg:w-64">
-
-                <select
-                  value={
-                    selectedCategory
-                  }
-                  onChange={(event) =>
-                    setSelectedCategory(
-                      event.target.value
-                    )
-                  }
-                  className="h-12 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 pr-10 text-sm font-semibold text-slate-700 outline-none transition focus:border-teal-400 focus:bg-white"
-                >
-
-                  {categories.map(
-                    (category) => (
-                      <option
-                        key={category}
-                        value={category}
-                      >
-                        {category}
-                      </option>
-                    )
-                  )}
-
-                </select>
-
-                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
-                  ▼
-                </span>
-
-              </div>
-
-              {(searchTerm ||
-                selectedCategory !==
-                  "All") && (
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchTerm("");
-                    setSelectedCategory(
-                      "All"
-                    );
-                  }}
-                  className="h-12 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
-                >
-                  Clear
-                </button>
-
-              )}
-
-            </div>
-
-          </div>
-
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#E0EAF1]">
+            Choose your applicant type, territory and categories.
+            Multiple selections match any selected option.
+          </p>
         </div>
 
+        <button
+          type="button"
+          onClick={clearFilters}
+          disabled={
+            selectedApplicantTypes.length === 0 &&
+            !selectedTerritory &&
+            !selectedCommunity &&
+            selectedCategories.length === 0
+          }
+          className="inline-flex w-fit shrink-0 items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-xs font-bold text-white transition hover:border-white/40 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            className="h-4 w-4"
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M10 3h4M7 7l1 13h8l1-13M10 11v5M14 11v5" />
+          </svg>
+          Clear filters
+        </button>
+      </div>
+    </div>
+
+    {/* FILTER PANELS */}
+    <div className="bg-[#F2F6F9] p-3 sm:p-5 lg:p-6">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(240px,0.85fr)_minmax(0,1.15fr)]">
+
+        {/* WHO YOU ARE */}
+        <section className="min-w-0 rounded-2xl border border-[#D7E2EA] bg-white shadow-sm transition hover:shadow-md">
+          <div className="flex items-center gap-3 border-b border-[#E5EDF2] px-4 py-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E5F1F8] text-[#0B496A]">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                className="h-5 w-5"
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6m3-3h-6" />
+              </svg>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-extrabold text-[#0B2438]">
+                Who you are
+              </h3>
+              <p className="mt-0.5 text-xs text-[#647785]">
+                Select one or more applicant types
+              </p>
+            </div>
+
+            {selectedApplicantTypes.length > 0 && (
+              <span className="ml-auto rounded-full bg-[#0B2438] px-2.5 py-1 text-[10px] font-extrabold text-white">
+                {selectedApplicantTypes.length}
+              </span>
+            )}
+          </div>
+
+          <div className="max-h-[300px] space-y-1 overflow-y-auto p-3">
+            {APPLICANT_TYPES.map((type) => {
+              const checked =
+                type === "Not sure"
+                  ? selectedApplicantTypes.length === 0
+                  : selectedApplicantTypes.includes(type);
+
+              return (
+                <label
+                  key={type}
+                  className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-2.5 text-sm leading-5 transition ${
+                    checked && type !== "Not sure"
+                      ? "border-[#2374A8]/40 bg-[#EAF4FA] font-semibold text-[#0B2438]"
+                      : "border-transparent bg-white text-[#43515C] hover:border-[#D8E6EF] hover:bg-[#F5F9FC]"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleApplicantType(type)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[#D52B1E]"
+                  />
+                  <span>{type}</span>
+                </label>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* TERRITORY / PROVINCE */}
+        <section className="min-w-0 overflow-hidden rounded-2xl border border-[#B8D4E5] bg-[#E8F3F9] shadow-sm transition hover:shadow-md">
+          <div className="flex items-center gap-3 border-b border-[#CFE1EC] bg-[#D9EBF5] px-4 py-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0B2438] text-white">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                className="h-5 w-5"
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s7-5.5 7-12a7 7 0 1 0-14 0c0 6.5 7 12 7 12Z" />
+                <circle cx="12" cy="9" r="2.5" />
+              </svg>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-extrabold text-[#0B2438]">
+                Location
+              </h3>
+              <p className="mt-0.5 text-xs text-[#435F70]">
+                Territory and community
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4 p-4">
+            <div>
+              <label
+                htmlFor="territory-filter"
+                className="mb-2 block text-xs font-extrabold text-[#0B2438]"
+              >
+                Territory / Province
+              </label>
+
+              <select
+                id="territory-filter"
+                value={selectedTerritory}
+                onChange={(event) => {
+                  setSelectedTerritory(event.target.value);
+                  setSelectedCommunity("");
+                }}
+                className="h-11 w-full rounded-xl border border-[#B9D0DE] bg-white px-3 text-sm font-medium text-[#243F50] outline-none transition hover:border-[#2374A8] focus:border-[#2374A8] focus:ring-4 focus:ring-[#2374A8]/15"
+              >
+                <option value="">All territories and provinces</option>
+                {TERRITORIES.map((territory) => (
+                  <option key={territory} value={territory}>
+                    {territory}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedTerritory && (
+              <div>
+                <label
+                  htmlFor="community-filter"
+                  className="mb-2 block text-xs font-extrabold text-[#0B2438]"
+                >
+                  Community
+                  <span className="ml-1 font-medium text-[#647785]">
+                    (optional)
+                  </span>
+                </label>
+
+                {TERRITORY_COMMUNITIES[selectedTerritory] ? (
+                  <select
+                    id="community-filter"
+                    value={selectedCommunity}
+                    onChange={(event) =>
+                      setSelectedCommunity(event.target.value)
+                    }
+                    className="h-11 w-full rounded-xl border border-[#B9D0DE] bg-white px-3 text-sm text-[#243F50] outline-none transition hover:border-[#2374A8] focus:border-[#2374A8] focus:ring-4 focus:ring-[#2374A8]/15"
+                  >
+                    <option value="">All communities</option>
+                    {TERRITORY_COMMUNITIES[selectedTerritory].map(
+                      (community) => (
+                        <option key={community} value={community}>
+                          {community}
+                        </option>
+                      )
+                    )}
+                  </select>
+                ) : (
+                  <input
+                    id="community-filter"
+                    type="text"
+                    value={selectedCommunity}
+                    onChange={(event) =>
+                      setSelectedCommunity(event.target.value)
+                    }
+                    placeholder="Enter community name"
+                    className="h-11 w-full rounded-xl border border-[#B9D0DE] bg-white px-3 text-sm text-[#243F50] outline-none transition placeholder:text-[#8294A0] hover:border-[#2374A8] focus:border-[#2374A8] focus:ring-4 focus:ring-[#2374A8]/15"
+                  />
+                )}
+              </div>
+            )}
+
+            <div className="rounded-xl border border-[#C5DDEB] bg-white/75 px-3 py-3">
+              <p className="text-xs leading-5 text-[#435F70]">
+                <span className="font-extrabold text-[#0B2438]">
+                  Good to know:
+                </span>{" "}
+                Territory searches include matching regional and Canada-wide
+                programs. NWT and Nunavut use community lists.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* CATEGORY */}
+        <section className="min-w-0 rounded-2xl border border-[#D7E2EA] bg-white shadow-sm transition hover:shadow-md">
+          <div className="flex items-center gap-3 border-b border-[#E5EDF2] px-4 py-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FCEAE8] text-[#A91F16]">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                className="h-5 w-5"
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h16M4 12h16M4 19h16M8 2v6m8 4v6m-5 1v6" />
+              </svg>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-extrabold text-[#0B2438]">
+                Funding category
+              </h3>
+              <p className="mt-0.5 text-xs text-[#647785]">
+                Select one or more categories
+              </p>
+            </div>
+
+            {selectedCategories.length > 0 && (
+              <span className="ml-auto rounded-full bg-[#D52B1E] px-2.5 py-1 text-[10px] font-extrabold text-white">
+                {selectedCategories.length}
+              </span>
+            )}
+          </div>
+
+          <div className="max-h-[300px] space-y-2 overflow-y-auto p-3">
+            {categoryTree.map((category) => (
+              <div
+                key={category.name}
+                className="rounded-xl border border-[#E5EDF2] bg-[#FAFCFD] p-2 transition hover:border-[#C7DCE8]"
+              >
+                {/* Parent category */}
+                <label
+                  className={`flex cursor-pointer items-start gap-3 rounded-lg px-2 py-2 text-sm leading-5 transition ${
+                    selectedCategories.includes(category.name)
+                      ? "bg-[#FCEAE8] font-bold text-[#8F2018]"
+                      : "text-[#243F50] hover:bg-white"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.includes(category.name)}
+                    onChange={() => toggleCategory(category.name)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[#D52B1E]"
+                  />
+                  <span>{category.name}</span>
+                </label>
+
+                {/* Independent subcategories */}
+                {category.children.map((child) => {
+                  const childKey = `${category.name}::${child}`;
+                  const childChecked = selectedCategories.includes(childKey);
+
+                  return (
+                    <label
+                      key={childKey}
+                      className={`ml-5 flex cursor-pointer items-start gap-3 rounded-lg px-2 py-2 text-sm leading-5 transition ${
+                        childChecked
+                          ? "bg-[#EAF4FA] font-semibold text-[#0B496A]"
+                          : "text-[#526875] hover:bg-white"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={childChecked}
+                        onChange={() => toggleCategory(childKey)}
+                        className="mt-0.5 h-4 w-4 shrink-0 accent-[#2374A8]"
+                      />
+                      <span>{child}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+
+    {/* RESULTS SUMMARY */}
+    <div className="flex flex-col gap-3 border-t border-[#D7E2EA] bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0B2438] text-white">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="h-5 w-5"
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </div>
+
+        <div>
+          <p className="text-sm font-extrabold text-[#0B2438]">
+            {filteredServices.length}{" "}
+            {filteredServices.length === 1
+              ? "program matches"
+              : "programs match"}
+          </p>
+          <p className="mt-0.5 text-xs text-[#647785]">
+            Based on your selected filters
+          </p>
+        </div>
+      </div>
+
+      <p className="flex items-center gap-2 text-xs font-medium text-[#526875]">
+        <span className="h-2 w-2 rounded-full bg-[#2374A8]" />
+        Programs with a closed status are hidden.
+      </p>
+    </div>
+  </div>
+</div>
+
+
         {/* ===================================================
-            TABLE
-            MAXIMUM AVAILABLE WIDTH
+            FUNDING TABLE
         =================================================== */}
 
-        {!loading &&
-          filteredServices.length >
-            0 && (
-
+        {!loading && filteredServices.length > 0 && (
           <div className="mx-auto w-full max-w-[1900px] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-900/[0.04]">
-
             {/* TABLE HEADER */}
 
-            <div className="flex flex-col justify-between gap-3 bg-[#071a2d] px-4 py-4 sm:px-5 sm:flex-row sm:items-center">
-
+            <div className="flex flex-col justify-between gap-3 bg-[#071a2d] px-4 py-4 sm:flex-row sm:items-center sm:px-5">
               <div>
-
                 <h3 className="text-sm font-black text-white">
                   Available Funding Programs
                 </h3>
-
                 <p className="mt-1 text-xs text-slate-400">
                   Customer-approved funding information
                 </p>
-
               </div>
 
               <div className="flex gap-2">
-
                 <span className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-teal-300">
                   {CUSTOMER_COLUMNS.length} columns
                 </span>
-
                 <span className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300">
                   {filteredServices.length} records
                 </span>
-
               </div>
-
             </div>
 
-            {/* =================================================
-                FULL WIDTH TABLE CONTAINER
-            ================================================= */}
+            {/* TABLE CONTAINER */}
 
             <div className="w-full max-w-full overflow-x-auto overscroll-x-contain">
-
               <table
                 className="w-full min-w-[1900px] border-collapse"
-                style={{
-                  tableLayout: "auto",
-                }}
+                style={{ tableLayout: "auto" }}
               >
-
                 <thead>
-
                   <tr className="border-b border-slate-200 bg-slate-50">
-
-                    {/* NUMBER */}
-
                     <th
                       className="sticky left-0 z-30 whitespace-nowrap border-r border-slate-200 bg-slate-50 px-5 py-4 text-center text-[11px] font-black uppercase tracking-wider text-slate-500"
-                      style={{
-                        width: "70px",
-                        minWidth: "70px",
-                      }}
+                      style={{ width: "70px", minWidth: "70px" }}
                     >
                       #
                     </th>
 
-                    {/* CUSTOMER COLUMNS */}
-
-                    {CUSTOMER_COLUMNS.map(
-                      (column) => (
-
-                        <th
-                          key={column}
-                          className="whitespace-nowrap border-r border-slate-100 px-6 py-4 text-left text-[11px] font-black uppercase tracking-wider text-slate-500"
-                          style={{
-                            width:
-                              COLUMN_WIDTHS[
-                                column
-                              ],
-                            minWidth:
-                              COLUMN_WIDTHS[
-                                column
-                              ],
-                          }}
-                        >
-                          {column}
-                        </th>
-
-                      )
-                    )}
-
-                    {/* ACTIONS */}
+                    {CUSTOMER_COLUMNS.map((column) => (
+                      <th
+                        key={column}
+                        className="whitespace-nowrap border-r border-slate-100 px-6 py-4 text-left text-[11px] font-black uppercase tracking-wider text-slate-500"
+                        style={{
+                          width: COLUMN_WIDTHS[column],
+                          minWidth: COLUMN_WIDTHS[column],
+                        }}
+                      >
+                        {column}
+                      </th>
+                    ))}
 
                     <th
                       className="sticky right-0 z-30 whitespace-nowrap border-l border-slate-200 bg-slate-50 px-6 py-4 text-center text-[11px] font-black uppercase tracking-wider text-slate-500"
-                      style={{
-                        width: "190px",
-                        minWidth: "190px",
-                      }}
+                      style={{ width: "190px", minWidth: "190px" }}
                     >
                       Actions
                     </th>
-
                   </tr>
-
                 </thead>
 
-            <tbody>
-  {paginatedServices.map(
-    (service, serviceIndex) => {
-      const globalIndex =
-        (currentPage - 1) *
-          itemsPerPage +
-        serviceIndex;
+                <tbody>
+                  {paginatedServices.map((service, serviceIndex) => {
+                    const globalIndex =
+                      (currentPage - 1) * itemsPerPage + serviceIndex;
 
-      const isEvenRow =
-        serviceIndex % 2 === 0;
+                    const isEvenRow = serviceIndex % 2 === 0;
 
-      return (
-        <tr
-          key={service.id}
-          className={`
-            group
-            border-b
-            border-slate-200
-            transition-all
-            duration-200
-            ${
-              isEvenRow
-                ? "bg-white hover:bg-teal-50"
-                : "bg-[#eaf4f7] hover:bg-teal-100"
-            }
-          `}
-        >
-          {/* NUMBER */}
+                    return (
+                      <tr
+                        key={service.id}
+                        className={`group border-b border-slate-200 transition-all duration-200 ${
+                          isEvenRow
+                            ? "bg-white hover:bg-teal-50"
+                            : "bg-[#eaf4f7] hover:bg-teal-100"
+                        }`}
+                      >
+                        {/* ROW NUMBER */}
 
-          <td
-            className={`
-              sticky left-0 z-20
-              border-r border-slate-200
-              px-5 py-5
-              text-center align-top
-              ${
-                isEvenRow
-                  ? "bg-white group-hover:bg-teal-50"
-                  : "bg-[#eaf4f7] group-hover:bg-teal-100"
-              }
-            `}
-            style={{
-              width: "70px",
-              minWidth: "70px",
-            }}
-          >
-            <span
-              className="
-                inline-flex
-                h-8
-                min-w-8
-                items-center
-                justify-center
-                rounded-lg
-                bg-[#071a2d]
-                px-2
-                text-xs
-                font-black
-                text-teal-300
-                transition-all
-                group-hover:bg-teal-500
-                group-hover:text-[#071a2d]
-              "
-            >
-              {globalIndex + 1}
-            </span>
-          </td>
+                        <td
+                          className={`sticky left-0 z-20 border-r border-slate-200 px-5 py-5 text-center align-top ${
+                            isEvenRow
+                              ? "bg-white group-hover:bg-teal-50"
+                              : "bg-[#eaf4f7] group-hover:bg-teal-100"
+                          }`}
+                          style={{ width: "70px", minWidth: "70px" }}
+                        >
+                          <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg bg-[#071a2d] px-2 text-xs font-black text-teal-300 transition-all group-hover:bg-teal-500 group-hover:text-[#071a2d]">
+                            {globalIndex + 1}
+                          </span>
+                        </td>
 
-          {/* CUSTOMER DATA */}
+                        {/* CUSTOMER DATA */}
 
-          {CUSTOMER_COLUMNS.map(
-            (
-              column,
-              columnIndex
-            ) => (
-              <td
-                key={`${service.id}-${column}`}
-                className="
-                  whitespace-normal
-                  border-r
-                  border-slate-200
-                  px-6
-                  py-5
-                  align-top
-                  text-sm
-                "
-                style={{
-                  width:
-                    COLUMN_WIDTHS[
-                      column
-                    ],
-                  minWidth:
-                    COLUMN_WIDTHS[
-                      column
-                    ],
-                }}
-              >
-                {renderTableValue(
-                  service,
-                  column,
-                  columnIndex
-                )}
-              </td>
-            )
-          )}
+                        {CUSTOMER_COLUMNS.map((column, columnIndex) => (
+                          <td
+                            key={`${service.id}-${column}`}
+                            className="whitespace-normal border-r border-slate-200 px-6 py-5 align-top text-sm"
+                            style={{
+                              width: COLUMN_WIDTHS[column],
+                              minWidth: COLUMN_WIDTHS[column],
+                            }}
+                          >
+                            {renderTableValue(service, column, columnIndex)}
+                          </td>
+                        ))}
 
-          {/* ACTIONS */}
+                        {/* ACTIONS */}
 
-<td
-  className="
-    sticky right-0 
-    border-l border-slate-200
-    bg-white
-    px-6 py-5
-    align-top
-  "
-  style={{
-    width: "190px",
-    minWidth: "190px",
-    backgroundColor: "#ffffff",
-    zIndex: 99,
-  }}
->
-  <div className="flex items-center justify-center gap-2">
-    <button
-      type="button"
-      onClick={() => handleView(service)}
-      className="
-        whitespace-nowrap
-        rounded-lg
-        border border-slate-300
-        bg-white
-        px-3.5 py-2
-        text-xs font-bold text-slate-700
-        shadow-sm transition
-        hover:border-teal-400
-        hover:bg-teal-50
-        hover:text-teal-700
-      "
-    >
-      View Details
-    </button>
+                        <td
+                          className="sticky right-0 border-l border-slate-200 bg-white px-6 py-5 align-top"
+                          style={{
+                            width: "190px",
+                            minWidth: "190px",
+                            backgroundColor: "#ffffff",
+                            zIndex: 99,
+                          }}
+                        >
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleView(service)}
+                              className="whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-teal-400 hover:bg-teal-50 hover:text-teal-700"
+                            >
+                              View Details
+                            </button>
 
-    <button
-      type="button"
-      onClick={() => handleApply(service)}
-      className="
-        whitespace-nowrap
-        rounded-lg
-        bg-[#071a2d]
-        px-3.5 py-2
-        text-xs font-bold text-white
-        shadow-sm transition
-        hover:bg-teal-600
-      "
-    >
-      Get help applying
-    </button>
-  </div>
-</td>
-
-        </tr>
-      );
-    }
-  )}
-</tbody>
-
+                            <button
+                              type="button"
+                              onClick={() => handleApply(service)}
+                              className="whitespace-nowrap rounded-lg bg-[#071a2d] px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-teal-600"
+                            >
+                              Get help applying
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
               </table>
-
             </div>
 
-            {/* =================================================
-                PAGINATION
-            ================================================= */}
+            {/* PAGINATION */}
 
             <div className="flex flex-col gap-5 border-t border-slate-200 bg-slate-50 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
-
               <div className="flex flex-wrap items-center gap-3">
-
                 <p className="text-xs font-medium text-slate-500">
-
                   Showing{" "}
-
                   <span className="font-bold text-slate-800">
-                    {filteredServices.length ===
-                    0
+                    {filteredServices.length === 0
                       ? 0
-                      : (currentPage -
-                          1) *
-                          itemsPerPage +
-                        1}
-                  </span>
-
-                  {" "}to{" "}
-
+                      : (currentPage - 1) * itemsPerPage + 1}
+                  </span>{" "}
+                  to{" "}
                   <span className="font-bold text-slate-800">
                     {Math.min(
-                      currentPage *
-                        itemsPerPage,
+                      currentPage * itemsPerPage,
                       filteredServices.length
                     )}
-                  </span>
-
-                  {" "}of{" "}
-
+                  </span>{" "}
+                  of{" "}
                   <span className="font-bold text-slate-800">
-                    {
-                      filteredServices.length
-                    }
-                  </span>
-
-                  {" "}records
-
+                    {filteredServices.length}
+                  </span>{" "}
+                  records
                 </p>
 
                 <div className="flex items-center gap-2">
-
-                  <span className="text-xs text-slate-400">
-                    Rows:
-                  </span>
-
+                  <span className="text-xs text-slate-400">Rows:</span>
                   <select
-                    value={
-                      itemsPerPage
-                    }
-                    onChange={(
-                      event
-                    ) => {
-
-                      setItemsPerPage(
-                        Number(
-                          event.target
-                            .value
-                        )
-                      );
-
-                      setCurrentPage(
-                        1
-                      );
-
+                    value={itemsPerPage}
+                    onChange={(event) => {
+                      setItemsPerPage(Number(event.target.value));
+                      setCurrentPage(1);
                     }}
                     className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-teal-400"
                   >
-
-                    <option value={5}>
-                      5
-                    </option>
-
-                    <option value={10}>
-                      10
-                    </option>
-
-                    <option value={20}>
-                      20
-                    </option>
-
-                    <option value={50}>
-                      50
-                    </option>
-
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
                   </select>
-
                 </div>
-
               </div>
 
               {totalPages > 1 && (
-
                 <div className="flex items-center justify-center gap-1.5">
-
                   <button
                     type="button"
-                    disabled={
-                      currentPage ===
-                      1
-                    }
+                    disabled={currentPage === 1}
                     onClick={() =>
-                      setCurrentPage(
-                        (page) =>
-                          Math.max(
-                            1,
-                            page - 1
-                          )
-                      )
+                      setCurrentPage((page) => Math.max(1, page - 1))
                     }
                     className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-teal-300 hover:text-teal-700 disabled:cursor-not-allowed disabled:opacity-40"
                   >
@@ -1825,286 +1986,171 @@ border: "hover:border-[#2374A8]/50",
                   </button>
 
                   <div className="flex items-center gap-1">
-
-                    {pageNumbers.map(
-                      (
-                        page,
-                        index
-                      ) => {
-
-                        if (
-                          page ===
-                          "..."
-                        ) {
-
-                          return (
-                            <span
-                              key={`ellipsis-${index}`}
-                              className="px-2 text-xs font-bold text-slate-400"
-                            >
-                              ...
-                            </span>
-                          );
-                        }
-
+                    {pageNumbers.map((page, index) => {
+                      if (page === "...") {
                         return (
-                          <button
-                            type="button"
-                            key={page}
-                            onClick={() =>
-                              setCurrentPage(
-                                page
-                              )
-                            }
-                            className={`h-9 min-w-9 rounded-lg px-2.5 text-xs font-black transition ${
-                              currentPage ===
-                              page
-                                ? "bg-[#071a2d] text-white shadow-md"
-                                : "border border-slate-200 bg-white text-slate-600 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700"
-                            }`}
+                          <span
+                            key={`ellipsis-${index}`}
+                            className="px-2 text-xs font-bold text-slate-400"
                           >
-                            {page}
-                          </button>
+                            ...
+                          </span>
                         );
-
                       }
-                    )}
 
+                      return (
+                        <button
+                          type="button"
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`h-9 min-w-9 rounded-lg px-2.5 text-xs font-black transition ${
+                            currentPage === page
+                              ? "bg-[#071a2d] text-white shadow-md"
+                              : "border border-slate-200 bg-white text-slate-600 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
                   </div>
 
                   <button
                     type="button"
-                    disabled={
-                      currentPage ===
-                      totalPages
-                    }
+                    disabled={currentPage === totalPages}
                     onClick={() =>
-                      setCurrentPage(
-                        (page) =>
-                          Math.min(
-                            totalPages,
-                            page + 1
-                          )
+                      setCurrentPage((page) =>
+                        Math.min(totalPages, page + 1)
                       )
                     }
                     className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-teal-300 hover:text-teal-700 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Next →
                   </button>
-
                 </div>
-
               )}
-
             </div>
-
           </div>
-
         )}
 
-        {/* ===================================================
-            LOADING
-        =================================================== */}
+        {/* LOADING STATE */}
 
         {loading && (
-
           <div className="mx-auto w-full max-w-[1900px] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl">
-
             <div className="flex h-14 animate-pulse items-center bg-slate-100 px-5">
               <div className="h-4 w-52 rounded bg-slate-200" />
             </div>
 
-            {[1, 2, 3, 4, 5].map(
-              (row) => (
-
-                <div
-                  key={row}
-                  className="flex h-16 animate-pulse gap-8 border-b border-slate-100 px-5 py-5"
-                >
-
-                  <div className="h-4 w-8 rounded bg-slate-100" />
-
-                  <div className="h-4 w-40 rounded bg-slate-100" />
-
-                  <div className="h-4 w-36 rounded bg-slate-100" />
-
-                  <div className="h-4 w-44 rounded bg-slate-100" />
-
-                  <div className="h-4 w-28 rounded bg-slate-100" />
-
-                </div>
-
-              )
-            )}
-
+            {[1, 2, 3, 4, 5].map((row) => (
+              <div
+                key={row}
+                className="flex h-16 animate-pulse gap-8 border-b border-slate-100 px-5 py-5"
+              >
+                <div className="h-4 w-8 rounded bg-slate-100" />
+                <div className="h-4 w-40 rounded bg-slate-100" />
+                <div className="h-4 w-36 rounded bg-slate-100" />
+                <div className="h-4 w-44 rounded bg-slate-100" />
+                <div className="h-4 w-28 rounded bg-slate-100" />
+              </div>
+            ))}
           </div>
-
         )}
 
-        {/* ===================================================
-            EMPTY
-        =================================================== */}
+        {/* EMPTY STATE */}
 
-        {!loading &&
-          filteredServices.length ===
-            0 && (
-
+        {!loading && filteredServices.length === 0 && (
           <div className="mx-auto w-full max-w-[1900px] rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-20 text-center">
-
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-2xl text-slate-400">
               ⌕
             </div>
 
             <h3 className="mt-5 text-xl font-black text-slate-900">
-              No funding opportunities
-              found
+              No funding opportunities found
             </h3>
 
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-              Try changing your search
-              term or selecting another
-              category.
+              Try changing your search term or selecting another category.
             </p>
 
             <button
               type="button"
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedCategory(
-                  "All"
-                );
-              }}
+              onClick={clearFilters}
               className="mt-6 rounded-xl bg-[#071a2d] px-5 py-3 text-sm font-bold text-white transition hover:bg-teal-600"
             >
               Clear Filters
             </button>
-
           </div>
-
         )}
-
       </section>
 
       {/* =====================================================
           HOW IT WORKS
       ===================================================== */}
 
-
-
       {/* =====================================================
           FOOTER
       ===================================================== */}
 
       <footer className="bg-[#071a2d]">
-
-     <div className="mx-auto max-w-[1800px] px-5 py-4 text-center sm:px-6 lg:px-10 xl:px-12">
-  <div className="pb-3 pt-3 text-xs text-slate-500">
-    © Copyright 2026 Innovative Business Solutions | All Rights Reserved
-  </div>
-</div>
-
+        <div className="mx-auto max-w-[1800px] px-5 py-4 text-center sm:px-6 lg:px-10 xl:px-12">
+          <div className="pb-3 pt-3 text-xs text-slate-500">
+            © Copyright 2026 Innovative Business Solutions | All Rights Reserved
+          </div>
+        </div>
       </footer>
-
-      {/* =====================================================
+            {/* =====================================================
           VIEW DETAILS MODAL
-          ONLY CUSTOMER_COLUMNS ARE SHOWN
       ===================================================== */}
 
-      {selectedService &&
-        !showApplication && (
-
+      {selectedService && !showApplication && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-[#020b15]/80 p-2 backdrop-blur-md sm:p-4"
           onClick={closeModal}
         >
-
           <div
             className="flex max-h-[96dvh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:max-h-[92vh] sm:rounded-[28px]"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
+            onClick={(event) => event.stopPropagation()}
           >
+            {/* HEADER */}
 
             <div className="bg-[#071a2d] px-4 py-4 sm:px-6 sm:py-6 md:px-8">
-
               <div className="flex items-start justify-between gap-5">
-
-                <div className="min-w-0">
-
-                  {/* <div className="mb-3 flex flex-wrap gap-2">
-
-                    <span className="rounded-lg bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-teal-300">
-                      {getProgramId(
-                        selectedService
-                      )}
-                    </span>
-
-                    <span className="rounded-lg bg-white/10 px-3 py-1.5 text-[10px] font-bold text-slate-300">
-                      {getCategory(
-                        selectedService
-                      )}
-                    </span>
-
-                  </div> */}
-{/* 
-                  <h2 className="text-2xl font-black text-white sm:text-3xl">
-                    {getProgramName(
-                      selectedService
-                    )}
-                  </h2> */}
-
-                  {/* <p className="mt-2 text-sm text-slate-300">
-                    Key funding opportunity
-                    information
-                  </p> */}
-
-                </div>
+                <div className="min-w-0" />
 
                 <button
                   type="button"
-                  onClick={
-                    closeModal
-                  }
+                  onClick={closeModal}
+                  aria-label="Close details"
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-xl text-white transition hover:bg-white/20"
                 >
                   ×
                 </button>
-
               </div>
-
             </div>
 
+            {/* DETAILS */}
+
             <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-5 md:p-8">
-
               <div className="mb-6 rounded-2xl border border-teal-100 bg-teal-50 p-5">
-
                 <p className="text-xs font-black uppercase tracking-wider text-teal-600">
                   Program
                 </p>
 
                 <p className="mt-1 text-lg font-black text-slate-900">
-                  {getProgramName(
-                    selectedService
-                  )}
+                  {getProgramName(selectedService)}
                 </p>
 
                 <p className="mt-2 text-sm text-slate-500">
                   {selectedService.description ||
                     "Funding opportunity details"}
                 </p>
-
               </div>
 
               <div className="overflow-hidden rounded-2xl border border-slate-200">
-
                 <div className="overflow-x-auto">
-
                   <table className="min-w-full border-collapse">
-
                     <thead>
-
                       <tr className="bg-slate-50">
-
                         <th className="w-16 border-b border-slate-200 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-slate-500">
                           #
                         </th>
@@ -2116,124 +2162,70 @@ border: "hover:border-[#2374A8]/50",
                         <th className="border-b border-slate-200 px-5 py-4 text-left text-[11px] font-black uppercase tracking-wider text-slate-500">
                           Information
                         </th>
-
                       </tr>
-
                     </thead>
 
                     <tbody>
+                      {CUSTOMER_COLUMNS.map((key, index) => {
+                        const value =
+                          key === "Program Name"
+                            ? getProgramName(selectedService)
+                            : getValue(selectedService, [key]);
 
-                      {CUSTOMER_COLUMNS.map(
-                        (
-                          key,
-                          index
-                        ) => {
+                        const formattedValue = formatValue(value);
+                        const isStatus = key.toLowerCase() === "status";
+                        const status = getStatusStyle(formattedValue);
 
-                          const value =
-                            key ===
-                            "Program Name"
-                              ? getProgramName(
-                                  selectedService
-                                )
-                              : getValue(
-                                  selectedService,
-                                  [key]
-                                );
+                        return (
+                          <tr
+                            key={key}
+                            className="border-b border-slate-100 last:border-0"
+                          >
+                            <td className="bg-slate-50/50 px-4 py-4 text-center align-top text-xs font-black text-slate-400">
+                              {index + 1}
+                            </td>
 
-                          const formattedValue =
-                            formatValue(
-                              value
-                            );
+                            <td className="bg-slate-50/50 px-5 py-4 align-top text-xs font-bold text-slate-600">
+                              {key}
+                            </td>
 
-                          const isStatus =
-                            key.toLowerCase() ===
-                            "status";
-
-                          const status =
-                            getStatusStyle(
-                              formattedValue
-                            );
-
-                          return (
-
-                            <tr
-                              key={key}
-                              className="border-b border-slate-100 last:border-0"
-                            >
-
-                              <td className="bg-slate-50/50 px-4 py-4 text-center align-top text-xs font-black text-slate-400">
-                                {index +
-                                  1}
-                              </td>
-
-                              <td className="bg-slate-50/50 px-5 py-4 align-top text-xs font-bold text-slate-600">
-                                {key}
-                              </td>
-
-                              <td className="break-words px-5 py-4 text-sm leading-6 text-slate-700">
-
-                                {isStatus &&
-                                formattedValue !==
-                                  "-" ? (
-
+                            <td className="break-words px-5 py-4 text-sm leading-6 text-slate-700">
+                              {isStatus && formattedValue !== "-" ? (
+                                <span
+                                  className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold"
+                                  style={{
+                                    backgroundColor: status.background,
+                                    color: status.color,
+                                    borderColor: status.border,
+                                  }}
+                                >
                                   <span
-                                    className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold"
+                                    className="h-1.5 w-1.5 rounded-full"
                                     style={{
-                                      backgroundColor:
-                                        status.background,
-                                      color:
-                                        status.color,
-                                      borderColor:
-                                        status.border,
+                                      backgroundColor: status.dot,
                                     }}
-                                  >
-
-                                    <span
-                                      className="h-1.5 w-1.5 rounded-full"
-                                      style={{
-                                        backgroundColor:
-                                          status.dot,
-                                      }}
-                                    />
-
-                                    {
-                                      formattedValue
-                                    }
-
-                                  </span>
-
-                                ) : (
-
-                                  formattedValue
-
-                                )}
-
-                              </td>
-
-                            </tr>
-
-                          );
-
-                        }
-                      )}
-
+                                  />
+                                  {formattedValue}
+                                </span>
+                              ) : (
+                                formattedValue
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
-
                   </table>
-
                 </div>
-
               </div>
-
             </div>
 
-            <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-white px-5 py-4 sm:flex-row sm:justify-end sm:px-8">
+            {/* FOOTER ACTIONS */}
 
+            <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-white px-5 py-4 sm:flex-row sm:justify-end sm:px-8">
               <button
                 type="button"
-                onClick={
-                  closeModal
-                }
+                onClick={closeModal}
                 className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               >
                 Close
@@ -2241,318 +2233,355 @@ border: "hover:border-[#2374A8]/50",
 
               <button
                 type="button"
-                onClick={() =>
-                  handleApply(
-                    selectedService
-                  )
-                }
+                onClick={() => handleApply(selectedService)}
                 className="rounded-xl bg-[#071a2d] px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-teal-600"
               >
                 Apply Now →
               </button>
-
             </div>
-
           </div>
-
         </div>
-
       )}
 
       {/* =====================================================
           APPLICATION MODAL
       ===================================================== */}
 
-{/* =====================================================
-    APPLICATION MODAL
-===================================================== */}
+      {selectedService && showApplication && (
+        <div
+          className="fixed inset-0 z-[1000000] flex items-center justify-center overflow-y-auto bg-[#020b15]/80 p-2 backdrop-blur-md sm:p-4"
+          onClick={closeModal}
+        >
+          <div
+            className="flex max-h-[96dvh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:max-h-[94vh] sm:rounded-[28px]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {/* HEADER */}
 
-{selectedService && showApplication && (
-  <div
-    className="fixed inset-0 z-[1000000] flex items-center justify-center overflow-y-auto bg-[#020b15]/80 p-2 backdrop-blur-md sm:p-4"
-    onClick={closeModal}
-  >
-    <div
-      className="flex max-h-[96dvh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:max-h-[94vh] sm:rounded-[28px]"
-      onClick={(event) => event.stopPropagation()}
-    >
-      {/* HEADER */}
-      <div className="bg-[#071a2d] px-4 py-4 sm:px-6 sm:py-6 md:px-8">
-        <div className="flex items-start justify-between gap-5">
-          <div>
-            <div className="mb-3 inline-flex rounded-full bg-teal-400/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-teal-300">
-              Application
+            <div className="bg-[#071a2d] px-4 py-4 sm:px-6 sm:py-6 md:px-8">
+              <div className="flex items-start justify-between gap-5">
+                <div>
+                  <div className="mb-3 inline-flex rounded-full bg-teal-400/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-teal-300">
+                    Application
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  disabled={submitting}
+                  aria-label="Close application form"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-xl text-white transition hover:bg-white/20 disabled:opacity-50"
+                >
+                  ×
+                </button>
+              </div>
             </div>
 
-            {/* <h2 className="text-2xl font-black text-white">
-              Apply for Funding
-            </h2>
+            {/* APPLICATION FORM */}
 
-            <p className="mt-1 text-sm text-slate-300">
-              {getProgramName(selectedService)}
-            </p> */}
+            <form
+              onSubmit={handleSubmit}
+              className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-5 md:p-8"
+            >
+              {/* SELECTED PROGRAM */}
+
+              <div className="mb-6 rounded-2xl border border-teal-100 bg-teal-50 p-4">
+                <p className="text-[10px] font-black uppercase tracking-wider text-teal-600">
+                  Applying For
+                </p>
+
+                <p className="mt-1 text-sm font-black text-slate-900">
+                  {getProgramName(selectedService)}
+                </p>
+
+                <p className="mt-1 text-xs text-slate-500">
+                  Program ID: {getProgramId(selectedService)}
+                </p>
+              </div>
+
+              {/* ERROR MESSAGE */}
+
+              {applicationError && (
+                <div
+                  role="alert"
+                  className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+                >
+                  {applicationError}
+                </div>
+              )}
+
+              {/* FORM FIELDS */}
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+                {/* NAME */}
+
+                <div>
+                  <label
+                    htmlFor="application-name"
+                    className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
+                  >
+                    Name *
+                  </label>
+
+                  <input
+                    id="application-name"
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                    autoComplete="name"
+                    placeholder="Enter your full name"
+                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                  />
+                </div>
+
+                {/* ORGANIZATION */}
+
+                <div>
+                  <label
+                    htmlFor="application-company"
+                    className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
+                  >
+                    Organization *
+                  </label>
+
+                  <input
+                    id="application-company"
+                    type="text"
+                    name="company"
+                    value={formData.company}
+                    onChange={handleInputChange}
+                    required
+                    autoComplete="organization"
+                    placeholder="Enter organization name"
+                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                  />
+                </div>
+
+                {/* WHO YOU ARE */}
+
+                <div>
+                  <label
+                    htmlFor="application-who-you-are"
+                    className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
+                  >
+                    Who you are *
+                  </label>
+
+                  <input
+                    id="application-who-you-are"
+                    type="text"
+                    name="whoYouAre"
+                    value={formData.whoYouAre}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="e.g. Business owner, community representative"
+                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                  />
+                </div>
+
+                {/* TERRITORY / PROVINCE */}
+
+                <div>
+                  <label
+                    htmlFor="application-province"
+                    className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
+                  >
+                    Territory / Province *
+                  </label>
+
+                  <input
+                    id="application-province"
+                    type="text"
+                    name="province"
+                    value={formData.province}
+                    onChange={handleInputChange}
+                    required
+                    autoComplete="address-level1"
+                    placeholder="Enter territory or province"
+                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                  />
+                </div>
+
+                {/* COMMUNITY */}
+
+                <div>
+                  <label
+                    htmlFor="application-community"
+                    className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
+                  >
+                    Community *
+                  </label>
+
+                  <input
+                    id="application-community"
+                    type="text"
+                    name="community"
+                    value={formData.community}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="Enter your community"
+                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                  />
+                </div>
+
+                {/* EMAIL */}
+
+                <div>
+                  <label
+                    htmlFor="application-email"
+                    className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
+                  >
+                    Email *
+                  </label>
+
+                  <input
+                    id="application-email"
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    autoComplete="email"
+                    placeholder="Enter email address"
+                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                  />
+                </div>
+
+                {/* PHONE */}
+
+                <div>
+                  <label
+                    htmlFor="application-phone"
+                    className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
+                  >
+                    Phone *
+                  </label>
+
+                  <input
+                    id="application-phone"
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    required
+                    autoComplete="tel"
+                    placeholder="Enter phone number"
+                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                  />
+                </div>
+
+                {/* MESSAGE */}
+
+                <div className="sm:col-span-2">
+                  <label
+                    htmlFor="application-message"
+                    className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
+                  >
+                    Message *
+                  </label>
+
+                  <textarea
+                    id="application-message"
+                    name="message"
+                    value={formData.message}
+                    onChange={handleInputChange}
+                    required
+                    rows={4}
+                    placeholder="Tell us about your funding requirements..."
+                    className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                  />
+                </div>
+
+                {/* CONSENT */}
+
+                <div className="sm:col-span-2">
+                  <label
+                    htmlFor="application-consent"
+                    className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <input
+                      id="application-consent"
+                      type="checkbox"
+                      name="consent"
+                      checked={formData.consent}
+                      onChange={(event) => {
+                        setFormData((previous) => ({
+                          ...previous,
+                          consent: event.target.checked,
+                        }));
+
+                        if (event.target.checked) {
+                          setApplicationError("");
+                        }
+                      }}
+                      required
+                      className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-teal-600"
+                    />
+
+                    <span className="text-sm leading-6 text-slate-600">
+                      I consent to IBS collecting and using the information I
+                      have provided to respond to my funding inquiry and
+                      process my application. *
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* HUMAN CHECK */}
+
+              <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={isHuman}
+                    onChange={(event) => {
+                      setIsHuman(event.target.checked);
+
+                      if (event.target.checked) {
+                        setApplicationError("");
+                      }
+                    }}
+                    className="h-5 w-5 shrink-0 cursor-pointer accent-teal-600"
+                  />
+
+                  <span className="text-sm font-semibold text-slate-700">
+                    I'm not a robot
+                  </span>
+                </label>
+              </div>
+
+              {/* ACTION BUTTONS */}
+
+              <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  disabled={submitting}
+                  className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={submitting || !isHuman}
+                  className="rounded-xl bg-[#071a2d] px-7 py-3 text-sm font-black text-white shadow-lg transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {submitting ? "Submitting..." : "Submit Application →"}
+                </button>
+              </div>
+            </form>
           </div>
-
-          <button
-            type="button"
-            onClick={closeModal}
-            disabled={submitting}
-            aria-label="Close application form"
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-xl text-white transition hover:bg-white/20 disabled:opacity-50"
-          >
-            ×
-          </button>
         </div>
-      </div>
+      )}
 
-      {/* APPLICATION FORM */}
-      <form
-        onSubmit={handleSubmit}
-        className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-5 md:p-8"
-      >
-        {/* SELECTED PROGRAM */}
-        <div className="mb-6 rounded-2xl border border-teal-100 bg-teal-50 p-4">
-          <p className="text-[10px] font-black uppercase tracking-wider text-teal-600">
-            Applying For
-          </p>
+      {/* =====================================================
+          SUCCESS POPUP
+      ===================================================== */}
 
-          <p className="mt-1 text-sm font-black text-slate-900">
-            {getProgramName(selectedService)}
-          </p>
-
-          <p className="mt-1 text-xs text-slate-500">
-            Program ID: {getProgramId(selectedService)}
-          </p>
-        </div>
-
-        {/* ERROR MESSAGE */}
-        {applicationError && (
-          <div
-            role="alert"
-            className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
-          >
-            {applicationError}
-          </div>
-        )}
-
-        {/* REQUIRED APPLICATION FIELDS */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
-          {/* NAME */}
-          <div>
-            <label htmlFor="application-name" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-              Name *
-            </label>
-            <input
-              id="application-name"
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              required
-              autoComplete="name"
-              placeholder="Enter your full name"
-              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-            />
-          </div>
-
-          {/* ORGANIZATION */}
-          <div>
-            <label htmlFor="application-company" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-              Organization *
-            </label>
-            <input
-              id="application-company"
-              type="text"
-              name="company"
-              value={formData.company}
-              onChange={handleInputChange}
-              required
-              autoComplete="organization"
-              placeholder="Enter organization name"
-              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-            />
-          </div>
-
-          {/* WHO YOU ARE */}
-          <div>
-            <label htmlFor="application-who-you-are" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-              Who you are *
-            </label>
-            <input
-              id="application-who-you-are"
-              type="text"
-              name="whoYouAre"
-              value={formData.whoYouAre}
-              onChange={handleInputChange}
-              required
-              placeholder="e.g. Business owner, community representative"
-              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-            />
-          </div>
-
-          {/* TERRITORY / PROVINCE */}
-          <div>
-            <label htmlFor="application-province" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-              Territory / Province *
-            </label>
-            <input
-              id="application-province"
-              type="text"
-              name="province"
-              value={formData.province}
-              onChange={handleInputChange}
-              required
-              autoComplete="address-level1"
-              placeholder="Enter territory or province"
-              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-            />
-          </div>
-
-          {/* COMMUNITY */}
-          <div>
-            <label htmlFor="application-community" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-              Community *
-            </label>
-            <input
-              id="application-community"
-              type="text"
-              name="community"
-              value={formData.community}
-              onChange={handleInputChange}
-              required
-              placeholder="Enter your community"
-              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-            />
-          </div>
-
-          {/* EMAIL */}
-          <div>
-            <label htmlFor="application-email" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-              Email *
-            </label>
-            <input
-              id="application-email"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-              autoComplete="email"
-              placeholder="Enter email address"
-              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-            />
-          </div>
-
-          {/* PHONE */}
-          <div>
-            <label htmlFor="application-phone" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-              Phone *
-            </label>
-            <input
-              id="application-phone"
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              required
-              autoComplete="tel"
-              placeholder="Enter phone number"
-              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-            />
-          </div>
-
-          {/* MESSAGE */}
-          <div className="sm:col-span-2">
-            <label htmlFor="application-message" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-              Message *
-            </label>
-            <textarea
-              id="application-message"
-              name="message"
-              value={formData.message}
-              onChange={handleInputChange}
-              required
-              rows={4}
-              placeholder="Tell us about your funding requirements..."
-              className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-            />
-          </div>
-
-          {/* CONSENT */}
-          <div className="sm:col-span-2">
-            <label htmlFor="application-consent" className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <input
-                id="application-consent"
-                type="checkbox"
-                name="consent"
-                checked={formData.consent}
-                onChange={(event) => {
-                  setFormData((previous) => ({
-                    ...previous,
-                    consent: event.target.checked,
-                  }));
-                  if (event.target.checked) setApplicationError("");
-                }}
-                required
-                className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-teal-600"
-              />
-              <span className="text-sm leading-6 text-slate-600">
-                I consent to IBS collecting and using the information I have provided to respond to my funding inquiry and process my application. *
-              </span>
-            </label>
-          </div>
-        </div>
-
-        {/* I'M HUMAN CHECKBOX */}
-        <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <label className="flex cursor-pointer items-center gap-3">
-            <input
-              type="checkbox"
-              checked={isHuman}
-              onChange={(event) => {
-                setIsHuman(event.target.checked);
-
-                if (event.target.checked) {
-                  setApplicationError("");
-                }
-              }}
-              className="h-5 w-5 shrink-0 cursor-pointer accent-teal-600"
-            />
-
-            <span className="text-sm font-semibold text-slate-700">
-              I'm not a robot
-            </span>
-          </label>
-        </div>
-
-        {/* ACTION BUTTONS */}
-        <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={closeModal}
-            disabled={submitting}
-            className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
-          >
-            Cancel
-          </button>
-
-          <button
-            type="submit"
-            disabled={submitting || !isHuman}
-            className="rounded-xl bg-[#071a2d] px-7 py-3 text-sm font-black text-white shadow-lg transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {submitting
-              ? "Submitting..."
-              : "Submit Application →"}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
-
-
-      {/* SUCCESS POPUP */}
       {showSuccessPopup && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#020b15]/75 p-4 backdrop-blur-sm">
           <div
@@ -2614,3 +2643,4 @@ border: "hover:border-[#2374A8]/50",
     </main>
   );
 }
+   
