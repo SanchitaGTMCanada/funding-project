@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 /* =========================================================
    CUSTOMER VISIBLE COLUMNS
@@ -101,6 +101,18 @@ const getValue = (service, possibleKeys) => {
 export default function Home() {
   const [fundingServices, setFundingServices] =
     useState([]);
+
+  const featuredCarouselRef = useRef(null);
+
+  const moveFeaturedCarousel = (direction) => {
+    const carousel = featuredCarouselRef.current;
+    if (!carousel) return;
+
+    carousel.scrollBy({
+      left: direction * carousel.clientWidth * 0.85,
+      behavior: "smooth",
+    });
+  };
 
   const [loading, setLoading] = useState(true);
 
@@ -1003,87 +1015,101 @@ const handleSubmit = async (event) => {
 
 <div className="relative z-10 mx-auto -mt-10 w-full max-w-[1250px] px-4 sm:-mt-12 sm:px-6 lg:px-10">
   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-    {[
-      {
-        value: statistics.total,
-        label: "Total Opportunities",
-        description: "Funding programs to explore",
-        icon: (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
-            className="h-6 w-6">
-            <rect x="5" y="3" width="14" height="18" rx="2.5" />
-            <path d="M9 8h6M9 12h6M9 16h3" />
-          </svg>
-        ),
-        color: "text-[#2374A8]",
-        iconBg: "bg-[#2374A8]/10",
-        accent: "bg-[#2374A8]",
-        border: "hover:border-[#2374A8]/40",
-        glow: "group-hover:shadow-blue-100",
-      },
-      {
-        value: statistics.open,
-        label: "Open Programs",
-        description: "Currently accepting applications",
-        icon: (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
-            className="h-6 w-6">
-            <circle cx="12" cy="12" r="9" />
-            <path d="m8 12 2.5 2.5L16 9" />
-          </svg>
-        ),
-        color: "text-[#0B2438]",
-        iconBg: "bg-[#0B2438]/[0.08]",
-        accent: "bg-[#0B2438]",
-        border: "hover:border-[#0B2438]/30",
-        glow: "group-hover:shadow-slate-200",
-      },
-      {
-        value: statistics.categories,
-        label: "Funding Categories",
-        description: "Support across different needs",
-        icon: (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
-            className="h-6 w-6">
-            <rect x="3" y="3" width="8" height="8" rx="2" />
-            <rect x="13" y="3" width="8" height="8" rx="2" />
-            <rect x="3" y="13" width="8" height="8" rx="2" />
-            <rect x="13" y="13" width="8" height="8" rx="2" />
-          </svg>
-        ),
-        color: "text-[#5B9BD5]",
-        iconBg: "bg-[#5B9BD5]/15",
-        accent: "bg-[#5B9BD5]",
-        border: "hover:border-[#5B9BD5]/40",
-        glow: "group-hover:shadow-sky-100",
-      },
+{[
+  {
+    value: statistics.total,
+    label: "New this week",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-5 w-5"
+      >
+        <rect x="5" y="3" width="14" height="18" rx="2.5" />
+        <path d="M9 8h6M9 12h6M9 16h3" />
+      </svg>
+    ),
+    color: "text-[#2374A8]",
+    iconBg: "bg-[#2374A8]/10",
+    accent: "bg-[#2374A8]",
+    border: "hover:border-[#2374A8]/50",
+  },
+  {
+    value: statistics.open,
+    label: "Open now",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-5 w-5"
+      >
+        <circle cx="12" cy="12" r="9" />
+        <path d="m8 12 2.5 2.5L16 9" />
+      </svg>
+    ),
+    color: "text-[#2374A8]",
+iconBg: "bg-[#2374A8]/10",
+accent: "bg-[#2374A8]",
+border: "hover:border-[#2374A8]/50",
+  },
+  {
+    value: statistics.categories,
+    label: "Closing in 14 days",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-5 w-5"
+      >
+        <rect x="3" y="3" width="8" height="8" rx="2" />
+        <rect x="13" y="3" width="8" height="8" rx="2" />
+        <rect x="3" y="13" width="8" height="8" rx="2" />
+        <rect x="13" y="13" width="8" height="8" rx="2" />
+      </svg>
+    ),
+    color: "text-[#0B6FB3]",
+    iconBg: "bg-[#7DD3FC]/20",
+    accent: "bg-[#7DD3FC]",
+    border: "hover:border-[#7DD3FC]",
+  },
 ].map((stat) => (
   <div
     key={stat.label}
-    className={`relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_8px_25px_-12px_rgba(11,36,56,0.20)] sm:p-5 ${stat.border} ${stat.glow}`}
+    className={`group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_8px_25px_-12px_rgba(11,36,56,0.20)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg sm:p-4 ${stat.border}`}
   >
     {/* Brand accent */}
     <div
       className={`absolute inset-x-0 top-0 h-1 ${stat.accent}`}
     />
 
-    {/* Subtle ice-blue glow — static */}
-    <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[#EEF5F8] opacity-90 blur-2xl" />
+    {/* Soft ice-blue glow */}
+    <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#EEF5F8] opacity-90 blur-2xl" />
 
-    <div className="relative flex items-center gap-3.5">
-      {/* Premium icon */}
+    <div className="relative flex items-center gap-3">
+      {/* Icon */}
       <div
-        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${stat.iconBg} ${stat.color} ring-1 ring-inset ring-black/[0.03]`}
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${stat.iconBg} ${stat.color} ring-1 ring-inset ring-black/[0.03] transition-transform duration-300 group-hover:scale-105 sm:h-11 sm:w-11`}
       >
         {stat.icon}
       </div>
 
-      {/* Statistics */}
+      {/* Value and title */}
       <div className="min-w-0 flex-1">
-        <p className="text-2xl font-extrabold leading-tight tracking-tight text-[#0B2438] sm:text-3xl">
+        <p
+          className={`text-2xl font-extrabold leading-tight tracking-tight ${stat.color} sm:text-3xl`}
+        >
           {loading ? (
             <span className="inline-block h-7 w-12 animate-pulse rounded-md bg-[#EEF5F8]" />
           ) : (
@@ -1091,25 +1117,170 @@ const handleSubmit = async (event) => {
           )}
         </p>
 
-        <h3 className="mt-1 text-sm font-bold leading-5 text-[#0B2438]">
+        <h3 className="mt-1 break-words text-sm font-bold leading-snug text-[#0B2438] sm:text-base">
           {stat.label}
         </h3>
-
-        <p className="mt-1 text-xs leading-4 text-[#43515C]">
-          {stat.description}
-        </p>
       </div>
     </div>
 
-    {/* Static bottom accent */}
+    {/* Bottom accent */}
     <div
-      className={`absolute inset-x-4 bottom-0 h-[2px] ${stat.accent} opacity-70`}
+      className={`absolute inset-x-4 bottom-0 h-[2px] ${stat.accent} opacity-80`}
     />
   </div>
 ))}
   </div>
 </div>
 
+
+      {/* =====================================================
+          FEATURED FUNDING PROGRAMS
+      ===================================================== */}
+      {!loading && fundingServices.length > 0 && (
+        <section className="mx-auto w-full max-w-[1800px] px-4 py-2 sm:px-6 lg:px-10 xl:px-12">
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#2374A8]">
+                Explore opportunities
+              </p>
+              <h2 className="mt-1 text-xl font-extrabold tracking-tight text-[#0B2438] sm:text-2xl">
+                Featured Funding Programs
+              </h2>
+              <p className="mt-1 text-sm text-[#43515C]">
+                Discover selected opportunities and find the right support for your needs.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={scrollToOpportunities}
+              className="inline-flex w-fit items-center gap-2 text-sm font-bold text-[#2374A8] transition hover:text-[#0B2438]"
+            >
+              View all programs <span aria-hidden="true">→</span>
+            </button>
+          </div>
+
+          <div className="relative">
+            {/* Previous arrow */}
+            <button
+              type="button"
+              onClick={() => moveFeaturedCarousel(-1)}
+              aria-label="Previous featured funding programs"
+              className="absolute -left-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#2374A8]/20 bg-white text-xl font-bold text-[#0B2438] shadow-lg transition hover:border-[#2374A8] hover:bg-[#2374A8] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2374A8] sm:-left-4 sm:h-11 sm:w-11"
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
+
+            {/* Carousel track */}
+            <div
+              ref={featuredCarouselRef}
+              className="flex items-stretch snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-1 pb-4 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+            {fundingServices.map((service) => {
+              const deadline = getValue(service, [
+                "Deadline",
+                "Application Deadline",
+                "Closing Date",
+                "End Date",
+              ]);
+              const amount = getValue(service, [
+                "Amount Max",
+                "Maximum Amount",
+                "Max Amount",
+                "Funding Amount",
+              ]);
+              const purpose = getValue(service, [
+                "Purpose",
+                "Program Purpose",
+                "Description",
+              ]);
+              const status = getStatus(service);
+
+              return (
+                <article
+                  key={service.id}
+                  className="group relative flex h-[400px] w-full min-w-0 shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_25px_-16px_rgba(11,36,56,0.35)] transition duration-300 hover:-translate-y-1 hover:border-[#2374A8]/40 hover:shadow-lg sm:h-[400px] sm:w-[calc(50%-8px)] xl:h-[400px] xl:w-[calc(25%-12px)]"
+                >
+                  <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-2 pl-0">
+                    <span
+                      className="inline-flex items-center gap-1.5 bg-[#2374A8] py-2 pl-3 pr-5 text-[11px] font-bold text-white shadow-sm"
+                      style={{
+                        clipPath:
+                          "polygon(0 0, calc(100% - 9px) 0, 100% 50%, calc(100% - 9px) 100%, 0 100%)",
+                      }}
+                    >
+                      <span aria-hidden="true">★</span>
+                      Featured
+                    </span>
+                   <span className="max-w-[50%] truncate rounded-md border border-[#2374A8] bg-[#2374A8] px-2.5 py-1 text-[10px] font-extrabold text-white shadow-sm">
+  {status}
+</span>
+                  </div>
+
+                  <div className="flex flex-1 flex-col p-4">
+                    <h3 className="line-clamp-2 min-h-[2.75rem] text-base font-extrabold leading-snug text-[#0B2438] sm:text-lg">
+                      {getProgramName(service)}
+                    </h3>
+
+                    <span className="mt-3 w-fit max-w-full truncate rounded-md border border-[#2374A8]/20 bg-[#EEF5F8] px-2 py-1 text-[11px] font-semibold text-[#0B2438]">
+                      {getCategory(service)}
+                    </span>
+
+                    {purpose && formatValue(purpose) !== "-" && (
+                      <p className="mt-3 line-clamp-2 min-h-[2.5rem] text-xs leading-5 text-[#43515C]">
+                        {formatValue(purpose)}
+                      </p>
+                    )}
+
+                    <div className="mt-4 space-y-1.5 text-xs text-[#43515C]">
+                      {deadline && formatValue(deadline) !== "-" && (
+                        <p className="break-words">
+                          <span className="font-bold text-[#0B2438]">Deadline:</span>{" "}
+                          {formatValue(deadline)}
+                        </p>
+                      )}
+                      {amount && formatValue(amount) !== "-" && (
+                        <p className="break-words">
+                          <span className="font-bold text-[#0B2438]">Maximum amount:</span>{" "}
+                          {formatValue(amount)}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="mt-10 grid grid-cols-1 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleApply(service)}
+                        className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#0B7285] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#075B6B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2374A8] focus-visible:ring-offset-2"
+                      >
+                        Get help applying
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleView(service)}
+                        className="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#0B7285]/50 bg-white px-3 py-2 text-xs font-bold text-[#0B2438] transition hover:bg-[#EEF5F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2374A8] focus-visible:ring-offset-2"
+                      >
+                        View details
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+            </div>
+
+            {/* Next arrow */}
+            <button
+              type="button"
+              onClick={() => moveFeaturedCarousel(1)}
+              aria-label="Next featured funding programs"
+              className="absolute -right-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#2374A8]/20 bg-white text-xl font-bold text-[#0B2438] shadow-lg transition hover:border-[#2374A8] hover:bg-[#2374A8] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2374A8] sm:-right-4 sm:h-11 sm:w-11"
+            >
+              <span aria-hidden="true">›</span>
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* =====================================================
           FUNDING OPPORTUNITIES
