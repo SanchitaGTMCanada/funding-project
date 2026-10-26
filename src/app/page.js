@@ -1428,18 +1428,19 @@ const toggleCategory = (categoryKey) => {
         =================================================== */}
 
     
+
 <div className="mx-auto mb-6 w-full max-w-[1900px]">
   <div className="overflow-hidden rounded-2xl border border-[#C8D8E2] bg-white shadow-xl shadow-[#0B2438]/[0.08] sm:rounded-3xl">
 
     {/* HEADER */}
     <div className="relative overflow-hidden bg-gradient-to-r from-[#0B2438] via-[#123D59] to-[#2374A8] px-5 py-6 sm:px-7 sm:py-7">
       <div className="pointer-events-none absolute -right-12 -top-20 h-52 w-52 rounded-full bg-white/[0.07] blur-2xl" />
-      <div className="pointer-events-none absolute bottom-0 right-1/3 h-24 w-48 rounded-full bg-[#D52B1E]/20 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 right-1/3 h-24 w-48 rounded-full bg-[#14B8A6]/20 blur-3xl" />
 
       <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#DCECF6]">
-            <span className="h-2 w-2 rounded-full bg-[#FF9B8F]" />
+            <span className="h-2 w-2 rounded-full bg-[#5EEAD4]" />
             Find the right program
           </span>
 
@@ -1473,7 +1474,11 @@ const toggleCategory = (categoryKey) => {
             className="h-4 w-4"
             aria-hidden="true"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M10 3h4M7 7l1 13h8l1-13M10 11v5M14 11v5" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4 7h16M10 3h4M7 7l1 13h8l1-13M10 11v5M14 11v5"
+            />
           </svg>
           Clear filters
         </button>
@@ -1497,7 +1502,11 @@ const toggleCategory = (categoryKey) => {
                 className="h-5 w-5"
                 aria-hidden="true"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6m3-3h-6" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6m3-3h-6"
+                />
               </svg>
             </div>
 
@@ -1537,7 +1546,7 @@ const toggleCategory = (categoryKey) => {
                     type="checkbox"
                     checked={checked}
                     onChange={() => toggleApplicantType(type)}
-                    className="mt-0.5 h-4 w-4 shrink-0 accent-[#D52B1E]"
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[#0F766E]"
                   />
                   <span>{type}</span>
                 </label>
@@ -1559,7 +1568,11 @@ const toggleCategory = (categoryKey) => {
                 className="h-5 w-5"
                 aria-hidden="true"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s7-5.5 7-12a7 7 0 1 0-14 0c0 6.5 7 12 7 12Z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 21s7-5.5 7-12a7 7 0 1 0-14 0c0 6.5 7 12 7 12Z"
+                />
                 <circle cx="12" cy="9" r="2.5" />
               </svg>
             </div>
@@ -1661,7 +1674,7 @@ const toggleCategory = (categoryKey) => {
         {/* CATEGORY */}
         <section className="min-w-0 rounded-2xl border border-[#D7E2EA] bg-white shadow-sm transition hover:shadow-md">
           <div className="flex items-center gap-3 border-b border-[#E5EDF2] px-4 py-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FCEAE8] text-[#A91F16]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#CCFBF1] text-[#0F766E]">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -1671,7 +1684,11 @@ const toggleCategory = (categoryKey) => {
                 className="h-5 w-5"
                 aria-hidden="true"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h16M4 12h16M4 19h16M8 2v6m8 4v6m-5 1v6" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 5h16M4 12h16M4 19h16M8 2v6m8 4v6m-5 1v6"
+                />
               </svg>
             </div>
 
@@ -1685,7 +1702,7 @@ const toggleCategory = (categoryKey) => {
             </div>
 
             {selectedCategories.length > 0 && (
-              <span className="ml-auto rounded-full bg-[#D52B1E] px-2.5 py-1 text-[10px] font-extrabold text-white">
+              <span className="ml-auto rounded-full bg-[#0F766E] px-2.5 py-1 text-[10px] font-extrabold text-white">
                 {selectedCategories.length}
               </span>
             )}
@@ -1701,7 +1718,7 @@ const toggleCategory = (categoryKey) => {
                 <label
                   className={`flex cursor-pointer items-start gap-3 rounded-lg px-2 py-2 text-sm leading-5 transition ${
                     selectedCategories.includes(category.name)
-                      ? "bg-[#FCEAE8] font-bold text-[#8F2018]"
+                      ? "bg-[#CCFBF1] font-bold text-[#115E59]"
                       : "text-[#243F50] hover:bg-white"
                   }`}
                 >
@@ -1709,7 +1726,7 @@ const toggleCategory = (categoryKey) => {
                     type="checkbox"
                     checked={selectedCategories.includes(category.name)}
                     onChange={() => toggleCategory(category.name)}
-                    className="mt-0.5 h-4 w-4 shrink-0 accent-[#D52B1E]"
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[#0F766E]"
                   />
                   <span>{category.name}</span>
                 </label>
@@ -1717,7 +1734,8 @@ const toggleCategory = (categoryKey) => {
                 {/* Independent subcategories */}
                 {category.children.map((child) => {
                   const childKey = `${category.name}::${child}`;
-                  const childChecked = selectedCategories.includes(childKey);
+                  const childChecked =
+                    selectedCategories.includes(childKey);
 
                   return (
                     <label
@@ -1758,7 +1776,11 @@ const toggleCategory = (categoryKey) => {
             className="h-5 w-5"
             aria-hidden="true"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M5 12h14M12 5l7 7-7 7"
+            />
           </svg>
         </div>
 
@@ -1782,6 +1804,7 @@ const toggleCategory = (categoryKey) => {
     </div>
   </div>
 </div>
+
 
 
         {/* ===================================================
