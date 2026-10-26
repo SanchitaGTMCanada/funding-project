@@ -879,37 +879,39 @@ const handleSubmit = async (event) => {
     </div>
 
 {/* Navigation and Staff Login */}
-<nav className="flex w-full flex-wrap items-center justify-start gap-x-3 gap-y-2 border-t border-white/10 pt-3 sm:justify-center sm:gap-x-5 xl:w-auto xl:shrink-0 xl:flex-nowrap xl:justify-end xl:gap-3 xl:border-0 xl:pt-0 2xl:gap-5">
 
 
-{/* Funding Programs */}
-<a
-  href="/"
-  className="whitespace-nowrap text-xs font-semibold text-slate-300 transition-colors duration-300 hover:text-[#7DD3FC] sm:text-sm"
->
-  Funding Programs
-</a>
 
+<nav className="flex w-full flex-wrap items-center justify-start gap-x-7 gap-y-3 border-t border-white/10 pt-4 sm:justify-center sm:gap-x-9 xl:w-auto xl:shrink-0 xl:flex-nowrap xl:justify-end xl:gap-x-8 xl:border-0 xl:pt-0 2xl:gap-x-10">
+
+  {/* Funding Programs */}
+  <a
+    href="/"
+    className="inline-flex shrink-0 flex-col items-start gap-2 whitespace-nowrap text-xs font-semibold text-slate-300 transition-colors duration-300 hover:text-[#7DD3FC] sm:text-sm"
+  >
+    <span>Funding Programs</span>
+    <span className="h-[2px] w-full rounded-full bg-[#7DD3FC]" />
+  </a>
 
   {/* News & Updates */}
   <a
     href="/news"
-    className="whitespace-nowrap text-xs font-semibold text-slate-300 transition-colors duration-300 hover:text-[#7DD3FC] sm:text-sm"
+    className="inline-flex shrink-0 flex-col items-start gap-2 whitespace-nowrap text-xs font-semibold text-slate-300 transition-colors duration-300 hover:text-[#7DD3FC] sm:text-sm"
   >
-    News & Updates
+    <span>News & Updates</span>
+    <span className="h-[2px] w-full rounded-full bg-[#7DD3FC]" />
   </a>
 
   {/* About Us */}
-
-<a
-  href="https://ibsgroupcanada.com/about/"
-  target="_blank"
-  rel="noopener noreferrer"
-  className="whitespace-nowrap text-xs font-semibold text-slate-300 transition-colors duration-300 hover:text-[#7DD3FC] sm:text-sm"
->
-  About Us
-</a>
-
+  <a
+    href="https://ibsgroupcanada.com/about/"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="inline-flex shrink-0 flex-col items-start gap-2 whitespace-nowrap text-xs font-semibold text-slate-300 transition-colors duration-300 hover:text-[#7DD3FC] sm:text-sm"
+  >
+    <span>About Us</span>
+    <span className="h-[2px] w-full rounded-full bg-[#7DD3FC]" />
+  </a>
 
   {/* Staff Login */}
   <a
@@ -920,6 +922,9 @@ const handleSubmit = async (event) => {
   </a>
 
 </nav>
+
+
+
 
 
   </div>
@@ -1137,7 +1142,7 @@ border: "hover:border-[#2374A8]/50",
           FEATURED FUNDING PROGRAMS
       ===================================================== */}
       {!loading && fundingServices.length > 0 && (
-        <section className="mx-auto w-full max-w-[1800px] px-4 py-2 sm:px-6 lg:px-10 xl:px-12">
+        <section className="mx-auto w-full max-w-[1800px] px-4 py-2 sm:px-6 lg:px-10 xl:px-12 pt-10 sm:pt-12 lg:pt-16">
           <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#2374A8]">
