@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "IBS Funding Program Portal",
+  title: "Innovative Business Solutions Ltd.",
   description:
     "Explore funding programs, grants, and financial support opportunities through IBS Group Canada. Discover eligible programs and submit your funding applications online.",
 };

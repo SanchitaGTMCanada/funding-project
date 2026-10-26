@@ -831,49 +831,89 @@ const handleSubmit = async (event) => {
       ===================================================== */}
 
 <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#071a2d] shadow-lg">
- <div className="mx-auto flex min-h-[74px] w-full max-w-[1800px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-10 xl:px-12">
-  {/* Logo and Brand */}
-  <div className="flex min-w-0 items-center gap-5 sm:gap-6">
-    {/* Logo */}
-    <a
-      href="https://ibsgroupcanada.com/"
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label="Visit IBS Group Canada website"
-      className="h-11 w-11 shrink-0 overflow-hidden rounded-xl sm:h-14 sm:w-14"
-    >
-      <img
-        src="/logo.jpg"
-        alt="IBS Logo"
-        className="h-full w-full object-cover"
-      />
-    </a>
+  <div className="mx-auto flex w-full max-w-[1800px] flex-col items-stretch gap-3 px-4 py-3 sm:px-6 lg:px-8 xl:min-h-[74px] xl:flex-row xl:items-center xl:justify-between xl:gap-5 xl:py-0 2xl:px-12">
 
-    {/* Portal Name */}
-    <a
-      href="/"
-      aria-label="Go to Funding Program Portal homepage"
-      className="group min-w-0"
-    >
+    {/* Logo and Brand */}
+    <div className="flex min-w-0 items-center gap-3 sm:gap-4 lg:gap-5">
+      {/* Logo */}
+      <a
+        href="https://ibsgroupcanada.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Visit IBS Group Canada website"
+        className="h-10 w-10 shrink-0 overflow-hidden rounded-xl sm:h-12 sm:w-12"
+      >
+        <img
+          src="/logo.jpg"
+          alt="IBS Logo"
+          className="h-full w-full object-cover"
+        />
+      </a>
 
-      
-      <span className="block text-sm font-extrabold leading-tight tracking-[-0.02em] text-white transition-colors duration-300 group-hover:text-[#7DD3FC] sm:text-base md:text-lg">
-        IBS Funding Program Portal
-      </span>
+      {/* Portal Name */}
+      <a
+        href="/"
+        aria-label="Go to Funding Program Portal homepage"
+        className="group flex min-w-0 flex-col gap-1"
+      >
+        <span className="text-xs font-extrabold leading-tight tracking-[-0.02em] text-white transition-colors duration-300 group-hover:text-[#7DD3FC] min-[380px]:text-sm sm:text-base md:text-lg">
+          Innovative Business Solutions Ltd.
+        </span>
 
-     
-    </a>
-  </div>
+        <span className="text-[10px] font-medium leading-relaxed tracking-[0.01em] text-slate-400 min-[380px]:text-xs sm:text-sm">
+          Funding found. Applications supported by IBS.
+        </span>
+      </a>
+    </div>
 
-  {/* Employee Login */}
+{/* Navigation and Staff Login */}
+<nav className="flex w-full flex-wrap items-center justify-start gap-x-3 gap-y-2 border-t border-white/10 pt-3 sm:justify-center sm:gap-x-5 xl:w-auto xl:shrink-0 xl:flex-nowrap xl:justify-end xl:gap-3 xl:border-0 xl:pt-0 2xl:gap-5">
+
+
+{/* Funding Programs */}
+<a
+  href="/"
+  className="whitespace-nowrap text-xs font-semibold text-slate-300 transition-colors duration-300 hover:text-[#7DD3FC] sm:text-sm"
+>
+  Funding Programs
+</a>
+
+
+  {/* News & Updates */}
+  <a
+    href="/news"
+    className="whitespace-nowrap text-xs font-semibold text-slate-300 transition-colors duration-300 hover:text-[#7DD3FC] sm:text-sm"
+  >
+    News & Updates
+  </a>
+
+  {/* About Us */}
+
+<a
+  href="https://ibsgroupcanada.com/about/"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="whitespace-nowrap text-xs font-semibold text-slate-300 transition-colors duration-300 hover:text-[#7DD3FC] sm:text-sm"
+>
+  About Us
+</a>
+
+
+  {/* Staff Login */}
   <a
     href="/login"
-    className="shrink-0 rounded-xl border border-[#7DD3FC]/30 bg-[#2374A8]/20 px-3 py-2.5 text-xs font-bold text-white transition-all duration-300 hover:border-[#7DD3FC]/70 hover:bg-[#2374A8]/40 sm:px-4 sm:text-sm"
+    className="shrink-0 rounded-lg border border-[#7DD3FC]/30 bg-[#2374A8]/20 px-3 py-2 text-xs font-bold text-white transition-all duration-300 hover:border-[#7DD3FC]/70 hover:bg-[#2374A8]/40 sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-sm"
   >
-    Employee Login
+    Staff Login
   </a>
-</div>
+
+</nav>
+
+
+  </div>
 </header>
+
+
 
 
      
@@ -897,7 +937,7 @@ const handleSubmit = async (event) => {
   <div className="pointer-events-none absolute -right-32 -top-40 h-72 w-72 rounded-full bg-teal-400/15 blur-[90px] sm:h-96 sm:w-96" />
   <div className="pointer-events-none absolute -bottom-32 -left-32 h-72 w-72 rounded-full bg-blue-500/10 blur-[90px] sm:h-96 sm:w-96" />
 
-  <div className="relative mx-auto w-full max-w-[1800px] px-4 py-10 sm:px-6 sm:py-14 lg:px-10 lg:py-20 xl:px-14">
+  <div className="relative mx-auto w-full max-w-[1800px] px-4 py-10 sm:px-6 sm:py-12 md:py-16 lg:px-10 lg:py-20 xl:px-14">
 
     {/* Main responsive layout */}
     <div className="grid min-w-0 grid-cols-1 items-center gap-9 sm:gap-12 lg:grid-cols-[minmax(0,1.25fr)_minmax(300px,0.8fr)] lg:gap-10 xl:grid-cols-[minmax(0,1.3fr)_minmax(360px,0.8fr)] xl:gap-16">
@@ -906,7 +946,7 @@ const handleSubmit = async (event) => {
      
 <div className="min-w-0">
   {/* Main heading */}
-  <h1 className="max-w-4xl break-words text-[2.45rem] font-black leading-[1.08] tracking-[-0.045em] text-[#0B2438] sm:text-5xl md:text-6xl xl:text-[4.5rem]">
+  <h1 className="max-w-4xl break-words text-[clamp(2rem,7vw,4.5rem)] font-black leading-[1.08] tracking-[-0.045em] text-[#0B2438]">
   Find the right 
   <span className="mt-1 block pb-1 text-[#0B2438]">
    funding for your business
@@ -1023,7 +1063,7 @@ const handleSubmit = async (event) => {
 ].map((stat) => (
   <div
     key={stat.label}
-    className={`relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_25px_-12px_rgba(11,36,56,0.20)] sm:p-5 ${stat.border} ${stat.glow}`}
+    className={`relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_8px_25px_-12px_rgba(11,36,56,0.20)] sm:p-5 ${stat.border} ${stat.glow}`}
   >
     {/* Brand accent */}
     <div
@@ -1077,7 +1117,7 @@ const handleSubmit = async (event) => {
 
       <section
         id="funding-opportunities"
-        className="w-full scroll-mt-24 py-5 px-3 sm:px-5 lg:px-8 xl:px-10"
+        className="w-full scroll-mt-24 px-3 py-5 sm:px-5 sm:py-7 lg:px-8 xl:px-10"
       >
 
         {/* ===================================================
@@ -1128,7 +1168,7 @@ const handleSubmit = async (event) => {
 
         <div className="mx-auto mb-6 w-full max-w-[1900px]">
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-lg shadow-slate-900/[0.03]">
+          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-lg shadow-slate-900/[0.03] sm:rounded-3xl sm:p-4">
 
             <div className="flex flex-col gap-4 lg:flex-row">
 
@@ -1223,7 +1263,7 @@ const handleSubmit = async (event) => {
 
             {/* TABLE HEADER */}
 
-            <div className="flex flex-col justify-between gap-3 bg-[#071a2d] px-5 py-4 sm:flex-row sm:items-center">
+            <div className="flex flex-col justify-between gap-3 bg-[#071a2d] px-4 py-4 sm:px-5 sm:flex-row sm:items-center">
 
               <div>
 
@@ -1255,7 +1295,7 @@ const handleSubmit = async (event) => {
                 FULL WIDTH TABLE CONTAINER
             ================================================= */}
 
-            <div className="w-full overflow-x-auto">
+            <div className="w-full max-w-full overflow-x-auto overscroll-x-contain">
 
               <table
                 className="w-full min-w-[1900px] border-collapse"
@@ -1801,18 +1841,18 @@ const handleSubmit = async (event) => {
         !showApplication && (
 
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-[#020b15]/80 p-4 backdrop-blur-md"
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-[#020b15]/80 p-2 backdrop-blur-md sm:p-4"
           onClick={closeModal}
         >
 
           <div
-            className="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl"
+            className="flex max-h-[96dvh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:max-h-[92vh] sm:rounded-[28px]"
             onClick={(event) =>
               event.stopPropagation()
             }
           >
 
-            <div className="bg-[#071a2d] px-6 py-6 sm:px-8">
+            <div className="bg-[#071a2d] px-4 py-4 sm:px-6 sm:py-6 md:px-8">
 
               <div className="flex items-start justify-between gap-5">
 
@@ -1861,7 +1901,7 @@ const handleSubmit = async (event) => {
 
             </div>
 
-            <div className="flex-1 overflow-y-auto p-5 sm:p-8">
+            <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-5 md:p-8">
 
               <div className="mb-6 rounded-2xl border border-teal-100 bg-teal-50 p-5">
 
@@ -2056,28 +2096,28 @@ const handleSubmit = async (event) => {
 
 {selectedService && showApplication && (
   <div
-    className="fixed inset-0 z-[100] flex items-center justify-center bg-[#020b15]/80 p-4 backdrop-blur-md"
+    className="fixed inset-0 z-[1000000] flex items-center justify-center overflow-y-auto bg-[#020b15]/80 p-2 backdrop-blur-md sm:p-4"
     onClick={closeModal}
   >
     <div
-      className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl"
+      className="flex max-h-[96dvh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:max-h-[94vh] sm:rounded-[28px]"
       onClick={(event) => event.stopPropagation()}
     >
       {/* HEADER */}
-      <div className="bg-[#071a2d] px-6 py-6 sm:px-8">
+      <div className="bg-[#071a2d] px-4 py-4 sm:px-6 sm:py-6 md:px-8">
         <div className="flex items-start justify-between gap-5">
           <div>
             <div className="mb-3 inline-flex rounded-full bg-teal-400/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-teal-300">
               Application
             </div>
 
-            <h2 className="text-2xl font-black text-white">
+            {/* <h2 className="text-2xl font-black text-white">
               Apply for Funding
             </h2>
 
             <p className="mt-1 text-sm text-slate-300">
               {getProgramName(selectedService)}
-            </p>
+            </p> */}
           </div>
 
           <button
@@ -2095,7 +2135,7 @@ const handleSubmit = async (event) => {
       {/* APPLICATION FORM */}
       <form
         onSubmit={handleSubmit}
-        className="flex-1 overflow-y-auto p-5 sm:p-8"
+        className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-5 md:p-8"
       >
         {/* SELECTED PROGRAM */}
         <div className="mb-6 rounded-2xl border border-teal-100 bg-teal-50 p-4">
@@ -2123,7 +2163,7 @@ const handleSubmit = async (event) => {
         )}
 
         {/* FORM FIELDS */}
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
           {/* NAME */}
           <div>
             <label

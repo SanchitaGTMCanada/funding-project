@@ -1049,8 +1049,11 @@ const handleToggleStatus = async () => {
     className="group min-w-0"
   >
     <h1 className="truncate text-base font-black tracking-tight text-white transition-colors duration-300 group-hover:text-[#7DD3FC] sm:text-xl">
-      IBS Funding Program Portal
+      Innovative Business Solutions Ltd.
     </h1>
+      <span className="text-xs font-medium leading-relaxed tracking-[0.01em] text-slate-400 sm:text-sm">
+    Funding found. Applications supported by IBS.
+  </span>
 
  
   </a>

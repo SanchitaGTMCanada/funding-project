@@ -135,17 +135,22 @@ export default function LoginPage() {
       </a>
 
       {/* Portal Name — Funding homepage */}
-      <a
-        href="/"
-        aria-label="Go to Funding Program Portal homepage"
-        className="group min-w-0"
-      >
-        <span className="block text-base font-black leading-tight tracking-tight text-white transition-colors duration-300 group-hover:text-[#7DD3FC] sm:text-lg">
-          IBS Funding Program Portal
-        </span>
 
-       
-      </a>
+<a
+  href="/"
+  aria-label="Go to Funding Program Portal homepage"
+  className="group flex min-w-0 flex-col gap-1"
+>
+  <span className="text-sm font-extrabold leading-tight tracking-[-0.03em] text-white transition-colors duration-300 group-hover:text-[#7DD3FC] sm:text-base lg:text-lg">
+    Innovative Business Solutions Ltd.
+  </span>
+
+  <span className="text-xs font-medium leading-relaxed tracking-[0.01em] text-slate-400 sm:text-sm">
+    Funding found. Applications supported by IBS.
+  </span>
+</a>
+
+
 
     </div>
 
@@ -213,7 +218,7 @@ export default function LoginPage() {
 
   {/* Brand Name */}
   <h1 className="mt-4 text-xl font-black tracking-tight text-white sm:text-2xl">
-    IBS Funding Program Portal
+    Innovative Business Solutions Ltd.
   </h1>
 
   {/* Subtitle */}
