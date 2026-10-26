@@ -1141,7 +1141,9 @@ const toggleCategory = (categoryKey) => {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
           {[
             {
-              value: statistics.total,
+              // value: statistics.total,
+              value: 0,
+
               label: "New this week",
               icon: (
                 <svg
@@ -1185,7 +1187,8 @@ const toggleCategory = (categoryKey) => {
               border: "hover:border-[#2374A8]/50",
             },
             {
-              value: statistics.categories,
+              // value: statistics.categories,
+                 value: 0,
               label: "Closing in 14 days",
               icon: (
                 <svg
