@@ -151,15 +151,22 @@ export default function Home() {
      APPLICATION FORM
      ======================================================= */
 
-  const [formData, setFormData] = useState({
+  // Keep legacy address/city keys for compatibility with the existing API.
+  const initialFormData = {
     name: "",
-    phone: "",
-    email: "",
     company: "",
+    whoYouAre: "",
+    province: "",
+    community: "",
+    email: "",
+    phone: "",
     address: "",
     city: "",
     message: "",
-  });
+    consent: false,
+  };
+
+  const [formData, setFormData] = useState({ ...initialFormData });
 
   const [submitting, setSubmitting] =
     useState(false);
@@ -700,15 +707,7 @@ setFundingServices(customerVisibleServices);
     setIsHuman(false);
     setShowSuccessPopup(false);
 
-    setFormData({
-      name: "",
-      phone: "",
-      email: "",
-      company: "",
-      address: "",
-      city: "",
-      message: "",
-    });
+    setFormData({ ...initialFormData });
 
     setShowApplication(true);
 
@@ -762,6 +761,11 @@ const handleSubmit = async (event) => {
     return;
   }
 
+  if (!formData.consent) {
+    setApplicationError("Please provide consent before submitting your application.");
+    return;
+  }
+
   if (!selectedService) {
     return;
   }
@@ -790,22 +794,15 @@ const handleSubmit = async (event) => {
       );
       return;
     }
+// Close the application form and show the success popup
+setApplicationMessage("");
+setApplicationError("");
+setShowApplication(false);
+setShowSuccessPopup(true);
 
-    // Show the success popup after successful submission
-    setApplicationMessage("");
-    setApplicationError("");
-    setShowSuccessPopup(true);
-
-    // Reset the form fields
-    setFormData({
-      name: "",
-      phone: "",
-      email: "",
-      company: "",
-      address: "",
-      city: "",
-      message: "",
-    });
+// Reset the form fields
+setFormData({ ...initialFormData });
+setIsHuman(false);
 
   } catch (error) {
     console.error("Application error:", error);
@@ -1657,7 +1654,7 @@ border: "hover:border-[#2374A8]/50",
     width: "190px",
     minWidth: "190px",
     backgroundColor: "#ffffff",
-    zIndex: 9999,
+    zIndex: 99,
   }}
 >
   <div className="flex items-center justify-center gap-2">
@@ -1677,7 +1674,7 @@ border: "hover:border-[#2374A8]/50",
         hover:text-teal-700
       "
     >
-      View
+      View Details
     </button>
 
     <button
@@ -1693,7 +1690,7 @@ border: "hover:border-[#2374A8]/50",
         hover:bg-teal-600
       "
     >
-      Apply
+      Get help applying
     </button>
   </div>
 </td>
@@ -2034,7 +2031,7 @@ border: "hover:border-[#2374A8]/50",
 
                 <div className="min-w-0">
 
-                  <div className="mb-3 flex flex-wrap gap-2">
+                  {/* <div className="mb-3 flex flex-wrap gap-2">
 
                     <span className="rounded-lg bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-teal-300">
                       {getProgramId(
@@ -2048,18 +2045,18 @@ border: "hover:border-[#2374A8]/50",
                       )}
                     </span>
 
-                  </div>
-
+                  </div> */}
+{/* 
                   <h2 className="text-2xl font-black text-white sm:text-3xl">
                     {getProgramName(
                       selectedService
                     )}
-                  </h2>
+                  </h2> */}
 
-                  <p className="mt-2 text-sm text-slate-300">
+                  {/* <p className="mt-2 text-sm text-slate-300">
                     Key funding opportunity
                     information
-                  </p>
+                  </p> */}
 
                 </div>
 
@@ -2338,17 +2335,13 @@ border: "hover:border-[#2374A8]/50",
           </div>
         )}
 
-        {/* FORM FIELDS */}
+        {/* REQUIRED APPLICATION FIELDS */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
           {/* NAME */}
           <div>
-            <label
-              htmlFor="application-name"
-              className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
-            >
-              Full Name *
+            <label htmlFor="application-name" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+              Name *
             </label>
-
             <input
               id="application-name"
               type="text"
@@ -2356,43 +2349,87 @@ border: "hover:border-[#2374A8]/50",
               value={formData.name}
               onChange={handleInputChange}
               required
-              placeholder="Enter your full name"
               autoComplete="name"
+              placeholder="Enter your full name"
               className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
             />
           </div>
 
-          {/* PHONE */}
+          {/* ORGANIZATION */}
           <div>
-            <label
-              htmlFor="application-phone"
-              className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
-            >
-              Phone Number *
+            <label htmlFor="application-company" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+              Organization *
             </label>
-
             <input
-              id="application-phone"
-              type="tel"
-              name="phone"
-              value={formData.phone}
+              id="application-company"
+              type="text"
+              name="company"
+              value={formData.company}
               onChange={handleInputChange}
               required
-              placeholder="Enter phone number"
-              autoComplete="tel"
+              autoComplete="organization"
+              placeholder="Enter organization name"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+            />
+          </div>
+
+          {/* WHO YOU ARE */}
+          <div>
+            <label htmlFor="application-who-you-are" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+              Who you are *
+            </label>
+            <input
+              id="application-who-you-are"
+              type="text"
+              name="whoYouAre"
+              value={formData.whoYouAre}
+              onChange={handleInputChange}
+              required
+              placeholder="e.g. Business owner, community representative"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+            />
+          </div>
+
+          {/* TERRITORY / PROVINCE */}
+          <div>
+            <label htmlFor="application-province" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+              Territory / Province *
+            </label>
+            <input
+              id="application-province"
+              type="text"
+              name="province"
+              value={formData.province}
+              onChange={handleInputChange}
+              required
+              autoComplete="address-level1"
+              placeholder="Enter territory or province"
+              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+            />
+          </div>
+
+          {/* COMMUNITY */}
+          <div>
+            <label htmlFor="application-community" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+              Community *
+            </label>
+            <input
+              id="application-community"
+              type="text"
+              name="community"
+              value={formData.community}
+              onChange={handleInputChange}
+              required
+              placeholder="Enter your community"
               className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
             />
           </div>
 
           {/* EMAIL */}
           <div>
-            <label
-              htmlFor="application-email"
-              className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
-            >
-              Email Address *
+            <label htmlFor="application-email" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+              Email *
             </label>
-
             <input
               id="application-email"
               type="email"
@@ -2400,93 +2437,69 @@ border: "hover:border-[#2374A8]/50",
               value={formData.email}
               onChange={handleInputChange}
               required
-              placeholder="Enter email address"
               autoComplete="email"
+              placeholder="Enter email address"
               className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
             />
           </div>
 
-          {/* COMPANY */}
+          {/* PHONE */}
           <div>
-            <label
-              htmlFor="application-company"
-              className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
-            >
-              Company / Organization
+            <label htmlFor="application-phone" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+              Phone *
             </label>
-
             <input
-              id="application-company"
-              type="text"
-              name="company"
-              value={formData.company}
+              id="application-phone"
+              type="tel"
+              name="phone"
+              value={formData.phone}
               onChange={handleInputChange}
-              placeholder="Company or organization"
-              autoComplete="organization"
-              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-            />
-          </div>
-
-          {/* CITY */}
-          <div>
-            <label
-              htmlFor="application-city"
-              className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
-            >
-              City
-            </label>
-
-            <input
-              id="application-city"
-              type="text"
-              name="city"
-              value={formData.city}
-              onChange={handleInputChange}
-              placeholder="City"
-              autoComplete="address-level2"
-              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-            />
-          </div>
-
-          {/* ADDRESS */}
-          <div>
-            <label
-              htmlFor="application-address"
-              className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
-            >
-              Address
-            </label>
-
-            <input
-              id="application-address"
-              type="text"
-              name="address"
-              value={formData.address}
-              onChange={handleInputChange}
-              placeholder="Address"
-              autoComplete="street-address"
+              required
+              autoComplete="tel"
+              placeholder="Enter phone number"
               className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
             />
           </div>
 
           {/* MESSAGE */}
           <div className="sm:col-span-2">
-            <label
-              htmlFor="application-message"
-              className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500"
-            >
-              Message / Reason for Applying
+            <label htmlFor="application-message" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+              Message *
             </label>
-
             <textarea
               id="application-message"
               name="message"
               value={formData.message}
               onChange={handleInputChange}
-              rows={5}
-              placeholder="Tell us about your funding requirement..."
-              className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+              required
+              rows={4}
+              placeholder="Tell us about your funding requirements..."
+              className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
             />
+          </div>
+
+          {/* CONSENT */}
+          <div className="sm:col-span-2">
+            <label htmlFor="application-consent" className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <input
+                id="application-consent"
+                type="checkbox"
+                name="consent"
+                checked={formData.consent}
+                onChange={(event) => {
+                  setFormData((previous) => ({
+                    ...previous,
+                    consent: event.target.checked,
+                  }));
+                  if (event.target.checked) setApplicationError("");
+                }}
+                required
+                className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-teal-600"
+              />
+              <span className="text-sm leading-6 text-slate-600">
+                I consent to IBS collecting and using the information I have provided to respond to my funding inquiry and process my application. *
+              </span>
+            </label>
           </div>
         </div>
 
