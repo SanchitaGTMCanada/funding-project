@@ -378,6 +378,43 @@ useEffect(() => {
     return String(value);
   };
 
+  // Format funding amounts with Canadian/Western digit grouping.
+  // Example: $10,00,000 -> $1,000,000. This only changes display text.
+  const formatCanadianAmount = (value) => {
+    if (value === null || value === undefined || value === "") {
+      return "-";
+    }
+
+    if (typeof value === "number") {
+      return new Intl.NumberFormat("en-CA", {
+        useGrouping: true,
+        maximumFractionDigits: 20,
+      }).format(value);
+    }
+
+    if (typeof value !== "string") {
+      return formatValue(value);
+    }
+
+    return value.replace(/\d[\d,]*(?:\.\d+)?/g, (numberText) => {
+      const numericValue = Number(numberText.replace(/,/g, ""));
+
+      if (!Number.isFinite(numericValue)) {
+        return numberText;
+      }
+
+      return new Intl.NumberFormat("en-CA", {
+        useGrouping: true,
+        maximumFractionDigits: 20,
+      }).format(numericValue);
+    });
+  };
+
+  const isAmountField = (field) =>
+    /amount|funding amount|maximum amount|minimum amount|max amount|min amount/i.test(
+      String(field || "")
+    );
+
   // =========================================================
   // MANUAL ADD
   // =========================================================
@@ -743,8 +780,10 @@ const handleSaveEdit = async () => {
     return text;
   };
 
-  const renderValue = (value) => {
-    const formattedValue = formatValue(value);
+  const renderValue = (value, field) => {
+    const formattedValue = isAmountField(field)
+      ? formatCanadianAmount(value)
+      : formatValue(value);
 
     if (!isUrlValue(value)) {
       return formattedValue;
@@ -1916,10 +1955,14 @@ const handleToggleStatus = async () => {
                   <td
                     key={`${service.id}-${column}`}
                     className="max-w-[320px] whitespace-nowrap px-5 py-4 text-[#43515C]"
-                    title={formatValue(service.data?.[column])}
+                    title={
+                      isAmountField(column)
+                        ? formatCanadianAmount(service.data?.[column])
+                        : formatValue(service.data?.[column])
+                    }
                   >
                     <div className="max-w-[320px] truncate">
-                      {renderValue(service.data?.[column])}
+                      {renderValue(service.data?.[column], column)}
                     </div>
                   </td>
                 ))}
@@ -4177,14 +4220,9 @@ const handleToggleStatus = async () => {
               {Object.entries(
                 viewingService.data || {}
               ).map(([field, value]) => {
-                const displayValue =
-                  value === null ||
-                  value === undefined ||
-                  value === ""
-                    ? "-"
-                    : typeof value === "object"
-                    ? JSON.stringify(value)
-                    : String(value);
+                const displayValue = isAmountField(field)
+                  ? formatCanadianAmount(value)
+                  : formatValue(value);
 
                 const isUrl =
                   typeof value === "string" &&

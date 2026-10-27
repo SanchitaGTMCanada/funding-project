@@ -170,6 +170,43 @@ const formatValue = (value) => {
   return String(value);
 };
 
+// Format numeric amounts with Canadian/Western digit grouping (1,000,000),
+// while preserving currency symbols, labels, ranges, and other surrounding text.
+const formatCanadianAmount = (value) => {
+  if (value === null || value === undefined || value === "") {
+    return "-";
+  }
+
+  if (typeof value === "number") {
+    return new Intl.NumberFormat("en-CA", {
+      useGrouping: true,
+      maximumFractionDigits: 20,
+    }).format(value);
+  }
+
+  if (typeof value !== "string") {
+    return formatValue(value);
+  }
+
+  return value.replace(/\d[\d,]*(?:\.\d+)?/g, (numberText) => {
+    const numericValue = Number(numberText.replace(/,/g, ""));
+
+    if (!Number.isFinite(numericValue)) {
+      return numberText;
+    }
+
+    return new Intl.NumberFormat("en-CA", {
+      useGrouping: true,
+      maximumFractionDigits: 20,
+    }).format(numericValue);
+  });
+};
+
+const isAmountField = (key) =>
+  /amount|funding amount|maximum amount|minimum amount|max amount|min amount/i.test(
+    String(key || "")
+  );
+
 const getValue = (service, possibleKeys) => {
   if (!service?.data) return "";
 
@@ -678,6 +715,53 @@ const toggleCategory = (categoryKey) => {
   }, [searchedServices, currentPage, itemsPerPage]);
 
   /* =========================================================
+     EXPORT CUSTOMER-VISIBLE FUNDING PROGRAMS TO CSV
+     One export button: use active filters/search when present;
+     otherwise export all customer-visible programs.
+     ========================================================= */
+
+  const downloadFundingCsv = (services, exportType) => {
+    const csvEscape = (value) => {
+      const textValue = String(value ?? "");
+      return `"${textValue.replace(/"/g, '""')}"`;
+    };
+
+    const headers = CUSTOMER_COLUMNS;
+    const rows = services.map((service) =>
+      headers.map((column) => {
+        const rawValue =
+          column === "Program Name"
+            ? getProgramName(service)
+            : getValue(service, [column]);
+
+        return isAmountField(column)
+          ? formatCanadianAmount(rawValue)
+          : formatValue(rawValue);
+      })
+    );
+
+    const csvContent = [
+      headers.map(csvEscape).join(","),
+      ...rows.map((row) => row.map(csvEscape).join(",")),
+    ].join("\r\n");
+
+    // BOM helps Excel correctly read UTF-8 text and accented characters.
+    const blob = new Blob(["\uFEFF", csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const date = new Date().toISOString().slice(0, 10);
+
+    link.href = url;
+    link.download = `funding-programs-${exportType}-${date}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  /* =========================================================
      PAGE NUMBERS
      ========================================================= */
 
@@ -815,7 +899,9 @@ const toggleCategory = (categoryKey) => {
       rawValue = getValue(service, [column]);
     }
 
-    const value = formatValue(rawValue);
+    const value = isAmountField(column)
+      ? formatCanadianAmount(rawValue)
+      : formatValue(rawValue);
 
     const cellKey = getCellKey(service.id, column);
     const isExpanded = expandedCells[cellKey];
@@ -1417,7 +1503,7 @@ const toggleCategory = (categoryKey) => {
                             <span className="font-bold text-[#0B2438]">
                               Maximum amount:
                             </span>{" "}
-                            {formatValue(amount)}
+                            {formatCanadianAmount(amount)}
                           </p>
                         )}
                       </div>
@@ -1869,7 +1955,44 @@ const toggleCategory = (categoryKey) => {
                 </p>
               </div>
 
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const hasActiveFilters =
+                      hasActiveApplicantFilter ||
+                      Boolean(selectedTerritory) ||
+                      Boolean(selectedCommunity) ||
+                      selectedCategories.length > 0 ||
+                      Boolean(tableSearch.trim());
+
+                    const exportServices = hasActiveFilters
+                      ? searchedServices
+                      : fundingServices;
+
+                    downloadFundingCsv(
+                      exportServices,
+                      hasActiveFilters ? "filtered" : "all"
+                    );
+                  }}
+                  disabled={loading || (fundingServices.length === 0)}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-teal-400/40 bg-teal-500/15 px-3 py-2 text-xs font-bold text-teal-200 transition hover:bg-teal-500/25 disabled:cursor-not-allowed disabled:opacity-40"
+                  title="Download matching results when filters or search are active; otherwise download all customer-visible programs"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    className="h-4 w-4"
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3" />
+                  </svg>
+                  Download CSV
+                </button>
+
                 <label className="relative block w-full sm:w-64">
                   <span className="sr-only">Search funding programs</span>
                   <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400" aria-hidden="true">
@@ -2285,7 +2408,9 @@ const toggleCategory = (categoryKey) => {
                             ? getProgramName(selectedService)
                             : getValue(selectedService, [key]);
 
-                        const formattedValue = formatValue(value);
+                        const formattedValue = isAmountField(key)
+                          ? formatCanadianAmount(value)
+                          : formatValue(value);
                         const isStatus = key.toLowerCase() === "status";
                         const status = getStatusStyle(formattedValue);
 
