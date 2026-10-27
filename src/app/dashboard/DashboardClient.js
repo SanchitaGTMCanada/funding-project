@@ -2,6 +2,79 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+
+const APPLICANT_TYPE_OPTIONS = [
+  "First Nation / Indigenous government or band, including tribal councils",
+  "Inuit organization (NTI, Regional Inuit Associations, development corporations)",
+  "Métis organization or council",
+  "Community or municipal government (cities, towns, villages, hamlets, charter communities)",
+  "Indigenous-owned business",
+  "Small business / entrepreneur",
+  "Non-profit / society / charity, including co-operatives",
+  "Housing provider or developer",
+  "School, college or post-secondary institution",
+  "Individual / youth / student / senior",
+  "Not sure",
+  "Other",
+];
+
+const TERRITORY_OPTIONS = [
+  "Canada-wide",
+  "Northwest Territories",
+  "Nunavut",
+  "Yukon",
+  "Alberta",
+  "British Columbia",
+  "Manitoba",
+  "New Brunswick",
+  "Newfoundland and Labrador",
+  "Nova Scotia",
+  "Ontario",
+  "Prince Edward Island",
+  "Quebec",
+  "Saskatchewan",
+];
+
+const COMMUNITY_OPTIONS = {
+  "Northwest Territories": [
+    "Aklavik", "Fort McPherson", "Inuvik", "Paulatuk", "Sachs Harbour",
+    "Tsiigehtchic", "Tuktoyaktuk", "Ulukhaktok", "Colville Lake", "Délı̨nę",
+    "Fort Good Hope", "Norman Wells", "Tulita", "Fort Liard", "Fort Simpson",
+    "Jean Marie River", "Nahanni Butte", "Sambaa K'e", "Wrigley", "Behchokǫ̀",
+    "Dettah", "Gamètì", "Łutselk'e", "Wekweètì", "Whatì", "Yellowknife",
+    "Enterprise", "Fort Providence", "Fort Resolution", "Fort Smith", "Hay River",
+    "Kakisa", "Kátł'odeeche",
+  ],
+  Nunavut: [
+    "Iqaluit", "Arctic Bay", "Clyde River", "Grise Fiord", "Igloolik", "Kimmirut",
+    "Kinngait", "Pangnirtung", "Pond Inlet", "Qikiqtarjuaq", "Resolute Bay",
+    "Sanikiluaq", "Sanirajak", "Arviat", "Baker Lake", "Chesterfield Inlet",
+    "Coral Harbour", "Naujaat", "Rankin Inlet", "Whale Cove", "Cambridge Bay",
+    "Gjoa Haven", "Kugaaruk", "Kugluktuk", "Taloyoak",
+  ],
+};
+
+const FUNDING_CATEGORIES = [
+  { name: "Business Development", children: [] },
+  { name: "Community Development", children: [] },
+  { name: "Capacity Building", children: [] },
+  { name: "Education & Training", children: [] },
+  { name: "Financial & Income Assistance", children: ["Financial Assistance", "Income Assistance"] },
+  { name: "Environment & Energy", children: [] },
+  { name: "Housing", children: [] },
+  { name: "Arts & Culture", children: [] },
+  { name: "Infrastructure & Transportation", children: ["Infrastructure", "Transportation"] },
+  { name: "Health & Wellness", children: [] },
+  { name: "Research & Innovation", children: [] },
+  { name: "Agriculture & Food", children: [] },
+  { name: "Jobs & Employment", children: [] },
+  { name: "Gender Equity, Justice & Victim Support", children: ["Gender & Equity", "Justice & Victim Support"] },
+  { name: "Land, Natural Resources & Harvesting", children: ["Natural Resources", "Hunting & Trapping"] },
+  { name: "Emergencies & Public Safety", children: [] },
+  { name: "Early Learning & Childcare", children: [] },
+  { name: "Sports & Recreation", children: [] },
+];
+
 export default function DashboardClient({ user }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -47,6 +120,14 @@ const [viewingService, setViewingService] = useState(null);
     "Official Source URL": "",
     "Source Category": "",
   });
+
+  const [selectedApplicantTypes, setSelectedApplicantTypes] = useState([]);
+  const [otherApplicantType, setOtherApplicantType] = useState("");
+  const [selectedTerritory, setSelectedTerritory] = useState("");
+  const [selectedCommunity, setSelectedCommunity] = useState("");
+  const [otherCommunity, setOtherCommunity] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [otherCategory, setOtherCategory] = useState("");
 
   const [addMessage, setAddMessage] = useState("");
   const [addError, setAddError] = useState("");
@@ -469,6 +550,13 @@ useEffect(() => {
 
     setAddTitle("");
     setAddDescription("");
+    setSelectedApplicantTypes([]);
+    setOtherApplicantType("");
+    setSelectedTerritory("");
+    setSelectedCommunity("");
+    setOtherCommunity("");
+    setSelectedCategories([]);
+    setOtherCategory("");
 
     setAddData({
       "Program ID": "",
@@ -489,6 +577,8 @@ useEffect(() => {
       "Contact Information": "",
       "Official Source URL": "",
       "Source Category": "",
+      "Applicant Types": "",
+      Communities: "",
     });
 
     setAddMessage("");
@@ -505,6 +595,13 @@ useEffect(() => {
     setAddTitle("");
     setAddDescription("");
     setAddData({});
+    setSelectedApplicantTypes([]);
+    setOtherApplicantType("");
+    setSelectedTerritory("");
+    setSelectedCommunity("");
+    setOtherCommunity("");
+    setSelectedCategories([]);
+    setOtherCategory("");
     setAddMessage("");
     setAddError("");
   };
@@ -567,12 +664,44 @@ useEffect(() => {
 
   const handleSaveManualData = async () => {
     if (!String(addData["Program Name"] || "").trim()) {
-      setAddError(
-        "Program Name is required."
-      );
-
+      setAddError("Program Name is required.");
       return;
     }
+
+    // "Other" is a selectable option on its own; no specification is required.
+    const applicantTypesToSave = [...selectedApplicantTypes];
+    const categoriesToSave = [...selectedCategories];
+    const communityToSave = selectedTerritory === "Northwest Territories" || selectedTerritory === "Nunavut"
+      ? selectedCommunity
+      : otherCommunity.trim();
+
+    if (!applicantTypesToSave.length) {
+      setAddError("Select at least one applicant type, or choose Not sure.");
+      return;
+    }
+    if (!selectedTerritory) {
+      setAddError("Territory/Province is required.");
+      return;
+    }
+    if (!categoriesToSave.length) {
+      setAddError("Select at least one category.");
+      return;
+    }
+    if ((selectedTerritory === "Northwest Territories" || selectedTerritory === "Nunavut") && !selectedCommunity) {
+      setAddError("Community is required for Northwest Territories and Nunavut. Choose All communities / territory-wide if applicable.");
+      return;
+    }
+    if (selectedTerritory !== "Canada-wide" && selectedTerritory !== "Northwest Territories" && selectedTerritory !== "Nunavut" && !communityToSave) {
+      setAddError("Enter a community or type All communities / territory-wide.");
+      return;
+    }
+    const payloadData = {
+      ...addData,
+      "Applicant Types": applicantTypesToSave.join(", "),
+      Locations: selectedTerritory,
+      Communities: communityToSave || "",
+      Category: categoriesToSave.join(", "),
+    };
 
     setAddingData(true);
     setAddMessage("");
@@ -594,7 +723,7 @@ useEffect(() => {
             description:
               String(addData["Purpose"] || "").trim() ||
               null,
-            data: addData,
+            data: payloadData,
           }),
         }
       );
@@ -2326,6 +2455,176 @@ const handleToggleStatus = async () => {
 
               <div className="p-6 sm:p-8">
 
+                {/* Applicant, territory, community and category */}
+                <section className="mb-8 rounded-2xl border border-teal-100 bg-teal-50/30 p-5 sm:p-6">
+                  <div className="mb-5">
+                    <h3 className="text-base font-bold text-slate-950">Program Classification</h3>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      Complete the required classification fields. Use “Other” when the listed options do not fit.
+                    </p>
+                  </div>
+
+                  <div className="mb-6">
+                    <label className="mb-3 block text-xs font-bold uppercase tracking-wide text-slate-600">
+                      2.1 Who you are (applicant type) <span className="text-red-500">*</span>
+                    </label>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {APPLICANT_TYPE_OPTIONS.map((option) => (
+                        <label key={option} className={`flex cursor-pointer items-start gap-2 rounded-xl border p-3 text-sm transition ${
+                          selectedApplicantTypes.includes(option)
+                            ? "border-teal-400 bg-teal-50 text-slate-900"
+                            : "border-slate-200 bg-white text-slate-700 hover:border-teal-200"
+                        }`}>
+                          <input
+                            type="checkbox"
+                            checked={selectedApplicantTypes.includes(option)}
+                            onChange={(event) => {
+                              let next = event.target.checked
+                                ? [...selectedApplicantTypes, option]
+                                : selectedApplicantTypes.filter((item) => item !== option);
+                              if (option === "Not sure" && event.target.checked) {
+                                next = ["Not sure"];
+                              } else if (option !== "Not sure" && event.target.checked) {
+                                next = next.filter((item) => item !== "Not sure");
+                              }
+                              setSelectedApplicantTypes(next);
+                              handleAddFieldChange("Applicant Types", next.join(", "));
+                            }}
+                            className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-teal-600"
+                          />
+                          <span>{option}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-xs text-slate-500">Select one or more. “Not sure” clears other selections and shows all applicant types.</p>
+                  </div>
+
+                  <div className="mb-6 grid gap-5 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-600">
+                        2.2 Territory/Province <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={selectedTerritory}
+                        onChange={(event) => {
+                          const territory = event.target.value;
+                          setSelectedTerritory(territory);
+                          setSelectedCommunity("");
+                          setOtherCommunity("");
+                          handleAddFieldChange("Locations", territory);
+                          handleAddFieldChange("Communities", "");
+                        }}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
+                      >
+                        <option value="">Select territory/province *</option>
+                        {TERRITORY_OPTIONS.map((territory) => <option key={territory} value={territory}>{territory}</option>)}
+                      </select>
+                      <p className="mt-2 text-xs text-slate-500">Canada-wide is for national programs only. Other territories include their local and Canada-wide programs when filtering.</p>
+                    </div>
+
+                    {selectedTerritory && selectedTerritory !== "Canada-wide" && (
+                      <div>
+                        <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-600">
+                          2.3 Community <span className="text-red-500">*</span>
+                        </label>
+                        {(selectedTerritory === "Northwest Territories" || selectedTerritory === "Nunavut") ? (
+                          <select
+                            value={selectedCommunity}
+                            onChange={(event) => {
+                              setSelectedCommunity(event.target.value);
+                              handleAddFieldChange("Communities", event.target.value);
+                            }}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
+                          >
+                            <option value="">Select community *</option>
+                            <option value="All communities / territory-wide">All communities / territory-wide</option>
+                            {(COMMUNITY_OPTIONS[selectedTerritory] || []).map((community) => (
+                              <option key={community} value={community}>{community}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={otherCommunity}
+                            onChange={(event) => {
+                              setOtherCommunity(event.target.value);
+                              handleAddFieldChange("Communities", event.target.value);
+                            }}
+                            placeholder="Enter community or All communities / territory-wide *"
+                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
+                          />
+                        )}
+                        <p className="mt-2 text-xs text-slate-500">Choose a listed community for NWT/Nunavut. For other provinces and territories, enter the community name or “All communities / territory-wide”.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="mb-3 block text-xs font-bold uppercase tracking-wide text-slate-600">
+                      2.4 Category <span className="text-red-500">*</span>
+                    </label>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {FUNDING_CATEGORIES.map((category) => (
+                        <div key={category.name} className="rounded-xl border border-slate-200 bg-white p-3">
+                          <label className="flex cursor-pointer items-start gap-2 text-sm font-semibold text-slate-800">
+                            <input
+                              type="checkbox"
+                              checked={selectedCategories.includes(category.name)}
+                              onChange={(event) => {
+                                const next = event.target.checked
+                                  ? [...selectedCategories, category.name]
+                                  : selectedCategories.filter((item) => item !== category.name);
+                                setSelectedCategories(next);
+                                handleAddFieldChange("Category", next.join(", "));
+                              }}
+                              className="mt-0.5 h-4 w-4 accent-teal-600"
+                            />
+                            <span>{category.name}</span>
+                          </label>
+                          {category.children.length > 0 && (
+                            <div className="ml-6 mt-3 space-y-2 border-l-2 border-slate-100 pl-3">
+                              {category.children.map((child) => (
+                                <label key={child} className="flex cursor-pointer items-start gap-2 text-sm text-slate-600">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedCategories.includes(child)}
+                                    onChange={(event) => {
+                                      const next = event.target.checked
+                                        ? [...selectedCategories, child]
+                                        : selectedCategories.filter((item) => item !== child);
+                                      setSelectedCategories(next);
+                                      handleAddFieldChange("Category", next.join(", "));
+                                    }}
+                                    className="mt-0.5 h-4 w-4 accent-teal-600"
+                                  />
+                                  <span>{child}</span>
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={selectedCategories.includes("Other")}
+                          onChange={(event) => {
+                            const option = "Other";
+                            const next = event.target.checked
+                              ? [...selectedCategories, option]
+                              : selectedCategories.filter((item) => item !== option);
+                            setSelectedCategories(next);
+                            handleAddFieldChange("Category", next.join(", "));
+                          }}
+                          className="mt-0.5 h-4 w-4 accent-teal-600"
+                        />
+                        <span>Other</span>
+                      </label>
+                    </div>
+                    <p className="mt-2 text-xs text-slate-500">Select one or more categories. Subcategories are indented under their parent categories.</p>
+                  </div>
+                </section>
+
                 {/* Basic information */}
                 <div className="mb-8">
 
@@ -2407,50 +2706,6 @@ const handleToggleStatus = async () => {
                           )
                         }
                         placeholder="Enter status"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
-                      />
-
-                    </div>
-
-                    {/* Category */}
-                    <div>
-
-                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                        Category
-                      </label>
-
-                      <input
-                        type="text"
-                        value={addData.Category || ""}
-                        onChange={(event) =>
-                          handleAddFieldChange(
-                            "Category",
-                            event.target.value
-                          )
-                        }
-                        placeholder="Enter category"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
-                      />
-
-                    </div>
-
-                    {/* Locations */}
-                    <div>
-
-                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                        Locations
-                      </label>
-
-                      <input
-                        type="text"
-                        value={addData.Locations || ""}
-                        onChange={(event) =>
-                          handleAddFieldChange(
-                            "Locations",
-                            event.target.value
-                          )
-                        }
-                        placeholder="Enter locations"
                         className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
                       />
 

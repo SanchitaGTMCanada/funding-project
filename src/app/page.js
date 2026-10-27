@@ -91,27 +91,43 @@ const TERRITORY_COMMUNITIES = {
   ],
 };
 
-const TOP_LEVEL_CATEGORIES = [
-  "Business Development",
-  "Community Development",
-  "Capacity Building",
-  "Education & Training",
-  "Financial & Income Assistance",
-  "Environment & Energy",
-  "Housing",
-  "Arts & Culture",
-  "Infrastructure & Transportation",
-  "Health & Wellness",
-  "Research & Innovation",
-  "Agriculture & Food",
-  "Jobs & Employment",
-  "Gender Equity, Justice & Victim Support",
-  "Land, Natural Resources & Harvesting",
-  "Emergencies & Public Safety",
-  "Early Learning & Childcare",
-  "Sports & Recreation",
-  "Other",
+const CATEGORY_TREE = [
+  { name: "Business Development", children: [] },
+  { name: "Community Development", children: [] },
+  { name: "Capacity Building", children: [] },
+  { name: "Education & Training", children: [] },
+  {
+    name: "Financial & Income Assistance",
+    children: ["Financial Assistance", "Income Assistance"],
+  },
+  { name: "Environment & Energy", children: [] },
+  { name: "Housing", children: [] },
+  { name: "Arts & Culture", children: [] },
+  {
+    name: "Infrastructure & Transportation",
+    children: ["Infrastructure", "Transportation"],
+  },
+  { name: "Health & Wellness", children: [] },
+  { name: "Research & Innovation", children: [] },
+  { name: "Agriculture & Food", children: [] },
+  { name: "Jobs & Employment", children: [] },
+  {
+    name: "Gender Equity, Justice & Victim Support",
+    children: ["Gender & Equity", "Justice & Victim Support"],
+  },
+  {
+    name: "Land, Natural Resources & Harvesting",
+    children: ["Natural Resources", "Hunting & Trapping"],
+  },
+  { name: "Emergencies & Public Safety", children: [] },
+  { name: "Early Learning & Childcare", children: [] },
+  { name: "Sports & Recreation", children: [] },
+  { name: "Other", children: [] },
 ];
+
+const TOP_LEVEL_CATEGORIES = CATEGORY_TREE.map(
+  (category) => category.name
+);
 
 /* =========================================================
    FILTER HELPERS
@@ -490,45 +506,9 @@ export default function Home() {
       ])
     );
 
-  /* Build category/subcategory options from the program data. */
-  const categoryTree = useMemo(() => {
-    const childrenByParent = new Map(
-      TOP_LEVEL_CATEGORIES.map((category) => [
-        category,
-        new Set(),
-      ])
-    );
-
-    fundingServices.forEach((service) => {
-      const tags = getCategoryTags(service);
-
-      const parent = tags.find((tag) =>
-        TOP_LEVEL_CATEGORIES.some((top) =>
-          valuesMatch(top, tag)
-        )
-      );
-
-      if (!parent) return;
-
-      tags.forEach((tag) => {
-        if (
-          !valuesMatch(tag, parent) &&
-          !TOP_LEVEL_CATEGORIES.some((top) =>
-            valuesMatch(top, tag)
-          )
-        ) {
-          childrenByParent.get(parent).add(tag);
-        }
-      });
-    });
-
-    return TOP_LEVEL_CATEGORIES.map((category) => ({
-      name: category,
-      children: [
-        ...(childrenByParent.get(category) || []),
-      ].sort((a, b) => a.localeCompare(b)),
-    }));
-  }, [fundingServices]);
+  /* Use the fixed category structure so all specified options are
+     available even when no current program uses a category yet. */
+  const categoryTree = CATEGORY_TREE;
 
   const hasActiveApplicantFilter =
     selectedApplicantTypes.length > 0 &&
