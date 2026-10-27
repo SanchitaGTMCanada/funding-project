@@ -329,30 +329,22 @@ const isEmployee = user?.role === "EMPLOYEE";
   const openNowServicesCount = useMemo(
     () => fundingServices.filter((service) => {
       if (service?.isActive === false) return false;
-      const status = getProgramStatus(service);
-      return status.includes("open") && !status.includes("closed");
-    }).length,
-    [fundingServices]
-  );
 
-  const upcomingServicesCount = useMemo(
-    () => fundingServices.filter((service) => {
-      if (service?.isActive === false) return false;
-      const status = getProgramStatus(service);
-      return status.includes("upcoming") || status.includes("opens soon") || status.includes("opening soon");
-    }).length,
-    [fundingServices]
-  );
+      const status = getProgramStatus(service).replace(/\s+/g, " ").trim();
 
-  const noApplicationRequiredCount = useMemo(
-    () => fundingServices.filter((service) => {
-      if (service?.isActive === false) return false;
-      const status = getProgramStatus(service);
+      // Count only the approved customer-visible statuses.
+      // Closed, discontinued, blank, and unrecognized statuses are excluded.
       return (
-        status.includes("no application required") ||
-        status.includes("application not required") ||
-        status.includes("no application needed") ||
-        status.includes("application not needed") ||
+        status === "open" ||
+        status === "open (rolling)" ||
+        status === "open rolling" ||
+        status === "upcoming" ||
+        status === "opens soon" ||
+        status === "opening soon" ||
+        status === "no application required" ||
+        status === "application not required" ||
+        status === "no application needed" ||
+        status === "application not needed" ||
         status === "not required"
       );
     }).length,
@@ -1420,7 +1412,7 @@ const handleToggleStatus = async () => {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">Open Now Services</p>
-                <p className="mt-2 text-3xl font-bold tracking-tight text-slate-950">{openNowServicesCount + upcomingServicesCount + noApplicationRequiredCount}</p>
+                <p className="mt-2 text-3xl font-bold tracking-tight text-slate-950">{openNowServicesCount}</p>
               </div>
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
                 <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

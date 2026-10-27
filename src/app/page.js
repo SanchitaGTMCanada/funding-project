@@ -397,13 +397,30 @@ export default function Home() {
   };
 
   const getStatus = (service) => {
-    return (
-      getValue(service, [
-        "Status",
-        "status",
-        "Program Status",
-      ]) || "Open"
-    );
+    // Do not default missing status values to "Open". Programs without a
+    // configured status must remain hidden from the customer-facing table.
+    return getValue(service, [
+      "Status",
+      "status",
+      "Program Status",
+    ]) ?? "";
+  };
+
+  const CUSTOMER_VISIBLE_STATUSES = new Set([
+    "open",
+    "open (rolling)",
+    "upcoming",
+    "no application required",
+  ]);
+
+  const isCustomerVisibleProgram = (service) => {
+    const normalizedStatus = String(getStatus(service) ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ");
+
+    return CUSTOMER_VISIBLE_STATUSES.has(normalizedStatus);
   };
 
   /* =========================================================
@@ -521,6 +538,10 @@ export default function Home() {
 
 const filteredServices = useMemo(() => {
   return fundingServices.filter((service) => {
+    // Only approved statuses are visible to customers. This happens before
+    // category/applicant/location filters, search, pagination, and CSV export.
+    if (!isCustomerVisibleProgram(service)) return false;
+
     const applicantTypes = getApplicantTypes(service);
     const territoryTags = getTerritories(service);
     const communityTags = getCommunityTags(service);
@@ -614,6 +635,7 @@ const filteredServices = useMemo(() => {
   selectedCommunity,
   selectedCategories,
   hasActiveApplicantFilter,
+  isCustomerVisibleProgram,
 ]);
 
 
