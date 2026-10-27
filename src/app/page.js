@@ -235,7 +235,8 @@ export default function Home() {
 
   const [isHuman, setIsHuman] = useState(false);
 
-  /* PAGINATION */
+  /* TABLE SEARCH + PAGINATION */
+  const [tableSearch, setTableSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -606,6 +607,7 @@ const toggleCategory = (categoryKey) => {
     setSelectedTerritory("");
     setSelectedCommunity("");
     setSelectedCategories([]);
+    setTableSearch("");
   };
 
   useEffect(() => {
@@ -618,20 +620,62 @@ const toggleCategory = (categoryKey) => {
   ]);
 
   /* =========================================================
+     TABLE SEARCH
+     Search program names, descriptions, and all customer-facing
+     program data. Search runs after the selected filters and before
+     pagination, so page counts stay accurate.
+     ========================================================= */
+
+  const searchedServices = useMemo(() => {
+    const query = tableSearch.trim().toLowerCase();
+
+    if (!query) return filteredServices;
+
+    return filteredServices.filter((service) => {
+      const searchableValues = [
+        service?.title,
+        service?.description,
+        getProgramName(service),
+        ...Object.values(service?.data || {}),
+      ];
+
+      return searchableValues.some((value) => {
+        let searchableText;
+
+        if (value && typeof value === "object") {
+          try {
+            searchableText = JSON.stringify(value);
+          } catch {
+            searchableText = "";
+          }
+        } else {
+          searchableText = String(value ?? "");
+        }
+
+        return searchableText.toLowerCase().includes(query);
+      });
+    });
+  }, [filteredServices, tableSearch]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [tableSearch]);
+
+  /* =========================================================
      PAGINATION
      ========================================================= */
 
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredServices.length / itemsPerPage)
+    Math.ceil(searchedServices.length / itemsPerPage)
   );
 
   const paginatedServices = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
 
-    return filteredServices.slice(startIndex, endIndex);
-  }, [filteredServices, currentPage, itemsPerPage]);
+    return searchedServices.slice(startIndex, endIndex);
+  }, [searchedServices, currentPage, itemsPerPage]);
 
   /* =========================================================
      PAGE NUMBERS
@@ -1786,8 +1830,8 @@ const toggleCategory = (categoryKey) => {
 
         <div>
           <p className="text-sm font-extrabold text-[#0B2438]">
-            {filteredServices.length}{" "}
-            {filteredServices.length === 1
+            {searchedServices.length}{" "}
+            {searchedServices.length === 1
               ? "program matches"
               : "programs match"}
           </p>
@@ -1825,12 +1869,34 @@ const toggleCategory = (categoryKey) => {
                 </p>
               </div>
 
-              <div className="flex gap-2">
-                <span className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-teal-300">
-                  {CUSTOMER_COLUMNS.length} columns
-                </span>
-                <span className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300">
-                  {filteredServices.length} records
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <label className="relative block w-full sm:w-64">
+                  <span className="sr-only">Search funding programs</span>
+                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400" aria-hidden="true">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className="h-4 w-4"
+                    >
+                      <circle cx="11" cy="11" r="7" />
+                      <path strokeLinecap="round" d="m20 20-4-4" />
+                    </svg>
+                  </span>
+                  <input
+                    type="search"
+                    value={tableSearch}
+                    onChange={(event) => setTableSearch(event.target.value)}
+                    placeholder="Search programs..."
+                    aria-label="Search funding programs"
+                    className="w-full rounded-lg border border-white/15 bg-white px-3 py-2 pl-9 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
+                  />
+                </label>
+
+                <span className="whitespace-nowrap rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-teal-300">
+                  {searchedServices.length} records
                 </span>
               </div>
             </div>
@@ -1874,7 +1940,28 @@ const toggleCategory = (categoryKey) => {
                 </thead>
 
                 <tbody>
-                  {paginatedServices.map((service, serviceIndex) => {
+                  {searchedServices.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={CUSTOMER_COLUMNS.length + 2}
+                        className="px-6 py-14 text-center"
+                      >
+                        <div className="text-sm font-bold text-slate-700">
+                          No matching funding programs
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Try a different search term or clear the search.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setTableSearch("")}
+                          className="mt-3 rounded-lg bg-[#071a2d] px-4 py-2 text-xs font-bold text-white transition hover:bg-teal-600"
+                        >
+                          Clear Search
+                        </button>
+                      </td>
+                    </tr>
+                  ) : paginatedServices.map((service, serviceIndex) => {
                     const globalIndex =
                       (currentPage - 1) * itemsPerPage + serviceIndex;
 
@@ -1962,7 +2049,7 @@ const toggleCategory = (categoryKey) => {
                 <p className="text-xs font-medium text-slate-500">
                   Showing{" "}
                   <span className="font-bold text-slate-800">
-                    {filteredServices.length === 0
+                    {searchedServices.length === 0
                       ? 0
                       : (currentPage - 1) * itemsPerPage + 1}
                   </span>{" "}
@@ -1970,12 +2057,12 @@ const toggleCategory = (categoryKey) => {
                   <span className="font-bold text-slate-800">
                     {Math.min(
                       currentPage * itemsPerPage,
-                      filteredServices.length
+                      searchedServices.length
                     )}
                   </span>{" "}
                   of{" "}
                   <span className="font-bold text-slate-800">
-                    {filteredServices.length}
+                    {searchedServices.length}
                   </span>{" "}
                   records
                 </p>

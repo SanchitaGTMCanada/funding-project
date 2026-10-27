@@ -614,75 +614,102 @@ const handleCloseView = () => {
     }));
   };
 
-  const handleSaveEdit = async () => {
-    if (!editingService) {
-      return;
-    }
+ 
+const handleSaveEdit = async () => {
+  if (!editingService) {
+    return;
+  }
 
-    if (!editTitle.trim()) {
-      setEditError(
-        "Funding service title is required."
-      );
+  if (!editTitle.trim()) {
+    setEditError("Funding service title is required.");
+    return;
+  }
 
-      return;
-    }
+  setSavingEdit(true);
+  setEditMessage("");
+  setEditError("");
 
-    setSavingEdit(true);
-    setEditMessage("");
-    setEditError("");
+  try {
+    const response = await fetch(
+      `/api/funding-services/${editingService.id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          title: editTitle.trim(),
+          description: editDescription.trim() || null,
+          data: editData,
+        }),
+      }
+    );
 
-    try {
-      const response = await fetch(
-        `/api/funding-services/${editingService.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            title: editTitle.trim(),
-            description:
-              editDescription.trim() || null,
-            data: editData,
-          }),
-        }
-      );
+    // Read the response as text first to avoid JSON parsing errors.
+    const responseText = await response.text();
 
-      const result = await response.json();
+    let result = {};
 
-      if (!response.ok) {
-        setEditError(
-          result.message ||
-            "Failed to update funding service."
+    if (responseText.trim()) {
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error(
+          "Invalid funding service API response:",
+          responseText,
+          parseError
         );
 
-        return;
+        throw new Error(
+          `The server returned an invalid response (HTTP ${response.status}). Check your API route and server logs.`
+        );
       }
-
-      setEditMessage(
-        result.message ||
-          "Funding service updated successfully."
-      );
-
-      await fetchFundingServices();
-
-      setTimeout(() => {
-        handleCloseEdit();
-      }, 500);
-    } catch (error) {
-      console.error(
-        "Update funding service error:",
-        error
-      );
-
-      setEditError(
-        "Something went wrong while updating the funding service."
-      );
-    } finally {
-      setSavingEdit(false);
     }
-  };
+
+    // Handle HTTP errors and API-level errors.
+    if (!response.ok || result.success === false) {
+      throw new Error(
+        result.message ||
+          `Failed to update funding service (HTTP ${response.status}).`
+      );
+    }
+
+    // A successful response should confirm the update.
+    if (result.success !== true) {
+      throw new Error(
+        "The server did not confirm that the funding service was updated."
+      );
+    }
+
+    // Show success message.
+    setEditMessage(
+      result.message ||
+        "Funding service updated successfully."
+    );
+
+    // Refresh the funding services list.
+    await fetchFundingServices();
+
+    // Close the edit modal after a short delay.
+    setTimeout(() => {
+      handleCloseEdit();
+    }, 500);
+  } catch (error) {
+    console.error(
+      "Update funding service error:",
+      error
+    );
+
+    setEditError(
+      error?.message ||
+        "Something went wrong while updating the funding service."
+    );
+  } finally {
+    setSavingEdit(false);
+  }
+};
+
 
   // =========================================================
   // URL HELPERS

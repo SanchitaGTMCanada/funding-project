@@ -19,6 +19,113 @@ import { requireAuth } from "@/lib/auth/requireAuth.js";
 // Super Admin → Full access
 // =========================================================
 
+
+export async function PUT(request, { params }) {
+  try {
+    const { authorized, user, status, message } =
+      await requireAuth();
+
+    if (!authorized) {
+      return Response.json(
+        {
+          success: false,
+          message: message || "Unauthorized",
+        },
+        { status: status || 401 }
+      );
+    }
+
+    if (
+      user?.role !== "EMPLOYEE" &&
+      user?.role !== "SUPER_ADMIN"
+    ) {
+      return Response.json(
+        {
+          success: false,
+          message: "You do not have permission to edit funding programs.",
+        },
+        { status: 403 }
+      );
+    }
+
+    const { id } = await params;
+    const fundingServiceId = Number(id);
+
+    if (!Number.isInteger(fundingServiceId) || fundingServiceId <= 0) {
+      return Response.json(
+        { success: false, message: "Invalid funding service ID." },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.json();
+    const { title, description, data } = body;
+
+    if (typeof title !== "string" || !title.trim()) {
+      return Response.json(
+        { success: false, message: "Title is required." },
+        { status: 400 }
+      );
+    }
+
+    if (
+      !data ||
+      typeof data !== "object" ||
+      Array.isArray(data)
+    ) {
+      return Response.json(
+        { success: false, message: "Invalid funding program data." },
+        { status: 400 }
+      );
+    }
+
+    const existing = await prisma.fundingService.findUnique({
+      where: { id: fundingServiceId },
+    });
+
+    if (!existing) {
+      return Response.json(
+        { success: false, message: "Funding program not found." },
+        { status: 404 }
+      );
+    }
+
+    const updated = await prisma.fundingService.update({
+      where: { id: fundingServiceId },
+      data: {
+        title: title.trim(),
+        description:
+          description === undefined
+            ? existing.description
+            : description === null
+              ? null
+              : String(description).trim() || null,
+        data,
+      },
+    });
+
+    return Response.json({
+      success: true,
+      message: "Funding program updated successfully.",
+      fundingService: updated,
+    });
+  } catch (error) {
+    console.error("PUT funding service error:", error);
+
+    return Response.json(
+      {
+        success: false,
+        message:
+          error instanceof SyntaxError
+            ? "Invalid JSON request body."
+            : "Failed to update funding program.",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+
 export async function PATCH(request, { params }) {
   try {
     // =====================================================
