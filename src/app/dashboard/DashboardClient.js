@@ -1411,11 +1411,12 @@ const handleToggleStatus = async () => {
   <div className="p-6 sm:p-7">
 
     <div
-      className={
-        isSuperAdmin
-          ? "grid gap-4 lg:grid-cols-2"
-          : "grid gap-4"
-      }
+      // className={
+      //   isSuperAdmin
+      //     ? "grid gap-4 lg:grid-cols-2"
+      //     : "grid gap-4"
+      // }
+      className="grid gap-4 lg:grid-cols-2"
     >
 
       {/* =================================================
@@ -1423,7 +1424,7 @@ const handleToggleStatus = async () => {
           SUPER ADMIN ONLY
       ================================================= */}
 
-      {isSuperAdmin && (
+      {/* {isSuperAdmin && ( */}
         <label
           htmlFor="excel-upload"
           className={`group relative flex min-h-[125px] cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed p-5 transition ${
@@ -1480,7 +1481,7 @@ const handleToggleStatus = async () => {
           />
 
         </label>
-      )}
+      {/* // )} */}
 
       {/* =================================================
           MANUAL ENTRY
