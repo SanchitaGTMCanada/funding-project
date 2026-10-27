@@ -307,6 +307,59 @@ const isEmployee = user?.role === "EMPLOYEE";
   }, [fundingServices]);
 
   // =========================================================
+  // PROGRAM STATUS COUNTS
+  // Counts active programs by application status. Display-only;
+  // no database changes are made.
+  // =========================================================
+
+  const getProgramStatus = (service) => {
+    const statusEntry = Object.entries(service?.data || {}).find(
+      ([key]) => {
+        const normalizedKey = String(key).trim().toLowerCase();
+        return normalizedKey === "status" || normalizedKey === "program status";
+      }
+    );
+
+    return String(statusEntry?.[1] ?? service?.status ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/[_-]+/g, " ");
+  };
+
+  const openNowServicesCount = useMemo(
+    () => fundingServices.filter((service) => {
+      if (service?.isActive === false) return false;
+      const status = getProgramStatus(service);
+      return status.includes("open") && !status.includes("closed");
+    }).length,
+    [fundingServices]
+  );
+
+  const upcomingServicesCount = useMemo(
+    () => fundingServices.filter((service) => {
+      if (service?.isActive === false) return false;
+      const status = getProgramStatus(service);
+      return status.includes("upcoming") || status.includes("opens soon") || status.includes("opening soon");
+    }).length,
+    [fundingServices]
+  );
+
+  const noApplicationRequiredCount = useMemo(
+    () => fundingServices.filter((service) => {
+      if (service?.isActive === false) return false;
+      const status = getProgramStatus(service);
+      return (
+        status.includes("no application required") ||
+        status.includes("application not required") ||
+        status.includes("no application needed") ||
+        status.includes("application not needed") ||
+        status === "not required"
+      );
+    }).length,
+    [fundingServices]
+  );
+
+  // =========================================================
   // FILTER SERVICES
   // =========================================================
 
@@ -1362,30 +1415,24 @@ const handleToggleStatus = async () => {
             </p>
           </div>
 
-          {/* Status */}
-          <div className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/60">
+          {/* Open now services */}
+          <div className="group rounded-2xl border border-emerald-200/80 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-100/70">
             <div className="flex items-start justify-between">
-
               <div>
-                <p className="text-sm font-medium text-slate-500">
-                  System Status
-                </p>
-
-                <p className="mt-2 text-xl font-bold tracking-tight text-emerald-600">
-                  Operational
-                </p>
+                <p className="text-sm font-medium text-slate-500">Open Now Services</p>
+                <p className="mt-2 text-3xl font-bold tracking-tight text-slate-950">{openNowServicesCount + upcomingServicesCount + noApplicationRequiredCount}</p>
               </div>
-
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                <span className="h-3 w-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-300" />
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="m8 12 2.5 2.5L16 9" />
+                </svg>
               </div>
-
             </div>
-
-            <p className="mt-4 text-xs text-slate-400">
-              Database connection active
-            </p>
+            <p className="mt-4 text-xs text-slate-400">Open now, upcoming, and no-application-required programs</p>
           </div>
+
+
 
         </div>
 

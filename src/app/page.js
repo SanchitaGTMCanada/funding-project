@@ -48,6 +48,7 @@ const APPLICANT_TYPES = [
   "Housing provider or developer",
   "School, college or post-secondary institution",
   "Individual / youth / student / senior",
+  "Other",
   "Not sure",
 ];
 
@@ -66,6 +67,7 @@ const TERRITORIES = [
   "Prince Edward Island",
   "Quebec",
   "Saskatchewan",
+  "Other",
 ];
 
 /* Community options are curated only for NWT and Nunavut for now.
@@ -78,14 +80,14 @@ const TERRITORY_COMMUNITIES = {
     "Jean Marie River", "Nahanni Butte", "Sambaa K'e", "Wrigley", "Behchokǫ̀",
     "Dettah", "Gamètì", "Łutselk'e", "Wekweètì", "Whatì", "Yellowknife",
     "Enterprise", "Fort Providence", "Fort Resolution", "Fort Smith", "Hay River",
-    "Kakisa", "Kátł'odeeche",
+    "Kakisa", "Kátł'odeeche", "Other",
   ],
   Nunavut: [
     "Iqaluit", "Arctic Bay", "Clyde River", "Grise Fiord", "Igloolik",
     "Kimmirut", "Kinngait", "Pangnirtung", "Pond Inlet", "Qikiqtarjuaq",
     "Resolute Bay", "Sanikiluaq", "Sanirajak", "Arviat", "Baker Lake",
     "Chesterfield Inlet", "Coral Harbour", "Naujaat", "Rankin Inlet", "Whale Cove",
-    "Cambridge Bay", "Gjoa Haven", "Kugaaruk", "Kugluktuk", "Taloyoak",
+    "Cambridge Bay", "Gjoa Haven", "Kugaaruk", "Kugluktuk", "Taloyoak", "Other",
   ],
 };
 
@@ -108,6 +110,7 @@ const TOP_LEVEL_CATEGORIES = [
   "Emergencies & Public Safety",
   "Early Learning & Childcare",
   "Sports & Recreation",
+  "Other",
 ];
 
 /* =========================================================
@@ -806,7 +809,12 @@ const toggleCategory = (categoryKey) => {
     const openCount = fundingServices.filter((service) => {
       const status = String(getStatus(service)).toLowerCase();
 
-      return status.includes("open") || status.includes("active");
+      return (
+        status.includes("open") ||
+        status.includes("active") ||
+        status.includes("upcoming") ||
+        status.includes("no application required")
+      );
     }).length;
 
     const categoryCount = new Set(
