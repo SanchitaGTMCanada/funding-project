@@ -73,6 +73,7 @@ const FUNDING_CATEGORIES = [
   { name: "Emergencies & Public Safety", children: [] },
   { name: "Early Learning & Childcare", children: [] },
   { name: "Sports & Recreation", children: [] },
+  { name: "Other", children: [] },
 ];
 
 export default function DashboardClient({ user }) {
@@ -3387,6 +3388,154 @@ const handleToggleStatus = async () => {
                 </div>
 
                 {/* =================================================
+                    PROGRAM CLASSIFICATION
+                ================================================= */}
+
+                <section className="mb-8 rounded-2xl border border-teal-100 bg-teal-50/30 p-5 sm:p-6">
+                  <div className="mb-5">
+                    <h3 className="text-base font-bold text-slate-950">Program Classification</h3>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      Update applicant type, location, community, and program category.
+                    </p>
+                  </div>
+
+                  {/* 2.1 Applicant type */}
+                  <div className="mb-6">
+                    <label className="mb-3 block text-xs font-bold uppercase tracking-wide text-slate-600">
+                      2.1 Who you are (applicant type)
+                    </label>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {APPLICANT_TYPE_OPTIONS.map((option) => {
+                        const current = String(editData["Applicant Types"] ?? "");
+                        const checked = current.includes(option);
+                        return (
+                          <label key={option} className={`flex cursor-pointer items-start gap-2 rounded-xl border p-3 text-sm transition ${checked ? "border-teal-400 bg-teal-50 text-slate-900" : "border-slate-200 bg-white text-slate-700 hover:border-teal-200"}`}>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(event) => {
+                                const selected = APPLICANT_TYPE_OPTIONS.filter((item) => {
+                                  if (item === option) return event.target.checked;
+                                  return String(editData["Applicant Types"] ?? "").includes(item);
+                                });
+                                let next = selected;
+                                if (option === "Not sure" && event.target.checked) next = ["Not sure"];
+                                else if (option !== "Not sure" && event.target.checked) next = selected.filter((item) => item !== "Not sure");
+                                handleEditFieldChange("Applicant Types", next.join(", "));
+                              }}
+                              className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-teal-600"
+                            />
+                            <span>{option}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-2 text-xs text-slate-500">Select one or more. “Not sure” clears other selections. “Other” is saved as an option without an extra text field.</p>
+                  </div>
+
+                  {/* 2.2 Territory / province and 2.3 community */}
+                  <div className="mb-6 grid gap-5 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-600">2.2 Territory/Province</label>
+                      <select
+                        value={String(editData.Locations ?? "")}
+                        onChange={(event) => {
+                          handleEditFieldChange("Locations", event.target.value);
+                          handleEditFieldChange("Communities", "");
+                        }}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
+                      >
+                        <option value="">Select territory/province</option>
+                        {TERRITORY_OPTIONS.map((territory) => <option key={territory} value={territory}>{territory}</option>)}
+                      </select>
+                      <p className="mt-2 text-xs text-slate-500">Canada-wide is for national programs. Other territories include local and Canada-wide programs when filtering.</p>
+                    </div>
+                    {String(editData.Locations ?? "") && String(editData.Locations ?? "") !== "Canada-wide" && (
+                      <div>
+                        <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-600">2.3 Community</label>
+                        {(String(editData.Locations) === "Northwest Territories" || String(editData.Locations) === "Nunavut") ? (
+                          <select
+                            value={String(editData.Communities ?? "")}
+                            onChange={(event) => handleEditFieldChange("Communities", event.target.value)}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
+                          >
+                            <option value="">Select community</option>
+                            <option value="All communities / territory-wide">All communities / territory-wide</option>
+                            {(COMMUNITY_OPTIONS[String(editData.Locations)] || []).map((community) => <option key={community} value={community}>{community}</option>)}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={String(editData.Communities ?? "")}
+                            onChange={(event) => handleEditFieldChange("Communities", event.target.value)}
+                            placeholder="Enter community or All communities / territory-wide"
+                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-50"
+                          />
+                        )}
+                        <p className="mt-2 text-xs text-slate-500">Choose a listed community for NWT/Nunavut, or enter a community for other provinces and territories.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2.4 Category */}
+                  <div>
+                    <label className="mb-3 block text-xs font-bold uppercase tracking-wide text-slate-600">2.4 Category</label>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {FUNDING_CATEGORIES.map((category) => {
+                        const current = String(editData.Category ?? "");
+                        const checked = current.includes(category.name);
+                        return (
+                          <div key={category.name} className="rounded-xl border border-slate-200 bg-white p-3">
+                            <label className="flex cursor-pointer items-start gap-2 text-sm font-semibold text-slate-800">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={(event) => {
+                                  const options = [...FUNDING_CATEGORIES.map((item) => item.name), ...FUNDING_CATEGORIES.flatMap((item) => item.children), "Other"];
+                                  const selected = options.filter((item) => {
+                                    if (item === category.name) return event.target.checked;
+                                    return String(editData.Category ?? "").includes(item);
+                                  });
+                                  handleEditFieldChange("Category", [...new Set(selected)].join(", "));
+                                }}
+                                className="mt-0.5 h-4 w-4 accent-teal-600"
+                              />
+                              <span>{category.name}</span>
+                            </label>
+                            {category.children.length > 0 && (
+                              <div className="ml-6 mt-3 space-y-2 border-l-2 border-slate-100 pl-3">
+                                {category.children.map((child) => {
+                                  const childChecked = String(editData.Category ?? "").includes(child);
+                                  return (
+                                    <label key={child} className="flex cursor-pointer items-start gap-2 text-sm text-slate-600">
+                                      <input
+                                        type="checkbox"
+                                        checked={childChecked}
+                                        onChange={(event) => {
+                                          const options = [...FUNDING_CATEGORIES.map((item) => item.name), ...FUNDING_CATEGORIES.flatMap((item) => item.children), "Other"];
+                                          const selected = options.filter((item) => {
+                                            if (item === child) return event.target.checked;
+                                            return String(editData.Category ?? "").includes(item);
+                                          });
+                                          handleEditFieldChange("Category", [...new Set(selected)].join(", "));
+                                        }}
+                                        className="mt-0.5 h-4 w-4 accent-teal-600"
+                                      />
+                                      <span>{child}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-2 text-xs text-slate-500">Select one or more categories. Subcategories are indented under their parent categories. “Other” does not require a specification.</p>
+                  </div>
+                </section>
+
+                {/* =================================================
                     FUNDING FIELDS
                 ================================================= */}
 
@@ -3404,7 +3553,7 @@ const handleToggleStatus = async () => {
 
                   </div>
 
-                  {Object.keys(editData).length === 0 ? (
+                  {Object.entries(editData).filter(([field]) => !["Applicant Types", "Locations", "Communities", "Category"].includes(field.trim())).length === 0 ? (
 
                     <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-10 text-center">
 
@@ -3418,7 +3567,7 @@ const handleToggleStatus = async () => {
 
                     <div className="grid gap-5 md:grid-cols-2">
 
-                      {Object.entries(editData).map(
+                      {Object.entries(editData).filter(([field]) => !["Applicant Types", "Locations", "Communities", "Category"].includes(field.trim())).map(
                         ([field, value]) => {
 
                           const isUrl =
@@ -3435,6 +3584,40 @@ const handleToggleStatus = async () => {
                                     value
                                   )
                                 : String(value);
+
+                          const rawEditValue = String(value ?? "");
+                          const editSelectableOptions = [
+                            ...APPLICANT_TYPE_OPTIONS,
+                            ...FUNDING_CATEGORIES.flatMap((category) => [
+                              category.name,
+                              ...category.children,
+                            ]),
+                          ];
+                          const selectedEditValues = editSelectableOptions.filter((option) =>
+                            rawEditValue.includes(option)
+                          );
+
+                          const isApplicantTypesField =
+                            field.trim().toLowerCase() === "applicant types";
+
+                          const isCategoryField =
+                            field.trim().toLowerCase() === "category";
+
+                          const updateEditMultiSelect = (option, checked) => {
+                            let next = checked
+                              ? [...selectedEditValues, option]
+                              : selectedEditValues.filter((item) => item !== option);
+
+                            if (isApplicantTypesField) {
+                              if (option === "Not sure" && checked) {
+                                next = ["Not sure"];
+                              } else if (option !== "Not sure" && checked) {
+                                next = next.filter((item) => item !== "Not sure");
+                              }
+                            }
+
+                            handleEditFieldChange(field, next.join(", "));
+                          };
 
                           const hasValidUrl =
                             isUrl &&
@@ -3483,7 +3666,82 @@ const handleToggleStatus = async () => {
 
                               </div>
 
-                              {isLongField ? (
+                              {isApplicantTypesField ? (
+
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                  {APPLICANT_TYPE_OPTIONS.map((option) => (
+                                    <label
+                                      key={option}
+                                      className={`flex cursor-pointer items-start gap-2 rounded-xl border p-3 text-sm transition ${
+                                        selectedEditValues.includes(option)
+                                          ? "border-teal-400 bg-teal-50 text-slate-900"
+                                          : "border-slate-200 bg-white text-slate-700 hover:border-teal-200"
+                                      }`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedEditValues.includes(option)}
+                                        onChange={(event) =>
+                                          updateEditMultiSelect(option, event.target.checked)
+                                        }
+                                        className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-teal-600"
+                                      />
+                                      <span>{option}</span>
+                                    </label>
+                                  ))}
+                                </div>
+
+                              ) : isCategoryField ? (
+
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                  {FUNDING_CATEGORIES.map((category) => (
+                                    <div key={category.name} className="space-y-2">
+                                      <label
+                                        className={`flex cursor-pointer items-start gap-2 rounded-xl border p-3 text-sm transition ${
+                                          selectedEditValues.includes(category.name)
+                                            ? "border-teal-400 bg-teal-50 text-slate-900"
+                                            : "border-slate-200 bg-white text-slate-700 hover:border-teal-200"
+                                        }`}
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={selectedEditValues.includes(category.name)}
+                                          onChange={(event) =>
+                                            updateEditMultiSelect(category.name, event.target.checked)
+                                          }
+                                          className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-teal-600"
+                                        />
+                                        <span>{category.name}</span>
+                                      </label>
+                                      {category.children.length > 0 && (
+                                        <div className="ml-6 space-y-2 border-l-2 border-teal-100 pl-3">
+                                          {category.children.map((child) => (
+                                            <label
+                                              key={child}
+                                              className={`flex cursor-pointer items-start gap-2 rounded-xl border p-2.5 text-sm transition ${
+                                                selectedEditValues.includes(child)
+                                                  ? "border-teal-400 bg-teal-50 text-slate-900"
+                                                  : "border-slate-200 bg-white text-slate-700 hover:border-teal-200"
+                                              }`}
+                                            >
+                                              <input
+                                                type="checkbox"
+                                                checked={selectedEditValues.includes(child)}
+                                                onChange={(event) =>
+                                                  updateEditMultiSelect(child, event.target.checked)
+                                                }
+                                                className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-teal-600"
+                                              />
+                                              <span>{child}</span>
+                                            </label>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+
+                              ) : isLongField ? (
 
                                 <textarea
                                   value={displayValue}
