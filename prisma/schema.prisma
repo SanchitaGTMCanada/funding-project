@@ -60,6 +60,8 @@ model FundingService {
   // Keep your other existing fields and relations here.
 
   applications Application[]
+  
+  @@map("funding_services")
 }
 
 model Application {
