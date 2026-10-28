@@ -67,7 +67,7 @@ export async function GET(request) {
     const fundingServices = await prisma.fundingService.findMany({
       where: isPublic || !user ? { isActive: true } : {},
       orderBy: {
-        createdAt: "desc",
+        id: "desc",
       },
     });
 
