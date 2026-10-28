@@ -462,6 +462,90 @@ const isEmployee = user?.role === "EMPLOYEE";
   }, [fundingServices, searchTerm]);
 
   // =========================================================
+  // DOWNLOAD FILTERED OR ALL FUNDING SERVICES AS CSV
+  // =========================================================
+
+  const handleDownloadCSV = () => {
+    // Export all matching records, not just the current page.
+    const servicesToExport = filteredServices;
+
+    if (servicesToExport.length === 0) {
+      alert("There are no funding records to export.");
+      return;
+    }
+
+    const headers = [
+      "ID",
+      "Funding Service Title",
+      ...dynamicColumns,
+      "Status",
+      "Created",
+      "Updated",
+    ];
+
+    const escapeCSV = (value) => {
+      if (value === null || value === undefined) {
+        return '""';
+      }
+
+      let text = typeof value === "object"
+        ? JSON.stringify(value)
+        : String(value);
+
+      // Reduce the risk of spreadsheet formula execution for untrusted values.
+      if (/^[\s]*[=+@]/.test(text) || /^[\s]*-/.test(text)) {
+        text = "'" + text;
+      }
+
+      return `"${text.replace(/"/g, '""')}"`;
+    };
+
+    const rows = servicesToExport.map((service) => {
+      const data = service.data || {};
+
+      return [
+        service.id,
+        service.title,
+        ...dynamicColumns.map((column) => data[column]),
+        service.isActive === false ? "Inactive" : "Active",
+        service.createdAt
+          ? new Date(service.createdAt).toISOString()
+          : "",
+        service.updatedAt
+          ? new Date(service.updatedAt).toISOString()
+          : "",
+      ];
+    });
+
+    const csvContent = [
+      headers.map(escapeCSV).join(","),
+      ...rows.map((row) => row.map(escapeCSV).join(",")),
+    ].join("\r\n");
+
+    // UTF-8 BOM helps Excel recognize accents and other special characters.
+    const blob = new Blob(["\uFEFF", csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `funding-services-${new Date()
+      .toISOString()
+      .slice(0, 10)}.csv`;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    // Do not revoke the Blob URL immediately: some browsers cancel the
+    // download if the URL is removed before the download has started.
+    window.setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 1000);
+  };
+
+  // =========================================================
   // FORMAT VALUES
   // =========================================================
 
@@ -1941,30 +2025,62 @@ const handleToggleStatus = async () => {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative w-full lg:max-w-sm">
-        <svg
-          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="11" cy="11" r="7" />
-          <path d="m20 20-4-4" />
-        </svg>
+      {/* Search and CSV Download */}
+      <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
+        {/* Search */}
+        <div className="relative w-full sm:min-w-[260px] lg:max-w-sm">
+          <svg
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-4-4" />
+          </svg>
 
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(event) => setSearchTerm(event.target.value)}
-          placeholder="Search funding programs..."
-          className="w-full rounded-xl border border-slate-200 bg-[#EEF5F8]/60 py-3 pl-11 pr-4 text-sm text-[#0B2438] outline-none transition placeholder:text-slate-400 focus:border-[#2374A8] focus:bg-white focus:ring-4 focus:ring-[#2374A8]/10"
-        />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search funding programs..."
+            className="w-full rounded-xl border border-slate-200 bg-[#EEF5F8]/60 py-3 pl-11 pr-4 text-sm text-[#0B2438] outline-none transition placeholder:text-slate-400 focus:border-[#2374A8] focus:bg-white focus:ring-4 focus:ring-[#2374A8]/10"
+          />
+        </div>
+
+        {/* Download every filtered result, across all pages */}
+        <button
+          type="button"
+          onClick={handleDownloadCSV}
+          disabled={loadingServices || filteredServices.length === 0}
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#0B2438] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#2374A8] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <path d="m7 10 5 5 5-5" />
+            <path d="M12 15V3" />
+          </svg>
+          Download CSV
+          <span className="rounded-md bg-white/15 px-1.5 py-0.5 text-xs">
+            {filteredServices.length}
+          </span>
+        </button>
       </div>
     </div>
   </div>

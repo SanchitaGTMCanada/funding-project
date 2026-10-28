@@ -519,7 +519,7 @@ export default function Home() {
 const filteredServices = useMemo(() => {
   return fundingServices.filter((service) => {
     // Only approved statuses are visible to customers. This happens before
-    // category/applicant/location filters, search, pagination, and CSV export.
+    // category/applicant/location filters, search, and pagination.
     if (!isCustomerVisibleProgram(service)) return false;
 
     const applicantTypes = getApplicantTypes(service);
@@ -718,53 +718,6 @@ const toggleCategory = (categoryKey) => {
 
     return searchedServices.slice(startIndex, endIndex);
   }, [searchedServices, currentPage, itemsPerPage]);
-
-  /* =========================================================
-     EXPORT CUSTOMER-VISIBLE FUNDING PROGRAMS TO CSV
-     One export button: use active filters/search when present;
-     otherwise export all customer-visible programs.
-     ========================================================= */
-
-  const downloadFundingCsv = (services, exportType) => {
-    const csvEscape = (value) => {
-      const textValue = String(value ?? "");
-      return `"${textValue.replace(/"/g, '""')}"`;
-    };
-
-    const headers = CUSTOMER_COLUMNS;
-    const rows = services.map((service) =>
-      headers.map((column) => {
-        const rawValue =
-          column === "Program Name"
-            ? getProgramName(service)
-            : getValue(service, [column]);
-
-        return isAmountField(column)
-          ? formatCanadianAmount(rawValue)
-          : formatValue(rawValue);
-      })
-    );
-
-    const csvContent = [
-      headers.map(csvEscape).join(","),
-      ...rows.map((row) => row.map(csvEscape).join(",")),
-    ].join("\r\n");
-
-    // BOM helps Excel correctly read UTF-8 text and accented characters.
-    const blob = new Blob(["\uFEFF", csvContent], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    const date = new Date().toISOString().slice(0, 10);
-
-    link.href = url;
-    link.download = `funding-programs-${exportType}-${date}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-  };
 
   /* =========================================================
      PAGE NUMBERS
@@ -1966,43 +1919,6 @@ const toggleCategory = (categoryKey) => {
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const hasActiveFilters =
-                      hasActiveApplicantFilter ||
-                      Boolean(selectedTerritory) ||
-                      Boolean(selectedCommunity) ||
-                      selectedCategories.length > 0 ||
-                      Boolean(tableSearch.trim());
-
-                    const exportServices = hasActiveFilters
-                      ? searchedServices
-                      : fundingServices;
-
-                    downloadFundingCsv(
-                      exportServices,
-                      hasActiveFilters ? "filtered" : "all"
-                    );
-                  }}
-                  disabled={loading || (fundingServices.length === 0)}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-teal-400/40 bg-teal-500/15 px-3 py-2 text-xs font-bold text-teal-200 transition hover:bg-teal-500/25 disabled:cursor-not-allowed disabled:opacity-40"
-                  title="Download matching results when filters or search are active; otherwise download all customer-visible programs"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    className="h-4 w-4"
-                    aria-hidden="true"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3" />
-                  </svg>
-                  Download CSV
-                </button>
-
                 <label className="relative block w-full sm:w-64">
                   <span className="sr-only">Search funding programs</span>
                   <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400" aria-hidden="true">
@@ -2891,4 +2807,3 @@ const toggleCategory = (categoryKey) => {
     </main>
   );
 }
-   
