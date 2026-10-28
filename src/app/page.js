@@ -275,6 +275,17 @@ export default function Home() {
   };
 
   const [loading, setLoading] = useState(true);
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+
+  // Refresh deadline checks periodically so expired featured programs
+  // disappear without requiring a manual page refresh.
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 60 * 60 * 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const [selectedService, setSelectedService] = useState(null);
 
@@ -337,6 +348,8 @@ export default function Home() {
           }
         );
 
+
+        // alert("called");
         const result = await response.json();
 
         if (!response.ok) {
@@ -372,6 +385,12 @@ export default function Home() {
 
     fetchFundingServices();
   }, []);
+
+  /* =========================================================
+     FEATURED PROGRAMS
+     Only staff-selected programs with customer-visible statuses
+     and a future deadline appear in the featured carousel.
+     ========================================================= */
 
   /* =========================================================
      COMMON FIELDS
@@ -438,6 +457,68 @@ export default function Home() {
 
     return CUSTOMER_VISIBLE_STATUSES.has(normalizedStatus);
   };
+
+  // A featured program must have a real, future deadline.
+  // Date-only values remain valid through the end of that calendar day.
+  const getProgramDeadlineDate = (service) => {
+    const rawDeadline = getValue(service, [
+      "Deadline",
+      "Application Deadline",
+      "Closing Date",
+      "End Date",
+    ]);
+
+    if (
+      rawDeadline === null ||
+      rawDeadline === undefined ||
+      String(rawDeadline).trim() === ""
+    ) {
+      return null;
+    }
+
+    if (rawDeadline instanceof Date) {
+      return Number.isNaN(rawDeadline.getTime())
+        ? null
+        : rawDeadline;
+    }
+
+    const deadlineText = String(rawDeadline).trim();
+    const dateOnlyMatch = deadlineText.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+    if (dateOnlyMatch) {
+      const [, year, month, day] = dateOnlyMatch;
+      const date = new Date(
+        Number(year),
+        Number(month) - 1,
+        Number(day),
+        23,
+        59,
+        59,
+        999
+      );
+
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    const parsedDate = new Date(deadlineText);
+    return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+  };
+
+  const featuredPrograms = useMemo(() => {
+    return fundingServices.filter((service) => {
+      const featuredValue =
+        service?.isFeatured ?? service?.data?.isFeatured;
+
+      // Accept boolean, numeric, and string representations returned by the API.
+      // Staff selection is the only featured-carousel requirement: deadline and
+      // status may be missing, expired, or not yet configured.
+      return (
+        featuredValue === true ||
+        featuredValue === 1 ||
+        String(featuredValue ?? "").trim().toLowerCase() === "true"
+      );
+    });
+  }, [fundingServices]);
 
   /* =========================================================
      FILTER DATA
@@ -1351,7 +1432,7 @@ const toggleCategory = (categoryKey) => {
           FEATURED FUNDING PROGRAMS
       ===================================================== */}
 
-      {!loading && fundingServices.length > 0 && (
+      {!loading && featuredPrograms.length > 0 && (
         <section className="mx-auto w-full max-w-[1800px] px-4 pt-10 py-2 sm:px-6 sm:pt-12 lg:px-10 lg:pt-16 xl:px-12">
           <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -1391,7 +1472,7 @@ const toggleCategory = (categoryKey) => {
               ref={featuredCarouselRef}
               className="flex items-stretch snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-1 pb-4 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-              {fundingServices.map((service) => {
+              {featuredPrograms.map((service) => {
                 const deadline = getValue(service, [
                   "Deadline",
                   "Application Deadline",
@@ -1412,7 +1493,7 @@ const toggleCategory = (categoryKey) => {
                   "Description",
                 ]);
 
-                const status = getStatus(service);
+                const status = getStatus(service) || "Status not specified";
 
                 return (
                   <article

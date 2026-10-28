@@ -141,6 +141,7 @@ const [viewingService, setViewingService] = useState(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editData, setEditData] = useState({});
+  const [editIsFeatured, setEditIsFeatured] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
   const [editMessage, setEditMessage] = useState("");
   const [editError, setEditError] = useState("");
@@ -882,6 +883,7 @@ const handleCloseView = () => {
     setEditData({
       ...(service.data || {}),
     });
+    setEditIsFeatured(service.isFeatured === true);
 
     setEditMessage("");
     setEditError("");
@@ -896,6 +898,7 @@ const handleCloseView = () => {
     setEditTitle("");
     setEditDescription("");
     setEditData({});
+    setEditIsFeatured(false);
     setEditMessage("");
     setEditError("");
   };
@@ -938,6 +941,7 @@ const handleSaveEdit = async () => {
           title: editTitle.trim(),
           description: editDescription.trim() || null,
           data: editData,
+          isFeatured: editIsFeatured,
         }),
       }
     );
@@ -1105,6 +1109,7 @@ const closeAllFundingModals = () => {
   setEditTitle("");
   setEditDescription("");
   setEditData({});
+  setEditIsFeatured(false);
   setEditMessage("");
   setEditError("");
 
@@ -3451,6 +3456,27 @@ const handleToggleStatus = async () => {
                     </p>
 
                   </div>
+
+                  <label className="mb-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                    <input
+                      type="checkbox"
+                      checked={editIsFeatured}
+                      onChange={(event) =>
+                        setEditIsFeatured(event.target.checked)
+                      }
+                      disabled={savingEdit}
+                      className="mt-1 h-4 w-4 accent-amber-500"
+                    />
+                    <span>
+                      <span className="block text-sm font-bold text-slate-900">
+                        ★ Feature this funding program
+                      </span>
+                      <span className="mt-1 block text-xs leading-5 text-slate-600">
+                        Show this program in the Featured Funding Programs section
+                        on the customer website.
+                      </span>
+                    </span>
+                  </label>
 
                   <div className="grid gap-5 md:grid-cols-2">
 

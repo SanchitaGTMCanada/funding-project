@@ -1,69 +1,132 @@
+
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth/requireAuth.js";
 
 // =========================================================
 // FUNDING SERVICE [id] API
 //
-// Employee    → Full access
-// Super Admin → Full access
-//
-// Supported:
-// PATCH → Activate / Deactivate
+// PUT    → Edit funding program details
+// PATCH  → Update active status and/or featured status
 // DELETE → Delete funding service
+//
+// Employee and Super Admin → Full access
 // =========================================================
 
+async function authorizeFundingServiceEdit() {
+  const { authorized, user, status, message } =
+    await requireAuth();
 
-// =========================================================
-// ACTIVATE / DEACTIVATE FUNDING SERVICE
-// Employee    → Full access
-// Super Admin → Full access
-// =========================================================
-
-
-export async function PUT(request, { params }) {
-  try {
-    const { authorized, user, status, message } =
-      await requireAuth();
-
-    if (!authorized) {
-      return Response.json(
+  if (!authorized) {
+    return {
+      authorized: false,
+      user,
+      response: Response.json(
         {
           success: false,
           message: message || "Unauthorized",
         },
         { status: status || 401 }
-      );
+      ),
+    };
+  }
+
+  if (
+    user?.role !== "EMPLOYEE" &&
+    user?.role !== "SUPER_ADMIN"
+  ) {
+    return {
+      authorized: false,
+      user,
+      response: Response.json(
+        {
+          success: false,
+          message:
+            "You do not have permission to edit funding programs.",
+        },
+        { status: 403 }
+      ),
+    };
+  }
+
+  return {
+    authorized: true,
+    user,
+    response: null,
+  };
+}
+
+async function getFundingServiceId(params) {
+  const { id } = await params;
+  const fundingServiceId = Number(id);
+
+  if (
+    !id ||
+    !Number.isInteger(fundingServiceId) ||
+    fundingServiceId <= 0
+  ) {
+    return {
+      valid: false,
+      response: Response.json(
+        {
+          success: false,
+          message: "Invalid funding service ID.",
+        },
+        { status: 400 }
+      ),
+    };
+  }
+
+  return {
+    valid: true,
+    id: fundingServiceId,
+  };
+}
+
+// =========================================================
+// PUT — EDIT FUNDING SERVICE
+// =========================================================
+
+export async function PUT(request, { params }) {
+  try {
+    const auth = await authorizeFundingServiceEdit();
+
+    if (!auth.authorized) {
+      return auth.response;
     }
 
-    if (
-      user?.role !== "EMPLOYEE" &&
-      user?.role !== "SUPER_ADMIN"
-    ) {
+    const serviceId = await getFundingServiceId(params);
+
+    if (!serviceId.valid) {
+      return serviceId.response;
+    }
+
+    let body;
+
+    try {
+      body = await request.json();
+    } catch {
       return Response.json(
         {
           success: false,
-          message: "You do not have permission to edit funding programs.",
+          message: "Invalid JSON request body.",
         },
-        { status: 403 }
-      );
-    }
-
-    const { id } = await params;
-    const fundingServiceId = Number(id);
-
-    if (!Number.isInteger(fundingServiceId) || fundingServiceId <= 0) {
-      return Response.json(
-        { success: false, message: "Invalid funding service ID." },
         { status: 400 }
       );
     }
 
-    const body = await request.json();
-    const { title, description, data } = body;
+    const {
+      title,
+      description,
+      data,
+      isFeatured,
+    } = body || {};
 
     if (typeof title !== "string" || !title.trim()) {
       return Response.json(
-        { success: false, message: "Title is required." },
+        {
+          success: false,
+          message: "Title is required.",
+        },
         { status: 400 }
       );
     }
@@ -74,35 +137,72 @@ export async function PUT(request, { params }) {
       Array.isArray(data)
     ) {
       return Response.json(
-        { success: false, message: "Invalid funding program data." },
+        {
+          success: false,
+          message: "Invalid funding program data.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (
+      isFeatured !== undefined &&
+      typeof isFeatured !== "boolean"
+    ) {
+      return Response.json(
+        {
+          success: false,
+          message: "isFeatured must be a boolean value.",
+        },
         { status: 400 }
       );
     }
 
     const existing = await prisma.fundingService.findUnique({
-      where: { id: fundingServiceId },
+      where: {
+        id: serviceId.id,
+      },
     });
 
     if (!existing) {
       return Response.json(
-        { success: false, message: "Funding program not found." },
+        {
+          success: false,
+          message: "Funding program not found.",
+        },
         { status: 404 }
       );
     }
 
     const updated = await prisma.fundingService.update({
-      where: { id: fundingServiceId },
+      where: {
+        id: serviceId.id,
+      },
       data: {
         title: title.trim(),
+
         description:
           description === undefined
             ? existing.description
             : description === null
               ? null
               : String(description).trim() || null,
+
         data,
+
+        // Update featured status only when supplied.
+        // Otherwise, preserve the existing value.
+        ...(isFeatured !== undefined
+          ? { isFeatured }
+          : {}),
       },
     });
+
+    console.log(
+      `[FundingService] ${serviceId.id} UPDATED by ${
+        auth.user?.email || "Unknown"
+      } (${auth.user?.role || "Unknown"})`
+    );
 
     return Response.json({
       success: true,
@@ -110,306 +210,128 @@ export async function PUT(request, { params }) {
       fundingService: updated,
     });
   } catch (error) {
+    // Log the complete error in the server terminal.
     console.error("PUT funding service error:", error);
 
+    // Return the actual error message to help diagnose
+    // Prisma schema, database, or update failures.
     return Response.json(
       {
         success: false,
         message:
-          error instanceof SyntaxError
-            ? "Invalid JSON request body."
-            : "Failed to update funding program.",
+          error instanceof Error
+            ? error.message
+            : "Unknown error while updating funding program.",
+        code: error?.code || null,
       },
       { status: 500 }
     );
   }
 }
 
+// =========================================================
+// PATCH — UPDATE ACTIVE AND/OR FEATURED STATUS
+// =========================================================
+//
+// Activate:
+// { "isActive": true }
+//
+// Deactivate:
+// { "isActive": false }
+//
+// Feature a program:
+// { "isFeatured": true }
+//
+// Remove featured status:
+// { "isFeatured": false }
+//
+// Update both:
+// { "isActive": true, "isFeatured": true }
+// =========================================================
 
 export async function PATCH(request, { params }) {
   try {
-    // =====================================================
-    // AUTHENTICATION
-    // =====================================================
+    const auth = await authorizeFundingServiceEdit();
 
-    const {
-      authorized,
-      user,
-      status,
-      message,
-    } = await requireAuth();
-
-    if (!authorized) {
-      return Response.json(
-        {
-          success: false,
-          message: message || "Unauthorized",
-        },
-        {
-          status: status || 401,
-        }
-      );
+    if (!auth.authorized) {
+      return auth.response;
     }
 
-    // =====================================================
-    // ROLE VALIDATION
-    // EMPLOYEE + SUPER_ADMIN = FULL ACCESS
-    // =====================================================
+    const serviceId = await getFundingServiceId(params);
 
-    if (
-      user?.role !== "EMPLOYEE" &&
-      user?.role !== "SUPER_ADMIN"
-    ) {
-      return Response.json(
-        {
-          success: false,
-          message:
-            "You do not have permission to change funding program status.",
-        },
-        {
-          status: 403,
-        }
-      );
+    if (!serviceId.valid) {
+      return serviceId.response;
     }
-
-    // =====================================================
-    // GET FUNDING SERVICE ID
-    // =====================================================
-
-    const { id } = await params;
-
-    const fundingServiceId = Number(id);
-
-    if (
-      !id ||
-      !Number.isInteger(fundingServiceId) ||
-      fundingServiceId <= 0
-    ) {
-      return Response.json(
-        {
-          success: false,
-          message: "Invalid funding service ID.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    // =====================================================
-    // CHECK FUNDING SERVICE EXISTS
-    // =====================================================
-
-    const existingService =
-      await prisma.fundingService.findUnique({
-        where: {
-          id: fundingServiceId,
-        },
-      });
-
-    if (!existingService) {
-      return Response.json(
-        {
-          success: false,
-          message: "Funding service not found.",
-        },
-        {
-          status: 404,
-        }
-      );
-    }
-
-    // =====================================================
-    // READ REQUEST BODY
-    // =====================================================
 
     let body;
 
     try {
       body = await request.json();
-    } catch (error) {
-      console.error(
-        "Funding service PATCH body parse error:",
-        error
-      );
-
+    } catch {
       return Response.json(
         {
           success: false,
           message: "Invalid request body.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
-    const { isActive } = body || {};
+    const { isActive, isFeatured } = body || {};
 
-    // =====================================================
-    // VALIDATE isActive
-    // =====================================================
+    const hasIsActive =
+      Object.prototype.hasOwnProperty.call(
+        body || {},
+        "isActive"
+      );
 
-    if (typeof isActive !== "boolean") {
+    const hasIsFeatured =
+      Object.prototype.hasOwnProperty.call(
+        body || {},
+        "isFeatured"
+      );
+
+    if (!hasIsActive && !hasIsFeatured) {
       return Response.json(
         {
           success: false,
           message:
-            "isActive must be a boolean value.",
+            "Provide isActive, isFeatured, or both.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
-
-    // =====================================================
-    // UPDATE FUNDING SERVICE STATUS
-    // =====================================================
-
-    const updatedService =
-      await prisma.fundingService.update({
-        where: {
-          id: fundingServiceId,
-        },
-        data: {
-          isActive,
-        },
-      });
-
-    // =====================================================
-    // LOG ACTION
-    // =====================================================
-
-    console.log(
-      `[FundingService] ${fundingServiceId} ${
-        isActive ? "ACTIVATED" : "DEACTIVATED"
-      } by ${user?.email || "Unknown"} (${
-        user?.role || "Unknown"
-      })`
-    );
-
-    // =====================================================
-    // SUCCESS RESPONSE
-    // =====================================================
-
-    return Response.json(
-      {
-        success: true,
-        message: isActive
-          ? "Funding program activated successfully."
-          : "Funding program deactivated successfully.",
-        fundingService: updatedService,
-      },
-      {
-        status: 200,
-      }
-    );
-  } catch (error) {
-    console.error(
-      "Activate/deactivate funding service error:",
-      error
-    );
-
-    return Response.json(
-      {
-        success: false,
-        message:
-          error?.message ||
-          "Failed to update funding program status.",
-      },
-      {
-        status: 500,
-      }
-    );
-  }
-}
-
-
-// =========================================================
-// DELETE FUNDING SERVICE
-// Employee    → Full access
-// Super Admin → Full access
-// =========================================================
-
-export async function DELETE(request, { params }) {
-  try {
-    // =====================================================
-    // AUTHENTICATION
-    // =====================================================
-
-    const {
-      authorized,
-      user,
-      status,
-      message,
-    } = await requireAuth();
-
-    if (!authorized) {
-      return Response.json(
-        {
-          success: false,
-          message: message || "Unauthorized",
-        },
-        {
-          status: status || 401,
-        }
-      );
-    }
-
-    // =====================================================
-    // ROLE VALIDATION
-    // EMPLOYEE + SUPER_ADMIN = FULL ACCESS
-    // =====================================================
 
     if (
-      user?.role !== "EMPLOYEE" &&
-      user?.role !== "SUPER_ADMIN"
+      hasIsActive &&
+      typeof isActive !== "boolean"
     ) {
       return Response.json(
         {
           success: false,
-          message:
-            "You do not have permission to delete funding programs.",
+          message: "isActive must be a boolean value.",
         },
-        {
-          status: 403,
-        }
+        { status: 400 }
       );
     }
 
-    // =====================================================
-    // GET FUNDING SERVICE ID
-    // =====================================================
-
-    const { id } = await params;
-
-    const fundingServiceId = Number(id);
-
     if (
-      !id ||
-      !Number.isInteger(fundingServiceId) ||
-      fundingServiceId <= 0
+      hasIsFeatured &&
+      typeof isFeatured !== "boolean"
     ) {
       return Response.json(
         {
           success: false,
-          message: "Invalid funding service ID.",
+          message: "isFeatured must be a boolean value.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
-
-    // =====================================================
-    // CHECK FUNDING SERVICE EXISTS
-    // =====================================================
 
     const existingService =
       await prisma.fundingService.findUnique({
         where: {
-          id: fundingServiceId,
+          id: serviceId.id,
         },
       });
 
@@ -419,50 +341,62 @@ export async function DELETE(request, { params }) {
           success: false,
           message: "Funding service not found.",
         },
-        {
-          status: 404,
-        }
+        { status: 404 }
       );
     }
 
-    // =====================================================
-    // DELETE FUNDING SERVICE
-    // =====================================================
+    const updateData = {};
 
-    await prisma.fundingService.delete({
-      where: {
-        id: fundingServiceId,
-      },
-    });
+    if (hasIsActive) {
+      updateData.isActive = isActive;
+    }
 
-    // =====================================================
-    // LOG ACTION
-    // =====================================================
+    if (hasIsFeatured) {
+      updateData.isFeatured = isFeatured;
+    }
+
+    const updatedService =
+      await prisma.fundingService.update({
+        where: {
+          id: serviceId.id,
+        },
+        data: updateData,
+      });
 
     console.log(
-      `[FundingService] ${fundingServiceId} DELETED by ${
-        user?.email || "Unknown"
-      } (${user?.role || "Unknown"})`
+      `[FundingService] ${serviceId.id} ${
+        hasIsFeatured
+          ? isFeatured
+            ? "FEATURED"
+            : "UNFEATURED"
+          : isActive
+            ? "ACTIVATED"
+            : "DEACTIVATED"
+      } by ${auth.user?.email || "Unknown"} (${
+        auth.user?.role || "Unknown"
+      })`
     );
 
-    // =====================================================
-    // SUCCESS RESPONSE
-    // =====================================================
+    let message = "Funding program updated successfully.";
 
-    return Response.json(
-      {
-        success: true,
-        message:
-          "Funding service deleted successfully.",
-        deletedId: fundingServiceId,
-      },
-      {
-        status: 200,
-      }
-    );
+    if (hasIsFeatured && !hasIsActive) {
+      message = isFeatured
+        ? "Funding program marked as featured."
+        : "Funding program removed from featured programs.";
+    } else if (hasIsActive && !hasIsFeatured) {
+      message = isActive
+        ? "Funding program activated successfully."
+        : "Funding program deactivated successfully.";
+    }
+
+    return Response.json({
+      success: true,
+      message,
+      fundingService: updatedService,
+    });
   } catch (error) {
     console.error(
-      "Delete funding service error:",
+      "Update funding service status error:",
       error
     );
 
@@ -470,12 +404,81 @@ export async function DELETE(request, { params }) {
       {
         success: false,
         message:
-          error?.message ||
-          "Failed to delete funding service.",
+          error instanceof Error
+            ? error.message
+            : "Failed to update funding program.",
+        code: error?.code || null,
       },
+      { status: 500 }
+    );
+  }
+}
+
+// =========================================================
+// DELETE — DELETE FUNDING SERVICE
+// =========================================================
+
+export async function DELETE(request, { params }) {
+  try {
+    const auth = await authorizeFundingServiceEdit();
+
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
+    const serviceId = await getFundingServiceId(params);
+
+    if (!serviceId.valid) {
+      return serviceId.response;
+    }
+
+    const existingService =
+      await prisma.fundingService.findUnique({
+        where: {
+          id: serviceId.id,
+        },
+      });
+
+    if (!existingService) {
+      return Response.json(
+        {
+          success: false,
+          message: "Funding service not found.",
+        },
+        { status: 404 }
+      );
+    }
+
+    await prisma.fundingService.delete({
+      where: {
+        id: serviceId.id,
+      },
+    });
+
+    console.log(
+      `[FundingService] ${serviceId.id} DELETED by ${
+        auth.user?.email || "Unknown"
+      } (${auth.user?.role || "Unknown"})`
+    );
+
+    return Response.json({
+      success: true,
+      message: "Funding service deleted successfully.",
+      deletedId: serviceId.id,
+    });
+  } catch (error) {
+    console.error("Delete funding service error:", error);
+
+    return Response.json(
       {
-        status: 500,
-      }
+        success: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete funding service.",
+        code: error?.code || null,
+      },
+      { status: 500 }
     );
   }
 }
