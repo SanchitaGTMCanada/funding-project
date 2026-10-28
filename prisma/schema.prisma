@@ -50,14 +50,16 @@ model FundingService {
   description String? @db.Text
   data        Json
 
-  whoYouAre   Json?
-  territory   Json?
-  category    Json?
+  whoYouAre  Json?
+  territory  Json?
+  category   Json?
 
-  isActive    Boolean @default(true)
-  isFeatured  Boolean @default(false)
+  isActive   Boolean @default(true)
+  isFeatured Boolean @default(false)
 
   // Keep your other existing fields and relations here.
+
+  applications Application[]
 }
 
 model Application {
