@@ -4,19 +4,57 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { requireModifyPermission } from "@/lib/auth/requireAuth";
 
 // =========================================================
-// GET FUNDING SERVICES
+// HELPERS
 // =========================================================
-// Public/customer page:
-//   - Returns ACTIVE programs only
-//
-// Dashboard:
-//   - Authenticated users can see ALL programs
-//
-// Public request:
-//   /api/funding-services?public=true
-//
-// Dashboard request:
-//   /api/funding-services
+
+function normalizeJsonField(value) {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
+    return null;
+  }
+
+  if (Array.isArray(value)) {
+    const cleaned = value
+      .map((item) => String(item).trim())
+      .filter(Boolean);
+
+    return cleaned.length ? cleaned : null;
+  }
+
+  if (typeof value === "string") {
+    const cleaned = value.trim();
+
+    return cleaned || null;
+  }
+
+  return value;
+}
+
+function normalizeData(data) {
+  const cleanedData = {};
+
+  Object.entries(data).forEach(([key, value]) => {
+    const cleanKey = String(key).trim();
+
+    if (!cleanKey) return;
+
+    if (value === null || value === undefined) {
+      cleanedData[cleanKey] = "";
+    } else if (typeof value === "string") {
+      cleanedData[cleanKey] = value.trim();
+    } else {
+      cleanedData[cleanKey] = value;
+    }
+  });
+
+  return cleanedData;
+}
+
+// =========================================================
+// GET FUNDING SERVICES
 // =========================================================
 
 export async function GET(request) {
@@ -27,13 +65,7 @@ export async function GET(request) {
     const isPublic = searchParams.get("public") === "true";
 
     const fundingServices = await prisma.fundingService.findMany({
-      where:
-        isPublic || !user
-          ? {
-              isActive: true,
-            }
-          : {},
-
+      where: isPublic || !user ? { isActive: true } : {},
       orderBy: {
         createdAt: "desc",
       },
@@ -51,21 +83,13 @@ export async function GET(request) {
         success: false,
         message: "Failed to fetch funding services",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }
 
 // =========================================================
 // POST / CREATE FUNDING SERVICE
-// =========================================================
-// Employee + Super Admin
-//
-// New services:
-//   - Active by default
-//   - Not featured by default
 // =========================================================
 
 export async function POST(request) {
@@ -83,23 +107,36 @@ export async function POST(request) {
           success: false,
           message: message || "Authentication required",
         },
-        {
-          status: status || 401,
-        }
+        { status: status || 401 }
       );
     }
 
-    const body = await request.json();
+    let body;
+
+    try {
+      body = await request.json();
+    } catch {
+      return Response.json(
+        {
+          success: false,
+          message: "Invalid JSON request body.",
+        },
+        { status: 400 }
+      );
+    }
 
     const {
       title,
       description,
       data,
+      whoYouAre,
+      territory,
+      category,
       isFeatured = false,
-    } = body;
+    } = body || {};
 
     if (
-      data === null ||
+      !data ||
       typeof data !== "object" ||
       Array.isArray(data)
     ) {
@@ -108,9 +145,7 @@ export async function POST(request) {
           success: false,
           message: "Funding data must be a valid object.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -120,37 +155,29 @@ export async function POST(request) {
           success: false,
           message: "isFeatured must be a boolean.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
-    const cleanedData = {};
+    const cleanedData = normalizeData(data);
 
-    Object.entries(data).forEach(([key, value]) => {
-      const cleanKey = String(key).trim();
+    const hasData = Object.values(cleanedData).some((value) => {
+      if (value == null) return false;
 
-      if (!cleanKey) {
-        return;
+      if (typeof value === "string") {
+        return value.trim() !== "";
       }
 
-      if (value === null || value === undefined) {
-        cleanedData[cleanKey] = "";
-        return;
+      if (Array.isArray(value)) {
+        return value.length > 0;
       }
 
       if (typeof value === "object") {
-        cleanedData[cleanKey] = value;
-        return;
+        return Object.keys(value).length > 0;
       }
 
-      cleanedData[cleanKey] = String(value).trim();
+      return true;
     });
-
-    const hasData = Object.values(cleanedData).some(
-      (value) => String(value ?? "").trim() !== ""
-    );
 
     if (!hasData) {
       return Response.json(
@@ -159,9 +186,7 @@ export async function POST(request) {
           message:
             "Please enter at least one funding detail before submitting.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -178,11 +203,35 @@ export async function POST(request) {
         : "") ||
       null;
 
+    // Support both dedicated request fields and legacy data fields.
+    const resolvedWhoYouAre = normalizeJsonField(
+      whoYouAre !== undefined
+        ? whoYouAre
+        : cleanedData["Applicant Types"]
+    );
+
+    const resolvedTerritory = normalizeJsonField(
+      territory !== undefined
+        ? territory
+        : cleanedData.Locations
+    );
+
+    const resolvedCategory = normalizeJsonField(
+      category !== undefined
+        ? category
+        : cleanedData.Category
+    );
+
     const fundingService = await prisma.fundingService.create({
       data: {
         title: fundingTitle,
         description: fundingDescription,
         data: cleanedData,
+
+        whoYouAre: resolvedWhoYouAre,
+        territory: resolvedTerritory,
+        category: resolvedCategory,
+
         isActive: true,
         isFeatured,
       },
@@ -198,9 +247,7 @@ export async function POST(request) {
         message: "Funding data added successfully.",
         fundingService,
       },
-      {
-        status: 201,
-      }
+      { status: 201 }
     );
   } catch (error) {
     console.error("Create funding service error:", error);
@@ -209,10 +256,16 @@ export async function POST(request) {
       {
         success: false,
         message: "Failed to add funding data.",
+        error:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : undefined,
+        code:
+          process.env.NODE_ENV === "development"
+            ? error.code || null
+            : undefined,
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }

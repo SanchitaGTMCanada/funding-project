@@ -1,5 +1,6 @@
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { requireAuth } from "@/lib/auth/requireAuth.js";
 
 // =========================================================
@@ -83,6 +84,53 @@ async function getFundingServiceId(params) {
 }
 
 // =========================================================
+// HELPERS — NORMALIZE CLASSIFICATION VALUES
+// =========================================================
+
+function normalizeClassificationArray(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (Array.isArray(value)) {
+    const cleaned = value
+      .map((item) => String(item).trim())
+      .filter(Boolean);
+
+    return cleaned.length ? cleaned : null;
+  }
+
+  if (typeof value === "string") {
+    const cleaned = value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    return cleaned.length ? cleaned : null;
+  }
+
+  return null;
+}
+
+function normalizeTerritory(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (Array.isArray(value)) {
+    const cleaned = value
+      .map((item) => String(item).trim())
+      .filter(Boolean);
+
+    return cleaned.length ? cleaned : null;
+  }
+
+  const cleaned = String(value).trim();
+
+  return cleaned || null;
+}
+
+// =========================================================
 // PUT — EDIT FUNDING SERVICE
 // =========================================================
 
@@ -118,6 +166,9 @@ export async function PUT(request, { params }) {
       title,
       description,
       data,
+      whoYouAre,
+      territory,
+      category,
       isFeatured,
     } = body || {};
 
@@ -174,28 +225,64 @@ export async function PUT(request, { params }) {
       );
     }
 
+    // Start with the standard fields.
+    const updateData = {
+      title: title.trim(),
+
+      description:
+        description === undefined
+          ? existing.description
+          : description === null
+            ? null
+            : String(description).trim() || null,
+
+      data,
+    };
+
+    // Update Who You Are only when the request includes it.
+    // An explicit null or empty array clears the column.
+    if (whoYouAre !== undefined) {
+      const normalizedWhoYouAre =
+        normalizeClassificationArray(whoYouAre);
+
+      updateData.whoYouAre =
+        normalizedWhoYouAre === null
+          ? Prisma.DbNull
+          : normalizedWhoYouAre;
+    }
+
+    // Update Territory only when the request includes it.
+    if (territory !== undefined) {
+      const normalizedTerritory =
+        normalizeTerritory(territory);
+
+      updateData.territory =
+        normalizedTerritory === null
+          ? Prisma.DbNull
+          : normalizedTerritory;
+    }
+
+    // Update Category only when the request includes it.
+    if (category !== undefined) {
+      const normalizedCategory =
+        normalizeClassificationArray(category);
+
+      updateData.category =
+        normalizedCategory === null
+          ? Prisma.DbNull
+          : normalizedCategory;
+    }
+
+    // Preserve the existing featured status when not supplied.
+    if (isFeatured !== undefined) {
+      updateData.isFeatured = isFeatured;
+    }
+
     const updated = await prisma.fundingService.update({
       where: {
         id: serviceId.id,
       },
-      data: {
-        title: title.trim(),
-
-        description:
-          description === undefined
-            ? existing.description
-            : description === null
-              ? null
-              : String(description).trim() || null,
-
-        data,
-
-        // Update featured status only when supplied.
-        // Otherwise, preserve the existing value.
-        ...(isFeatured !== undefined
-          ? { isFeatured }
-          : {}),
-      },
+      data: updateData,
     });
 
     console.log(
@@ -210,11 +297,8 @@ export async function PUT(request, { params }) {
       fundingService: updated,
     });
   } catch (error) {
-    // Log the complete error in the server terminal.
     console.error("PUT funding service error:", error);
 
-    // Return the actual error message to help diagnose
-    // Prisma schema, database, or update failures.
     return Response.json(
       {
         success: false,
@@ -231,7 +315,6 @@ export async function PUT(request, { params }) {
 
 // =========================================================
 // PATCH — UPDATE ACTIVE AND/OR FEATURED STATUS
-// =========================================================
 //
 // Activate:
 // { "isActive": true }
@@ -279,17 +362,15 @@ export async function PATCH(request, { params }) {
 
     const { isActive, isFeatured } = body || {};
 
-    const hasIsActive =
-      Object.prototype.hasOwnProperty.call(
-        body || {},
-        "isActive"
-      );
+    const hasIsActive = Object.prototype.hasOwnProperty.call(
+      body || {},
+      "isActive"
+    );
 
-    const hasIsFeatured =
-      Object.prototype.hasOwnProperty.call(
-        body || {},
-        "isFeatured"
-      );
+    const hasIsFeatured = Object.prototype.hasOwnProperty.call(
+      body || {},
+      "isFeatured"
+    );
 
     if (!hasIsActive && !hasIsFeatured) {
       return Response.json(
@@ -377,21 +458,22 @@ export async function PATCH(request, { params }) {
       })`
     );
 
-    let message = "Funding program updated successfully.";
+    let responseMessage =
+      "Funding program updated successfully.";
 
     if (hasIsFeatured && !hasIsActive) {
-      message = isFeatured
+      responseMessage = isFeatured
         ? "Funding program marked as featured."
         : "Funding program removed from featured programs.";
     } else if (hasIsActive && !hasIsFeatured) {
-      message = isActive
+      responseMessage = isActive
         ? "Funding program activated successfully."
         : "Funding program deactivated successfully.";
     }
 
     return Response.json({
       success: true,
-      message,
+      message: responseMessage,
       fundingService: updatedService,
     });
   } catch (error) {

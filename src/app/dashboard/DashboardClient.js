@@ -367,27 +367,125 @@ const isEmployee = user?.role === "EMPLOYEE";
   // =========================================================
   // DYNAMIC COLUMNS
   // =========================================================
+const dynamicColumns = useMemo(() => {
+  const columns = [];
 
-  const dynamicColumns = useMemo(() => {
-    const columns = [];
+  // Always include these classification fields.
+  const classificationColumns = [
+    "Applicant Types",
+    "Locations",
+    "Category",
+  ];
 
-    fundingServices.forEach((service) => {
-      if (
-        !service.data ||
-        typeof service.data !== "object"
-      ) {
-        return;
+  classificationColumns.forEach((column) => {
+    if (!columns.includes(column)) {
+      columns.push(column);
+    }
+  });
+
+  // Add all other columns from the existing program data.
+  fundingServices.forEach((service) => {
+    const data =
+      service.data && typeof service.data === "object"
+        ? service.data
+        : {};
+
+    Object.keys(data).forEach((key) => {
+      if (!columns.includes(key)) {
+        columns.push(key);
       }
-
-      Object.keys(service.data).forEach((key) => {
-        if (!columns.includes(key)) {
-          columns.push(key);
-        }
-      });
     });
+  });
 
-    return columns;
-  }, [fundingServices]);
+  return columns;
+}, [fundingServices]);
+
+const getTableCellValue = (service, column) => {
+  const data =
+    service?.data && typeof service.data === "object" && !Array.isArray(service.data)
+      ? service.data
+      : {};
+
+  const hasValue = (value) => {
+    if (value === null || value === undefined) return false;
+    if (typeof value === "string") return value.trim() !== "";
+    if (Array.isArray(value)) return value.length > 0;
+    return true;
+  };
+
+  const displayValue = (value) => {
+    if (!hasValue(value)) return "-";
+    if (Array.isArray(value)) {
+      const items = value
+        .map((item) => String(item ?? "").trim())
+        .filter(Boolean);
+      return items.length ? items.join(", ") : "-";
+    }
+    if (typeof value === "object") return JSON.stringify(value);
+    return String(value);
+  };
+
+  // Match field names regardless of case, spacing, or common table labels.
+  const normalizeKey = (value) =>
+    String(value ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/[_-]+/g, " ")
+      .replace(/\\s+/g, " ");
+
+  const aliases = {
+    "applicant types": ["Applicant Types", "Who You Are", "Who You Are / Applicant Types"],
+    "who you are": ["Who You Are", "Applicant Types", "Who You Are / Applicant Types"],
+    "territory/province": ["Territory/Province", "Territory", "Locations", "Jurisdiction"],
+    territory: ["Territory", "Territory/Province", "Locations"],
+    locations: ["Locations", "Territory/Province", "Territory"],
+    category: ["Category", "Categories"],
+    "official source url": ["Official Source URL", "Source URL", "Official URL"],
+    "program name": ["Program Name", "Funding Service Title", "Title"],
+  };
+
+  const requestedKey = normalizeKey(column);
+  const candidateKeys = aliases[requestedKey] || [column];
+
+  // First use the exact or aliased value in the JSON data.
+  for (const candidate of candidateKeys) {
+    if (hasValue(data[candidate])) {
+      return displayValue(data[candidate]);
+    }
+  }
+
+  // Handle data keys that differ only by capitalization or whitespace.
+  const matchingEntry = Object.entries(data).find(([key, value]) =>
+    normalizeKey(key) === requestedKey && hasValue(value)
+  );
+
+  if (matchingEntry) {
+    return displayValue(matchingEntry[1]);
+  }
+
+  // Fall back to dedicated Prisma columns when JSON values are empty.
+  if (
+    ["applicant types", "who you are", "who you are / applicant types"].includes(requestedKey)
+  ) {
+    return displayValue(service?.whoYouAre);
+  }
+
+  if (
+    ["locations", "territory", "territory/province"].includes(requestedKey)
+  ) {
+    return displayValue(service?.territory);
+  }
+
+  if (["category", "categories"].includes(requestedKey)) {
+    return displayValue(service?.category);
+  }
+
+  if (requestedKey === "program name" || requestedKey === "funding service title") {
+    return displayValue(data["Program Name"] || service?.title);
+  }
+
+  return displayValue(data[column]);
+};
 
   // =========================================================
   // PROGRAM STATUS COUNTS
@@ -451,6 +549,9 @@ const isEmployee = user?.role === "EMPLOYEE";
       const values = [
         service.title,
         service.description,
+        service.whoYouAre,
+        service.territory,
+        service.category,
         ...Object.values(service.data || {}),
       ];
 
@@ -507,7 +608,9 @@ const isEmployee = user?.role === "EMPLOYEE";
       return [
         service.id,
         service.title,
-        ...dynamicColumns.map((column) => data[column]),
+        ...dynamicColumns.map((column) =>
+          getTableCellValue(service, column)
+        ),
         service.isActive === false ? "Inactive" : "Active",
         service.createdAt
           ? new Date(service.createdAt).toISOString()
@@ -802,15 +905,20 @@ useEffect(() => {
             "Content-Type": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify({
-            title: String(
-              addData["Program Name"] || ""
-            ).trim(),
-            description:
-              String(addData["Purpose"] || "").trim() ||
-              null,
-            data: payloadData,
-          }),
+         
+body: JSON.stringify({
+  title: String(addData["Program Name"] || "").trim(),
+  description: String(addData["Purpose"] || "").trim() || null,
+
+  // Dedicated Prisma columns
+  whoYouAre: applicantTypesToSave,
+  territory: selectedTerritory || null,
+  category: categoriesToSave,
+
+  // Preserve the existing program data
+  data: payloadData,
+}),
+
         }
       );
 
@@ -873,18 +981,37 @@ const handleCloseView = () => {
 
   const handleEdit = (service) => {
     setEditingService(service);
-
     setEditTitle(service.title || "");
+    setEditDescription(service.description || "");
 
-    setEditDescription(
-      service.description || ""
-    );
+    const existingData =
+      service.data && typeof service.data === "object"
+        ? service.data
+        : {};
 
+    const normalizeClassificationValue = (value) => {
+      if (value === null || value === undefined) return "";
+      if (Array.isArray(value)) return value.map((item) => String(item)).join(", ");
+      if (typeof value === "object") return JSON.stringify(value);
+      return String(value);
+    };
+
+    // Load legacy JSON values first, falling back to dedicated database columns.
+    // The edit controls use comma-separated strings for multi-select values.
     setEditData({
-      ...(service.data || {}),
+      ...existingData,
+      "Applicant Types": normalizeClassificationValue(
+        existingData["Applicant Types"] || service.whoYouAre
+      ),
+      Locations: normalizeClassificationValue(
+        existingData.Locations || service.territory
+      ),
+      Category: normalizeClassificationValue(
+        existingData.Category || service.category
+      ),
     });
-    setEditIsFeatured(service.isFeatured === true);
 
+    setEditIsFeatured(service.isFeatured === true);
     setEditMessage("");
     setEditError("");
   };
@@ -937,12 +1064,42 @@ const handleSaveEdit = async () => {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({
-          title: editTitle.trim(),
-          description: editDescription.trim() || null,
-          data: editData,
-          isFeatured: editIsFeatured,
-        }),
+      body: JSON.stringify({
+  title: editTitle.trim(),
+  description: editDescription.trim() || null,
+
+  // Keep the existing table data synchronized.
+  data: {
+    ...editData,
+    "Applicant Types":
+      editData["Applicant Types"] ??
+      editingService.whoYouAre ??
+      "",
+    Locations:
+      editData.Locations ??
+      editingService.territory ??
+      "",
+    Category:
+      editData.Category ??
+      editingService.category ??
+      "",
+  },
+
+  // Save to the dedicated Prisma columns too.
+  whoYouAre: editData["Applicant Types"] ??
+    editingService.whoYouAre ??
+    null,
+
+  territory: editData.Locations ??
+    editingService.territory ??
+    null,
+
+  category: editData.Category ??
+    editingService.category ??
+    null,
+
+  isFeatured: editIsFeatured,
+}),
       }
     );
 
@@ -2247,12 +2404,12 @@ const handleToggleStatus = async () => {
                     className="max-w-[320px] whitespace-nowrap px-5 py-4 text-[#43515C]"
                     title={
                       isAmountField(column)
-                        ? formatCanadianAmount(service.data?.[column])
-                        : formatValue(service.data?.[column])
+                        ? formatCanadianAmount(getTableCellValue(service, column))
+                        : formatValue(getTableCellValue(service, column))
                     }
                   >
                     <div className="max-w-[320px] truncate">
-                      {renderValue(service.data?.[column], column)}
+                     {renderValue(getTableCellValue(service, column), column)}
                     </div>
                   </td>
                 ))}

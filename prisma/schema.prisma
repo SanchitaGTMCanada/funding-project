@@ -44,21 +44,20 @@ model Session {
   @@index([userId])
   @@map("sessions")
 }
-
 model FundingService {
-  id           Int           @id @default(autoincrement())
-  title        String
-  description  String?       @db.Text
-  data         Json
-  isActive     Boolean       @default(true)
-  isFeatured   Boolean       @default(false)
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String? @db.Text
+  data        Json
 
-  applications Application[]
+  whoYouAre   Json?
+  territory   Json?
+  category    Json?
 
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  isActive    Boolean @default(true)
+  isFeatured  Boolean @default(false)
 
-  @@map("funding_services")
+  // Keep your other existing fields and relations here.
 }
 
 model Application {
