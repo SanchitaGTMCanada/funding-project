@@ -1622,10 +1622,10 @@ const toggleCategory = (categoryKey) => {
             Filter funding opportunities
           </h2>
 
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#E0EAF1]">
+          {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#E0EAF1]">
             Choose your applicant type, territory and categories.
             Multiple selections match any selected option.
-          </p>
+          </p> */}
         </div>
 
         <button
@@ -1994,9 +1994,9 @@ const toggleCategory = (categoryKey) => {
                 <h3 className="text-sm font-black text-white">
                   Available Funding Programs
                 </h3>
-                <p className="mt-1 text-xs text-slate-400">
+                {/* <p className="mt-1 text-xs text-slate-400">
                   Customer-approved funding information
-                </p>
+                </p> */}
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap">

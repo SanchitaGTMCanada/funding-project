@@ -178,6 +178,10 @@ const [viewingService, setViewingService] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
 
+  const [databaseColumnCount, setDatabaseColumnCount] = useState(0);
+const [dynamicColumnCount, setDynamicColumnCount] = useState(0);
+
+
 
 
   // =========================================================
@@ -196,12 +200,20 @@ const isEmployee = user?.role === "EMPLOYEE";
       setLoadingServices(true);
       setUploadError("");
 
-      const response = await fetch("/api/funding-services", {
-        cache: "no-store",
-        credentials: "include",
-      });
+const response = await fetch("/api/funding-services", {
+  cache: "no-store",
+  credentials: "include",
+});
 
-      const result = await response.json();
+const result = await response.json();
+
+if (!response.ok || !result.success) {
+  throw new Error("Failed to fetch funding services");
+}
+
+setFundingServices(result.fundingServices || []);
+setDatabaseColumnCount(result.databaseColumnCount ?? 0);
+setDynamicColumnCount(result.dynamicColumnCount ?? 0);
 
       if (!response.ok) {
         throw new Error(
@@ -1711,7 +1723,8 @@ const handleToggleStatus = async () => {
                 </p>
 
                 <p className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
-                  {dynamicColumns.length}
+                 {dynamicColumnCount + databaseColumnCount}
+
                 </p>
               </div>
 

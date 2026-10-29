@@ -57,6 +57,10 @@ function normalizeData(data) {
 // GET FUNDING SERVICES
 // =========================================================
 
+// =========================================================
+// GET FUNDING SERVICES + DATABASE COLUMN COUNT
+// =========================================================
+
 export async function GET(request) {
   try {
     const user = await getCurrentUser();
@@ -64,16 +68,56 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const isPublic = searchParams.get("public") === "true";
 
-    const fundingServices = await prisma.fundingService.findMany({
-      where: isPublic || !user ? { isActive: true } : {},
-      orderBy: {
-        id: "desc",
-      },
+    const [fundingServices, columnResult] = await Promise.all([
+      prisma.fundingService.findMany({
+        where: isPublic || !user ? { isActive: true } : {},
+        orderBy: {
+          id: "desc",
+        },
+      }),
+
+      prisma.$queryRaw`
+        SELECT COUNT(*) AS columnCount
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'funding_services'
+      `,
+    ]);
+
+    // Count all physical database columns
+    const databaseColumnCount = Number(
+      columnResult[0]?.columnCount ?? 0
+    );
+
+    // Count unique dynamic fields from the returned funding services
+    const dynamicColumnSet = new Set([
+      "Applicant Types",
+      "Locations",
+      "Category",
+    ]);
+
+    fundingServices.forEach((service) => {
+      const data =
+        service.data &&
+        typeof service.data === "object" &&
+        !Array.isArray(service.data)
+          ? service.data
+          : {};
+
+      Object.keys(data).forEach((key) => {
+        const cleanKey = key.trim();
+
+        if (cleanKey) {
+          dynamicColumnSet.add(cleanKey);
+        }
+      });
     });
 
     return Response.json({
       success: true,
       fundingServices,
+      databaseColumnCount,
+      dynamicColumnCount: dynamicColumnSet.size,
     });
   } catch (error) {
     console.error("Funding services error:", error);
