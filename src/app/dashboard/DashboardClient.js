@@ -623,6 +623,8 @@ const getTableCellValue = (service, column) => {
     const headers = [
       "ID",
       "Funding Service Title",
+      "Start Date",
+      "End Date",
       ...dynamicColumns,
       "Status",
       "Created",
@@ -652,6 +654,8 @@ const getTableCellValue = (service, column) => {
       return [
         service.id,
         service.title,
+        formatDedicatedDate(service.startDate),
+        formatDedicatedDate(service.endDate),
         ...dynamicColumns.map((column) =>
           getTableCellValue(service, column)
         ),
@@ -735,6 +739,27 @@ useEffect(() => {
     }
 
     return String(value);
+  };
+
+  // Display dedicated Prisma date columns as YYYY-MM-DD without timezone shifts.
+  const formatDedicatedDate = (value) => {
+    if (value === null || value === undefined || String(value).trim() === "") {
+      return "-";
+    }
+
+    const text = String(value).trim();
+    const dateOnlyMatch = text.match(/^(\\d{4}-\\d{2}-\\d{2})/);
+
+    if (dateOnlyMatch) {
+      return dateOnlyMatch[1];
+    }
+
+    const parsed = new Date(text);
+    if (Number.isNaN(parsed.getTime())) {
+      return "-";
+    }
+
+    return parsed.toISOString().slice(0, 10);
   };
 
   // Format funding amounts with Canadian/Western digit grouping.
@@ -2452,6 +2477,14 @@ const handleToggleStatus = async () => {
                 Funding Service Title
               </th>
 
+              <th className="whitespace-nowrap px-5 py-4 text-xs font-bold uppercase tracking-wider text-[#43515C]">
+                Start Date
+              </th>
+
+              <th className="whitespace-nowrap px-5 py-4 text-xs font-bold uppercase tracking-wider text-[#43515C]">
+                End Date
+              </th>
+
               {dynamicColumns.map((column) => (
                 <th
                   key={column}
@@ -2505,6 +2538,16 @@ const handleToggleStatus = async () => {
                 {/* Title */}
                 <td className="px-5 py-4 text-sm font-semibold text-[#0B2438]">
                   {service.title || "-"}
+                </td>
+
+                {/* Dedicated Start Date */}
+                <td className="whitespace-nowrap px-5 py-4 text-sm text-[#43515C]">
+                  {formatDedicatedDate(service.startDate)}
+                </td>
+
+                {/* Dedicated End Date */}
+                <td className="whitespace-nowrap px-5 py-4 text-sm text-[#43515C]">
+                  {formatDedicatedDate(service.endDate)}
                 </td>
 
                 {/* Dynamic columns */}
