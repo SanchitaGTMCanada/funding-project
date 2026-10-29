@@ -573,6 +573,107 @@ export default function Home() {
     return CUSTOMER_VISIBLE_STATUSES.has(normalizedStatus);
   };
 
+  // Read dates from the dedicated Prisma columns first, with JSON-data
+  // fallbacks for older records that still store these values in `data`.
+  // Date-only strings are parsed as local calendar dates to avoid timezone shifts.
+ const getServiceDate = (service, field) => {
+  const isStartDate = field === "start";
+
+  const directValue = isStartDate
+    ? service?.startDate
+    : service?.endDate;
+
+  const rawValue =
+    directValue ??
+    getValue(
+      service,
+      isStartDate
+        ? [
+            "Start Date",
+            "startDate",
+            "Program Start Date",
+            "Funding Start Date",
+          ]
+        : [
+            "End Date",
+            "endDate",
+            "Program End Date",
+            "Funding End Date",
+          ]
+    );
+
+  if (
+    rawValue === null ||
+    rawValue === undefined ||
+    String(rawValue).trim() === ""
+  ) {
+    return null;
+  }
+
+  const text = String(rawValue).trim();
+
+  // Parse date-only values without timezone shifts.
+  // Preferred format: YYYY-MM-DD.
+  // Also tolerate legacy values stored as YYYY-DD-MM, e.g. 2026-31-10,
+  // but only when the middle segment cannot be a month.
+  const dateOnlyMatch = text.match(
+    /^(\d{4})-(\d{1,2})-(\d{1,2})$/
+  );
+
+  if (dateOnlyMatch) {
+    const year = Number(dateOnlyMatch[1]);
+    const firstPart = Number(dateOnlyMatch[2]);
+    const secondPart = Number(dateOnlyMatch[3]);
+
+    let month = firstPart;
+    let day = secondPart;
+
+    // Legacy day/month order: YYYY-DD-MM (e.g. 2026-31-10 = Oct 31, 2026).
+    if (firstPart > 12 && secondPart >= 1 && secondPart <= 12) {
+      day = firstPart;
+      month = secondPart;
+    }
+
+    const date = new Date(year, month - 1, day);
+
+    // Reject invalid calendar dates instead of letting JS roll them over.
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() !== month - 1 ||
+      date.getDate() !== day
+    ) {
+      console.warn("Invalid program date:", {
+        id: service?.id,
+        field,
+        value: text,
+      });
+
+      return null;
+    }
+
+    return date;
+  }
+
+  // Handle valid ISO timestamps, if supplied by the API.
+  const parsed = new Date(text);
+
+  if (Number.isNaN(parsed.getTime())) {
+    console.warn("Unable to parse program date:", {
+      id: service?.id,
+      field,
+      value: text,
+    });
+
+    return null;
+  }
+
+  return new Date(
+    parsed.getFullYear(),
+    parsed.getMonth(),
+    parsed.getDate()
+  );
+};
+
   // A featured program must have a real, future deadline.
   // Date-only values remain valid through the end of that calendar day.
   const getProgramDeadlineDate = (service) => {
@@ -955,33 +1056,106 @@ const toggleCategory = (categoryKey) => {
   /* =========================================================
      STATISTICS
      ========================================================= */
+const statistics = useMemo(() => {
+  const now = new Date(currentTime);
 
-  const statistics = useMemo(() => {
-    const openCount = fundingServices.filter((service) => {
-      const status = String(getStatus(service)).toLowerCase();
+  // Start of today (midnight).
+  const todayStart = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
 
-      return (
-        status.includes("open") ||
-        status.includes("active") ||
-        status.includes("upcoming") ||
-        status.includes("no application required")
-      );
-    }).length;
+  // Start of tomorrow.
+  const tomorrowStart = new Date(todayStart);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
 
-    const categoryCount = new Set(
-      fundingServices
-        .map((service) => getCategory(service))
-        .filter(Boolean)
-        .map((value) => String(value))
-    ).size;
+  // Current calendar week: Monday through Sunday.
+  const weekStart = new Date(todayStart);
+  const daysSinceMonday = (todayStart.getDay() + 6) % 7;
 
-    return {
-      total: fundingServices.length,
-      open: openCount,
-      categories: categoryCount,
-      columns: CUSTOMER_COLUMNS.length,
-    };
-  }, [fundingServices]);
+  weekStart.setDate(
+    weekStart.getDate() - daysSinceMonday
+  );
+
+  const nextWeekStart = new Date(weekStart);
+  nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+
+  // Include today and the following 14 calendar days.
+  const closingWindowEnd = new Date(todayStart);
+  closingWindowEnd.setDate(
+    closingWindowEnd.getDate() + 15
+  );
+
+  // Only include programs visible to customers.
+  const eligiblePrograms = fundingServices.filter(
+    (service) => isCustomerVisibleProgram(service)
+  );
+
+  // 1. NEW THIS WEEK
+  // Start date falls within this Monday–Sunday week.
+  // Program must not have expired.
+  const newThisWeek = eligiblePrograms.filter((service) => {
+    const startDate = getServiceDate(service, "start");
+    const endDate = getServiceDate(service, "end");
+
+    return (
+      startDate !== null &&
+      startDate >= weekStart &&
+      startDate < nextWeekStart &&
+      (endDate === null || endDate >= todayStart)
+    );
+  }).length;
+
+  // 2. OPEN NOW
+  // Program has started or has no start date.
+  // Program has not expired or has no end date.
+  const openCount = eligiblePrograms.filter((service) => {
+    const startDate = getServiceDate(service, "start");
+    const endDate = getServiceDate(service, "end");
+
+    const hasStarted =
+      startDate === null ||
+      startDate < tomorrowStart;
+
+    const hasNotEnded =
+      endDate === null ||
+      endDate >= todayStart;
+
+    return hasStarted && hasNotEnded;
+  }).length;
+
+  // 3. CLOSING IN 14 DAYS
+  // Count based only on the end date.
+  // A future start date does not exclude the program.
+  const closingIn14Days = eligiblePrograms.filter((service) => {
+    const endDate = getServiceDate(service, "end");
+
+    return (
+      endDate !== null &&
+      endDate >= todayStart &&
+      endDate < closingWindowEnd
+    );
+  }).length;
+
+  // 4. UNIQUE CATEGORIES
+  const categoryCount = new Set(
+    eligiblePrograms
+      .map((service) => getCategory(service))
+      .filter(Boolean)
+      .map((value) => String(value).trim())
+      .filter(Boolean)
+  ).size;
+
+  return {
+    total: eligiblePrograms.length,
+    newThisWeek,
+    open: openCount,
+    closingIn14Days,
+    categories: categoryCount,
+    columns: CUSTOMER_COLUMNS.length,
+  };
+}, [fundingServices, currentTime]);
     /* =========================================================
      STATUS STYLE
      ========================================================= */
@@ -1430,8 +1604,7 @@ const toggleCategory = (categoryKey) => {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
           {[
             {
-              // value: statistics.total,
-              value: 0,
+              value: statistics.newThisWeek,
 
               label: "New this week",
               icon: (
@@ -1476,8 +1649,7 @@ const toggleCategory = (categoryKey) => {
               border: "hover:border-[#2374A8]/50",
             },
             {
-              // value: statistics.categories,
-                 value: 0,
+              value: statistics.closingIn14Days,
               label: "Closing in 14 days",
               icon: (
                 <svg

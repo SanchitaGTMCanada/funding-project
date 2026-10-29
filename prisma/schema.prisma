@@ -51,16 +51,17 @@ model FundingService {
   data        Json
 
   whoYouAre  Json?
-  territory  Json?
-  category   Json?
+  territory   Json?
+  category    Json?
+
+  startDate DateTime? @db.Date
+  endDate   DateTime? @db.Date
 
   isActive   Boolean @default(true)
   isFeatured Boolean @default(false)
 
-  // Keep your other existing fields and relations here.
-
   applications Application[]
-  
+
   @@map("funding_services")
 }
 

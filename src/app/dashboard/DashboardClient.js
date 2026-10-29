@@ -76,6 +76,27 @@ const FUNDING_CATEGORIES = [
   { name: "Other", children: [] },
 ];
 
+// Convert a saved date (YYYY-MM-DD or ISO timestamp) to the value expected
+// by an HTML date input without shifting the calendar day across time zones.
+const toDateInputValue = (value) => {
+  if (value === null || value === undefined || String(value).trim() === "") {
+    return "";
+  }
+
+  const text = String(value).trim();
+  const dateOnlyMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if (dateOnlyMatch) {
+    return text;
+  }
+
+  const parsed = new Date(text);
+  if (Number.isNaN(parsed.getTime())) return "";
+
+  // API DateTime values are serialized as UTC ISO strings.
+  return parsed.toISOString().slice(0, 10);
+};
+
 export default function DashboardClient({ user }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -95,6 +116,9 @@ export default function DashboardClient({ user }) {
 
   const [addTitle, setAddTitle] = useState("");
   const [addDescription, setAddDescription] = useState("");
+  // Dedicated date fields are stored in Prisma columns, never inside `data` JSON.
+  const [addStartDate, setAddStartDate] = useState("");
+  const [addEndDate, setAddEndDate] = useState("");
   // =========================================================
 // VIEW STATE
 // =========================================================
@@ -403,9 +427,17 @@ const dynamicColumns = useMemo(() => {
         : {};
 
     Object.keys(data).forEach((key) => {
-      if (!columns.includes(key)) {
-        columns.push(key);
+      // Start Date and End Date are dedicated date-picker fields, not dynamic fields.
+      const normalizedKey = String(key).trim().toLowerCase().replace(/[_-]+/g, " ");
+      if (
+        normalizedKey === "start date" ||
+        normalizedKey === "end date" ||
+        columns.includes(key)
+      ) {
+        return;
       }
+
+      columns.push(key);
     });
   });
 
@@ -751,6 +783,8 @@ useEffect(() => {
 
     setAddTitle("");
     setAddDescription("");
+    setAddStartDate("");
+    setAddEndDate("");
     setSelectedApplicantTypes([]);
     setOtherApplicantType("");
     setSelectedTerritory("");
@@ -795,6 +829,8 @@ useEffect(() => {
 
     setAddTitle("");
     setAddDescription("");
+    setAddStartDate("");
+    setAddEndDate("");
     setAddData({});
     setSelectedApplicantTypes([]);
     setOtherApplicantType("");
@@ -827,6 +863,11 @@ useEffect(() => {
     }
 
     const fieldName = newField.trim();
+
+    if (["start date", "end date"].includes(fieldName.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim())) {
+      setAddError("Start Date and End Date are dedicated fields and cannot be added as dynamic data fields.");
+      return;
+    }
 
     const fieldExists =
       Object.keys(addData).some(
@@ -896,8 +937,17 @@ useEffect(() => {
       setAddError("Enter a community or type All communities / territory-wide.");
       return;
     }
+    // Explicitly remove date fields from the JSON object. They belong only in
+    // the dedicated `startDate` and `endDate` database columns.
+    const dynamicDataWithoutDates = Object.fromEntries(
+      Object.entries(addData).filter(([key]) => {
+        const normalizedKey = String(key).trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
+        return normalizedKey !== "start date" && normalizedKey !== "end date";
+      })
+    );
+
     const payloadData = {
-      ...addData,
+      ...dynamicDataWithoutDates,
       "Applicant Types": applicantTypesToSave.join(", "),
       Locations: selectedTerritory,
       Communities: communityToSave || "",
@@ -926,6 +976,8 @@ body: JSON.stringify({
   whoYouAre: applicantTypesToSave,
   territory: selectedTerritory || null,
   category: categoriesToSave,
+  startDate: addStartDate ? `${addStartDate}T00:00:00.000Z` : null,
+  endDate: addEndDate ? `${addEndDate}T00:00:00.000Z` : null,
 
   // Preserve the existing program data
   data: payloadData,
@@ -957,6 +1009,8 @@ body: JSON.stringify({
 
         setAddTitle("");
         setAddDescription("");
+        setAddStartDate("");
+        setAddEndDate("");
         setAddData({});
         setAddMessage("");
         setAddError("");
@@ -996,10 +1050,32 @@ const handleCloseView = () => {
     setEditTitle(service.title || "");
     setEditDescription(service.description || "");
 
-    const existingData =
-      service.data && typeof service.data === "object"
-        ? service.data
-        : {};
+    // The API may return `data` as an object or as a JSON string.
+    // Normalize both shapes before reading any fields from it.
+    let existingData = {};
+    if (service.data && typeof service.data === "object" && !Array.isArray(service.data)) {
+      existingData = service.data;
+    } else if (typeof service.data === "string" && service.data.trim()) {
+      try {
+        const parsedData = JSON.parse(service.data);
+        if (parsedData && typeof parsedData === "object" && !Array.isArray(parsedData)) {
+          existingData = parsedData;
+        }
+      } catch (error) {
+        console.error("Unable to parse funding service data:", error);
+      }
+    }
+
+    // Read JSON keys without depending on exact capitalization or surrounding spaces.
+    const getExistingDataValue = (key) => {
+      if (Object.prototype.hasOwnProperty.call(existingData, key)) {
+        return existingData[key];
+      }
+      const matchingKey = Object.keys(existingData).find(
+        (existingKey) => String(existingKey).trim().toLowerCase() === key.trim().toLowerCase()
+      );
+      return matchingKey === undefined ? undefined : existingData[matchingKey];
+    };
 
     const normalizeClassificationValue = (value) => {
       if (value === null || value === undefined) return "";
@@ -1020,6 +1096,14 @@ const handleCloseView = () => {
       ),
       Category: normalizeClassificationValue(
         existingData.Category || service.category
+      ),
+      // Date pickers use YYYY-MM-DD. Prefer the JSON field when present,
+      // then fall back to the dedicated database column.
+      "Start Date": toDateInputValue(
+        getExistingDataValue("Start Date") || service.startDate
+      ),
+      "End Date": toDateInputValue(
+        getExistingDataValue("End Date") || service.endDate
       ),
     });
 
@@ -1080,7 +1164,8 @@ const handleSaveEdit = async () => {
   title: editTitle.trim(),
   description: editDescription.trim() || null,
 
-  // Keep the existing table data synchronized.
+  // Keep JSON date fields as YYYY-MM-DD, matching the requested data format.
+  // The dedicated Prisma DateTime columns are sent as UTC ISO timestamps.
   data: {
     ...editData,
     "Applicant Types":
@@ -1095,7 +1180,17 @@ const handleSaveEdit = async () => {
       editData.Category ??
       editingService.category ??
       "",
+    "Start Date": editData["Start Date"] || null,
+    "End Date": editData["End Date"] || null,
   },
+
+  // Keep the dedicated date columns synchronized with the date-picker fields.
+  startDate: editData["Start Date"]
+    ? `${editData["Start Date"]}T00:00:00.000Z`
+    : null,
+  endDate: editData["End Date"]
+    ? `${editData["End Date"]}T00:00:00.000Z`
+    : null,
 
   // Save to the dedicated Prisma columns too.
   whoYouAre: editData["Applicant Types"] ??
@@ -1294,6 +1389,8 @@ const closeAllFundingModals = () => {
   setShowAddModal(false);
   setAddTitle("");
   setAddDescription("");
+  setAddStartDate("");
+  setAddEndDate("");
   setAddData({});
   setAddMessage("");
   setAddError("");
@@ -3003,6 +3100,38 @@ const handleToggleStatus = async () => {
 
                     </div>
 
+                    {/* Start Date */}
+                    <div>
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        value={addStartDate}
+                        onChange={(event) => {
+                          setAddStartDate(event.target.value);
+                          if (addEndDate && event.target.value && addEndDate < event.target.value) {
+                            setAddEndDate("");
+                          }
+                        }}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
+                      />
+                    </div>
+
+                    {/* End Date */}
+                    <div>
+                      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        min={addStartDate || undefined}
+                        value={addEndDate}
+                        onChange={(event) => setAddEndDate(event.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-50"
+                      />
+                    </div>
+
                     {/* Jurisdiction */}
                     <div>
 
@@ -3865,7 +3994,36 @@ const handleToggleStatus = async () => {
 
                   </div>
 
-                  {Object.entries(editData).filter(([field]) => !["Applicant Types", "Locations", "Communities", "Category"].includes(field.trim())).length === 0 ? (
+                  {/* Dedicated date fields: these are not rendered as dynamic fields below. */}
+                  <div className="mb-5 grid gap-5 md:grid-cols-2">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
+                      <label htmlFor="edit-start-date" className="mb-3 block text-xs font-bold uppercase tracking-[0.12em] text-slate-600">
+                        Start Date
+                      </label>
+                      <input
+                        id="edit-start-date"
+                        type="date"
+                        value={String(editData["Start Date"] ?? "").trim().match(/^\d{4}-\d{2}-\d{2}$/) ? editData["Start Date"] : ""}
+                        onChange={(event) => handleEditFieldChange("Start Date", event.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                      />
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
+                      <label htmlFor="edit-end-date" className="mb-3 block text-xs font-bold uppercase tracking-[0.12em] text-slate-600">
+                        End Date
+                      </label>
+                      <input
+                        id="edit-end-date"
+                        type="date"
+                        min={String(editData["Start Date"] ?? "").trim().match(/^\d{4}-\d{2}-\d{2}$/) ? editData["Start Date"] : undefined}
+                        value={String(editData["End Date"] ?? "").trim().match(/^\d{4}-\d{2}-\d{2}$/) ? editData["End Date"] : ""}
+                        onChange={(event) => handleEditFieldChange("End Date", event.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                      />
+                    </div>
+                  </div>
+
+                  {Object.entries(editData).filter(([field]) => !["Applicant Types", "Locations", "Communities", "Category", "Start Date", "End Date"].includes(field.trim())).length === 0 ? (
 
                     <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-10 text-center">
 
@@ -3879,7 +4037,7 @@ const handleToggleStatus = async () => {
 
                     <div className="grid gap-5 md:grid-cols-2">
 
-                      {Object.entries(editData).filter(([field]) => !["Applicant Types", "Locations", "Communities", "Category"].includes(field.trim())).map(
+                      {Object.entries(editData).filter(([field]) => !["Applicant Types", "Locations", "Communities", "Category", "Start Date", "End Date"].includes(field.trim())).map(
                         ([field, value]) => {
 
                           const isUrl =
@@ -3898,6 +4056,43 @@ const handleToggleStatus = async () => {
                                 : String(value);
 
                           const rawEditValue = String(value ?? "");
+                          const normalizedFieldName = field.trim().toLowerCase();
+                          const isDateField = ["start date", "end date"].includes(normalizedFieldName);
+
+                          // Native date inputs require YYYY-MM-DD. Also accept legacy
+                          // YYYY-DD-MM values when the middle part cannot be a month.
+                          const getDateInputValue = (inputValue) => {
+                            const text = String(inputValue ?? "").trim();
+                            if (!text) return "";
+
+                            const match = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+                            if (match) {
+                              const year = Number(match[1]);
+                              const first = Number(match[2]);
+                              const second = Number(match[3]);
+                              let month = first;
+                              let day = second;
+
+                              if (first > 12 && second >= 1 && second <= 12) {
+                                day = first;
+                                month = second;
+                              }
+
+                              const date = new Date(year, month - 1, day);
+                              if (
+                                date.getFullYear() !== year ||
+                                date.getMonth() !== month - 1 ||
+                                date.getDate() !== day
+                              ) return "";
+
+                              return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                            }
+
+                            const parsed = new Date(text);
+                            if (Number.isNaN(parsed.getTime())) return "";
+                            return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`;
+                          };
+
                           const editSelectableOptions = [
                             ...APPLICANT_TYPE_OPTIONS,
                             ...FUNDING_CATEGORIES.flatMap((category) => [
@@ -4076,19 +4271,15 @@ const handleToggleStatus = async () => {
                               ) : (
 
                                 <input
-                                  type={
-                                    isUrl
-                                      ? "url"
-                                      : "text"
-                                  }
-                                  value={displayValue}
+                                  type={isDateField ? "date" : isUrl ? "url" : "text"}
+                                  value={isDateField ? getDateInputValue(displayValue) : displayValue}
                                   onChange={(event) =>
                                     handleEditFieldChange(
                                       field,
                                       event.target.value
                                     )
                                   }
-                                  placeholder={`Enter ${field.toLowerCase()}`}
+                                  placeholder={isDateField ? undefined : `Enter ${field.toLowerCase()}`}
                                   className="h-12 w-full rounded-xl border border-slate-200 bg-[#f8fafb] px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
                                 />
 

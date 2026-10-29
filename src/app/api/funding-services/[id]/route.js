@@ -131,6 +131,82 @@ function normalizeTerritory(value) {
 }
 
 // =========================================================
+// HELPERS — DYNAMIC DATA AND DEDICATED DATES
+// =========================================================
+
+function normalizeData(data) {
+  const cleanedData = {};
+
+  Object.entries(data).forEach(([key, value]) => {
+    const cleanKey = String(key).trim();
+    if (!cleanKey) return;
+
+    const normalizedKey = cleanKey
+      .toLowerCase()
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    // Dates are stored only in dedicated Prisma columns.
+    if (normalizedKey === "start date" || normalizedKey === "end date") {
+      return;
+    }
+
+    if (value === null || value === undefined) {
+      cleanedData[cleanKey] = "";
+    } else if (typeof value === "string") {
+      cleanedData[cleanKey] = value.trim();
+    } else {
+      cleanedData[cleanKey] = value;
+    }
+  });
+
+  return cleanedData;
+}
+
+// Accept YYYY-MM-DD from date inputs and ISO timestamps from older clients.
+// Always store the selected calendar day at UTC midnight.
+function normalizeDate(value, fieldName) {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  if (typeof value !== "string") {
+    throw new Error(`${fieldName} must be a valid date.`);
+  }
+
+  const dateValue = value.trim();
+  let match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateValue);
+
+  if (!match) {
+    // Accept an ISO timestamp, but normalize it back to its UTC calendar day.
+    const isoMatch = /^(\d{4}-\d{2}-\d{2})T/.exec(dateValue);
+    if (isoMatch) {
+      match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoMatch[1]);
+    }
+  }
+
+  if (!match) {
+    throw new Error(`${fieldName} must use YYYY-MM-DD format or a valid ISO timestamp.`);
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() !== month - 1 ||
+    parsed.getUTCDate() !== day
+  ) {
+    throw new Error(`${fieldName} is not a valid calendar date.`);
+  }
+
+  return parsed;
+}
+
+// =========================================================
 // PUT — EDIT FUNDING SERVICE
 // =========================================================
 
@@ -169,6 +245,8 @@ export async function PUT(request, { params }) {
       whoYouAre,
       territory,
       category,
+      startDate,
+      endDate,
       isFeatured,
     } = body || {};
 
@@ -225,7 +303,47 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // Start with the standard fields.
+    let normalizedStartDate;
+    let normalizedEndDate;
+
+    try {
+      // If a date field is omitted, preserve its current database value.
+      // If explicitly sent as null/empty, clear that dedicated column.
+      normalizedStartDate =
+        startDate === undefined
+          ? existing.startDate
+          : normalizeDate(startDate, "Start Date");
+
+      normalizedEndDate =
+        endDate === undefined
+          ? existing.endDate
+          : normalizeDate(endDate, "End Date");
+    } catch (dateError) {
+      return Response.json(
+        {
+          success: false,
+          message: dateError.message,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (
+      normalizedStartDate &&
+      normalizedEndDate &&
+      normalizedEndDate < normalizedStartDate
+    ) {
+      return Response.json(
+        {
+          success: false,
+          message: "End Date cannot be earlier than Start Date.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Start with the standard fields. Date fields are excluded from JSON
+    // and saved only in the dedicated Prisma columns.
     const updateData = {
       title: title.trim(),
 
@@ -236,7 +354,9 @@ export async function PUT(request, { params }) {
             ? null
             : String(description).trim() || null,
 
-      data,
+      data: normalizeData(data),
+      startDate: normalizedStartDate,
+      endDate: normalizedEndDate,
     };
 
     // Update Who You Are only when the request includes it.
