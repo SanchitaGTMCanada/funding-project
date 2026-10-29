@@ -255,6 +255,121 @@ const getValue = (service, possibleKeys) => {
   return "";
 };
 
+// =========================================================
+// PUBLIC PROGRAM DETAIL HELPERS
+// =========================================================
+
+const getJurisdiction = (service) => {
+  const raw = getValue(service, [
+    "Jurisdiction",
+    "Program Jurisdiction",
+    "Funding Jurisdiction",
+  ]);
+
+  if (!raw) return "-";
+
+  const value = String(raw).trim().toLowerCase();
+
+  if (value.includes("federal")) return "Federal";
+  if (value.includes("territorial")) return "Territorial";
+  if (value.includes("provincial")) return "Provincial";
+  if (value.includes("private")) return "Private";
+
+  return "-";
+};
+
+const getPublicDeadline = (service) => {
+  const deadlineType = String(
+    getValue(service, ["Deadline Type", "Application Deadline Type"]) || ""
+  ).trim().toLowerCase();
+
+  if (deadlineType.includes("rolling") || deadlineType.includes("ongoing")) {
+    return "Rolling";
+  }
+
+  const deadline = getValue(service, [
+    "Next Deadline",
+    "Deadline",
+    "Application Deadline",
+    "Closing Date",
+  ]);
+
+  if (!deadline) return "-";
+
+  // Keep date-only values from shifting to the previous day in some time zones.
+  const dateOnly = String(deadline).trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const date = dateOnly
+    ? new Date(Date.UTC(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3])))
+    : new Date(deadline);
+
+  if (Number.isNaN(date.getTime())) return formatValue(deadline);
+
+  return new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+};
+
+const formatCAD = (value) => {
+  if (value === null || value === undefined || String(value).trim() === "") {
+    return null;
+  }
+
+  if (typeof value === "number" || /^\$?\s*-?\d[\d,]*(?:\.\d+)?$/.test(String(value).trim())) {
+    const number = Number(String(value).replace(/[$,\s]/g, ""));
+    if (Number.isFinite(number)) {
+      return new Intl.NumberFormat("en-CA", {
+        style: "currency",
+        currency: "CAD",
+        maximumFractionDigits: 2,
+      }).format(number);
+    }
+  }
+
+  return String(value).replace(/\d[\d,]*(?:\.\d+)?/g, (part) => {
+    const number = Number(part.replace(/,/g, ""));
+    return Number.isFinite(number)
+      ? new Intl.NumberFormat("en-CA", { useGrouping: true, maximumFractionDigits: 2 }).format(number)
+      : part;
+  });
+};
+
+const getPublicAmount = (service) => {
+  const min = getValue(service, ["Amount Min", "Minimum Amount", "Min Amount"]);
+  const max = getValue(service, ["Amount Max", "Maximum Amount", "Max Amount"]);
+
+  const formattedMin = formatCAD(min);
+  const formattedMax = formatCAD(max);
+
+  if (formattedMin && formattedMax) {
+    return formattedMin === formattedMax ? formattedMax : `${formattedMin} – ${formattedMax}`;
+  }
+  if (formattedMax) return `Up to ${formattedMax}`;
+  if (formattedMin) return `From ${formattedMin}`;
+  return "-";
+};
+
+const getLastVerified = (service) => {
+  const value = getValue(service, ["Last Verified", "Last Verified Date"]);
+  if (!value) return "-";
+
+  const dateOnly = String(value).trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const date = dateOnly
+    ? new Date(Date.UTC(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3])))
+    : new Date(value);
+
+  if (Number.isNaN(date.getTime())) return formatValue(value);
+
+  return new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+};
+
 /* =========================================================
    COMPONENT
    ========================================================= */
@@ -2351,123 +2466,111 @@ const toggleCategory = (categoryKey) => {
           onClick={closeModal}
         >
           <div
-            className="flex max-h-[96dvh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:max-h-[92vh] sm:rounded-[28px]"
+            className="flex max-h-[96dvh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:max-h-[92vh] sm:rounded-[28px]"
             onClick={(event) => event.stopPropagation()}
           >
-            {/* HEADER */}
-
-            <div className="bg-[#071a2d] px-4 py-4 sm:px-6 sm:py-6 md:px-8">
-              <div className="flex items-start justify-between gap-5">
-                <div className="min-w-0" />
-
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  aria-label="Close details"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-xl text-white transition hover:bg-white/20"
-                >
-                  ×
-                </button>
+            {/* HEADER: full program name and ID */}
+            <div className="flex items-start justify-between gap-4 bg-[#0B2438] px-5 py-5 text-white sm:px-8 sm:py-7">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#7DD3FC]">
+                  Funding Program Details
+                </p>
+                <h2 className="mt-2 break-words text-xl font-extrabold leading-tight sm:text-2xl md:text-3xl">
+                  {getProgramName(selectedService)}
+                </h2>
+                <p className="mt-3 break-words text-sm text-slate-300">
+                  Program ID: {getProgramId(selectedService)}
+                </p>
               </div>
+
+              <button
+                type="button"
+                onClick={closeModal}
+                aria-label="Close program details"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-2xl text-white transition hover:bg-white/20"
+              >
+                ×
+              </button>
             </div>
 
-            {/* DETAILS */}
-
-            <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-5 md:p-8">
-              <div className="mb-6 rounded-2xl border border-teal-100 bg-teal-50 p-5">
-                <p className="text-xs font-black uppercase tracking-wider text-teal-600">
-                  Program
-                </p>
-
-                <p className="mt-1 text-lg font-black text-slate-900">
-                  {getProgramName(selectedService)}
-                </p>
-
-                <p className="mt-2 text-sm text-slate-500">
-                  {selectedService.description ||
-                    "Funding opportunity details"}
-                </p>
+            {/* PUBLIC SUMMARY FIELDS */}
+            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {[
+                  { label: "Jurisdiction", value: getJurisdiction(selectedService) },
+                  { label: "Deadline", value: getPublicDeadline(selectedService) },
+                  { label: "Funding Amount", value: getPublicAmount(selectedService) },
+                  { label: "Last Updated", value: getLastVerified(selectedService) },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="min-w-0 rounded-xl border border-[#D7E2EA] bg-[#F7FAFC] p-4"
+                  >
+                    <p className="text-xs font-bold uppercase tracking-wide text-[#607586]">
+                      {item.label}
+                    </p>
+                    <p className="mt-2 break-words text-sm font-bold leading-6 text-[#0B2438]">
+                      {item.value}
+                    </p>
+                  </div>
+                ))}
               </div>
 
-              <div className="overflow-hidden rounded-2xl border border-slate-200">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50">
-                        <th className="w-16 border-b border-slate-200 px-4 py-4 text-center text-[11px] font-black uppercase tracking-wider text-slate-500">
-                          #
-                        </th>
+              {/* REQUIRED DETAIL PAGE SECTIONS */}
+              <div className="mt-7">
+                <div className="mb-4">
+                  <h3 className="text-lg font-extrabold text-[#0B2438]">
+                    Program Information
+                  </h3>
+                  <p className="mt-1 text-sm text-[#607586]">
+                    Program purpose, eligibility and application requirements.
+                  </p>
+                </div>
 
-                        <th className="w-1/3 whitespace-nowrap border-b border-slate-200 px-5 py-4 text-left text-[11px] font-black uppercase tracking-wider text-slate-500">
-                          Field
-                        </th>
-
-                        <th className="border-b border-slate-200 px-5 py-4 text-left text-[11px] font-black uppercase tracking-wider text-slate-500">
-                          Information
-                        </th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {CUSTOMER_COLUMNS.map((key, index) => {
-                        const value =
-                          key === "Program Name"
-                            ? getProgramName(selectedService)
-                            : getValue(selectedService, [key]);
-
-                        const formattedValue = isAmountField(key)
-                          ? formatCanadianAmount(value)
-                          : formatValue(value);
-                        const isStatus = key.toLowerCase() === "status";
-                        const status = getStatusStyle(formattedValue);
-
-                        return (
-                          <tr
-                            key={key}
-                            className="border-b border-slate-100 last:border-0"
-                          >
-                            <td className="bg-slate-50/50 px-4 py-4 text-center align-top text-xs font-black text-slate-400">
-                              {index + 1}
-                            </td>
-
-                            <td className="bg-slate-50/50 px-5 py-4 align-top text-xs font-bold text-slate-600">
-                              {key}
-                            </td>
-
-                            <td className="break-words px-5 py-4 text-sm leading-6 text-slate-700">
-                              {isStatus && formattedValue !== "-" ? (
-                                <span
-                                  className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold"
-                                  style={{
-                                    backgroundColor: status.background,
-                                    color: status.color,
-                                    borderColor: status.border,
-                                  }}
-                                >
-                                  <span
-                                    className="h-1.5 w-1.5 rounded-full"
-                                    style={{
-                                      backgroundColor: status.dot,
-                                    }}
-                                  />
-                                  {formattedValue}
-                                </span>
-                              ) : (
-                                formattedValue
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                <div className="space-y-4">
+                  {[
+                    {
+                      title: "Purpose",
+                      value: getValue(selectedService, ["Purpose", "Program Purpose"]) || selectedService.description,
+                    },
+                    {
+                      title: "Eligibility Details",
+                      value: getValue(selectedService, ["Eligibility Details", "Detailed Eligibility", "Eligibility Criteria Details"]),
+                    },
+                    {
+                      title: "Documents Needed",
+                      value: getValue(selectedService, ["Documents Needed", "Required Documents", "Required Documentation"]),
+                    },
+                    {
+                      title: "Deadline Notes",
+                      value: getValue(selectedService, ["Deadline Notes", "Application Deadline Notes"]),
+                    },
+                    {
+                      title: "Amount Notes",
+                      value: getValue(selectedService, ["Amount Notes", "Funding Amount Notes"]),
+                    },
+                  ].map((section) => {
+                    const value = formatValue(section.value);
+                    return (
+                      <section
+                        key={section.title}
+                        className="rounded-xl border border-[#D7E2EA] bg-white p-4 sm:p-5"
+                      >
+                        <h4 className="text-sm font-extrabold text-[#0B2438]">
+                          {section.title}
+                        </h4>
+                        <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-7 text-[#43515C]">
+                          {value === "-" ? "Information not provided." : value}
+                        </p>
+                      </section>
+                    );
+                  })}
                 </div>
               </div>
             </div>
 
             {/* FOOTER ACTIONS */}
-
-            <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-white px-5 py-4 sm:flex-row sm:justify-end sm:px-8">
+            <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-white px-4 py-4 sm:flex-row sm:justify-end sm:px-8">
               <button
                 type="button"
                 onClick={closeModal}
@@ -2475,13 +2578,12 @@ const toggleCategory = (categoryKey) => {
               >
                 Close
               </button>
-
               <button
                 type="button"
                 onClick={() => handleApply(selectedService)}
-                className="rounded-xl bg-[#071a2d] px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-teal-600"
+                className="rounded-xl bg-[#0B7285] px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-[#075B6B]"
               >
-                Apply Now →
+                Get help applying →
               </button>
             </div>
           </div>
