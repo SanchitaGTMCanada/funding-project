@@ -2484,8 +2484,10 @@ const handleToggleStatus = async () => {
               <th className="whitespace-nowrap px-5 py-4 text-xs font-bold uppercase tracking-wider text-[#43515C]">
                 End Date
               </th>
+             
 
               {dynamicColumns.map((column) => (
+                
                 <th
                   key={column}
                   className="whitespace-nowrap px-5 py-4 text-xs font-bold uppercase tracking-wider text-[#43515C]"
