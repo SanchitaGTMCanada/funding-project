@@ -607,13 +607,23 @@ const getTableCellValue = (service, column) => {
     });
   }, [fundingServices, searchTerm]);
 
+  // Show the newest record first. Newly added records receive a higher
+  // auto-increment database ID, so descending ID order puts the latest
+  // manually added/imported program at serial number 1.
+  // The real database IDs remain unchanged and are still used for API actions.
+  const sortedFilteredServices = useMemo(() => {
+    return [...filteredServices].sort(
+      (a, b) => Number(b.id) - Number(a.id)
+    );
+  }, [filteredServices]);
+
   // =========================================================
   // DOWNLOAD FILTERED OR ALL FUNDING SERVICES AS CSV
   // =========================================================
 
   const handleDownloadCSV = () => {
     // Export all matching records, not just the current page.
-    const servicesToExport = filteredServices;
+    const servicesToExport = sortedFilteredServices;
 
     if (servicesToExport.length === 0) {
       alert("There are no funding records to export.");
@@ -648,11 +658,11 @@ const getTableCellValue = (service, column) => {
       return `"${text.replace(/"/g, '""')}"`;
     };
 
-    const rows = servicesToExport.map((service) => {
+    const rows = servicesToExport.map((service, index) => {
       const data = service.data || {};
 
       return [
-        service.id,
+        index + 1,
         service.title,
         formatDedicatedDate(service.startDate),
         formatDedicatedDate(service.endDate),
@@ -706,18 +716,21 @@ const getTableCellValue = (service, column) => {
 const [currentPage, setCurrentPage] = useState(1);
 const [itemsPerPage, setItemsPerPage] = useState(10);
 
-const totalPages = Math.ceil(filteredServices.length / itemsPerPage);
+const totalPages = Math.ceil(
+  sortedFilteredServices.length / itemsPerPage
+);
 const startIndex = (currentPage - 1) * itemsPerPage;
 
-const paginatedServices = filteredServices.slice(
+const paginatedServices = sortedFilteredServices.slice(
   startIndex,
   startIndex + itemsPerPage
 );
 
-const startItem = filteredServices.length === 0 ? 0 : startIndex + 1;
+const startItem =
+  sortedFilteredServices.length === 0 ? 0 : startIndex + 1;
 const endItem = Math.min(
   startIndex + itemsPerPage,
-  filteredServices.length
+  sortedFilteredServices.length
 );
 
 useEffect(() => {
@@ -2533,7 +2546,7 @@ const handleToggleStatus = async () => {
                   }`}
                 >
                   <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg bg-[#EEF5F8] px-2 text-xs font-bold text-[#0B2438]">
-                    #{service.id}
+                    #{startIndex + index + 1}
                   </span>
                 </td>
 

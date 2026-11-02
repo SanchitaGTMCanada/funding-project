@@ -83,7 +83,7 @@ export async function GET(request) {
       prisma.fundingService.findMany({
         where: isPublic || !user ? { isActive: true } : {},
         orderBy: {
-          id: "desc",
+          id: "asc",
         },
       }),
 

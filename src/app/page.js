@@ -968,32 +968,39 @@ const toggleCategory = (categoryKey) => {
   const searchedServices = useMemo(() => {
     const query = tableSearch.trim().toLowerCase();
 
-    if (!query) return filteredServices;
+    const matchingServices = !query
+      ? filteredServices
+      : filteredServices.filter((service) => {
+          const searchableValues = [
+            service?.title,
+            service?.description,
+            getProgramName(service),
+            ...Object.values(service?.data || {}),
+          ];
 
-    return filteredServices.filter((service) => {
-      const searchableValues = [
-        service?.title,
-        service?.description,
-        getProgramName(service),
-        ...Object.values(service?.data || {}),
-      ];
+          return searchableValues.some((value) => {
+            let searchableText;
 
-      return searchableValues.some((value) => {
-        let searchableText;
+            if (value && typeof value === "object") {
+              try {
+                searchableText = JSON.stringify(value);
+              } catch {
+                searchableText = "";
+              }
+            } else {
+              searchableText = String(value ?? "");
+            }
 
-        if (value && typeof value === "object") {
-          try {
-            searchableText = JSON.stringify(value);
-          } catch {
-            searchableText = "";
-          }
-        } else {
-          searchableText = String(value ?? "");
-        }
+            return searchableText.toLowerCase().includes(query);
+          });
+        });
 
-        return searchableText.toLowerCase().includes(query);
-      });
-    });
+    // Display the newest program first. Newly created records receive a
+    // higher auto-increment database ID, so descending ID order makes the
+    // latest program serial number 1. Database IDs themselves are unchanged.
+    return [...matchingServices].sort(
+      (a, b) => Number(b.id) - Number(a.id)
+    );
   }, [filteredServices, tableSearch]);
 
   useEffect(() => {
