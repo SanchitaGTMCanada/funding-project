@@ -2,6 +2,7 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { requireAuth } from "@/lib/auth/requireAuth.js";
+import { logActivity } from "@/lib/activity-log";
 
 // =========================================================
 // FUNDING SERVICE [id] API
@@ -398,11 +399,32 @@ export async function PUT(request, { params }) {
       updateData.isFeatured = isFeatured;
     }
 
-    const updated = await prisma.fundingService.update({
-      where: {
-        id: serviceId.id,
-      },
-      data: updateData,
+    const updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.fundingService.update({
+        where: { id: serviceId.id },
+        data: updateData,
+      });
+
+      await logActivity({
+        userId: auth.user.id,
+        userName: auth.user.name,
+        userRole: auth.user.role,
+        action: "UPDATE",
+        module: "FUNDING_SERVICE",
+        description: `Updated funding program: ${result.title}`,
+        entityId: result.id,
+        entityName: result.title,
+        oldValues: existing,
+        newValues: result,
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip") ||
+          null,
+        userAgent: request.headers.get("user-agent"),
+        db: tx,
+      });
+
+      return result;
     });
 
     console.log(
@@ -556,13 +578,39 @@ export async function PATCH(request, { params }) {
       updateData.isFeatured = isFeatured;
     }
 
-    const updatedService =
-      await prisma.fundingService.update({
-        where: {
-          id: serviceId.id,
-        },
+    const updatedService = await prisma.$transaction(async (tx) => {
+      const result = await tx.fundingService.update({
+        where: { id: serviceId.id },
         data: updateData,
       });
+
+      await logActivity({
+        userId: auth.user.id,
+        userName: auth.user.name,
+        userRole: auth.user.role,
+        action: "STATUS_UPDATE",
+        module: "FUNDING_SERVICE",
+        description: `Updated status of funding program: ${result.title}`,
+        entityId: result.id,
+        entityName: result.title,
+        oldValues: {
+          isActive: existingService.isActive,
+          isFeatured: existingService.isFeatured,
+        },
+        newValues: {
+          isActive: result.isActive,
+          isFeatured: result.isFeatured,
+        },
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip") ||
+          null,
+        userAgent: request.headers.get("user-agent"),
+        db: tx,
+      });
+
+      return result;
+    });
 
     console.log(
       `[FundingService] ${serviceId.id} ${
@@ -651,10 +699,29 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    await prisma.fundingService.delete({
-      where: {
-        id: serviceId.id,
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.fundingService.delete({
+        where: { id: serviceId.id },
+      });
+
+      await logActivity({
+        userId: auth.user.id,
+        userName: auth.user.name,
+        userRole: auth.user.role,
+        action: "DELETE",
+        module: "FUNDING_SERVICE",
+        description: `Deleted funding program: ${existingService.title}`,
+        entityId: existingService.id,
+        entityName: existingService.title,
+        oldValues: existingService,
+        newValues: null,
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip") ||
+          null,
+        userAgent: request.headers.get("user-agent"),
+        db: tx,
+      });
     });
 
     console.log(

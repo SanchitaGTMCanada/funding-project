@@ -2,6 +2,7 @@
 import { prisma } from "@/lib/prisma";
 import { Resend } from "resend";
 import { requireAuth } from "@/lib/auth/requireAuth";
+import { logActivity } from "@/lib/activity-log";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -134,39 +135,60 @@ export async function POST(request) {
     }
 
     // =====================================================
-    // Save application
+    // Save application and record activity atomically
     // =====================================================
 
-    const application = await prisma.application.create({
-      data: {
-        fundingServiceId: parsedFundingServiceId,
+    const application = await prisma.$transaction(async (tx) => {
+      const createdApplication = await tx.application.create({
+        data: {
+          fundingServiceId: parsedFundingServiceId,
+          name: name.trim(),
+          phone: phone.trim(),
+          email: email.trim().toLowerCase(),
+          company:
+            typeof company === "string"
+              ? company.trim() || null
+              : null,
+          address:
+            typeof address === "string"
+              ? address.trim() || null
+              : null,
+          city:
+            typeof city === "string"
+              ? city.trim() || null
+              : null,
+          message:
+            typeof message === "string"
+              ? message.trim() || null
+              : null,
+        },
+      });
 
-        name: name.trim(),
+      await logActivity({
+        userId: null,
+        userName: name.trim(),
+        userRole: "PUBLIC",
+        action: "CREATE",
+        module: "APPLICATION",
+        description: `New application submitted for funding program: ${fundingService.title}`,
+        entityId: createdApplication.id,
+        entityName: fundingService.title,
+        newValues: {
+          applicationId: createdApplication.id,
+          fundingServiceId: parsedFundingServiceId,
+          fundingServiceTitle: fundingService.title,
+          status: createdApplication.status,
+        },
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip") ||
+          null,
+        userAgent: request.headers.get("user-agent"),
+        source: "PUBLIC",
+        db: tx,
+      });
 
-        phone: phone.trim(),
-
-        email: email.trim().toLowerCase(),
-
-        company:
-          typeof company === "string"
-            ? company.trim() || null
-            : null,
-
-        address:
-          typeof address === "string"
-            ? address.trim() || null
-            : null,
-
-        city:
-          typeof city === "string"
-            ? city.trim() || null
-            : null,
-
-        message:
-          typeof message === "string"
-            ? message.trim() || null
-            : null,
-      },
+      return createdApplication;
     });
 
     // =====================================================

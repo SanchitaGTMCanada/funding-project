@@ -20,15 +20,16 @@ enum ApplicationStatus {
 }
 
 model User {
-  id           Int       @id @default(autoincrement())
+  id           Int      @id @default(autoincrement())
   name         String
-  email        String    @unique
+  email        String   @unique
   passwordHash String
-  role         Role      @default(EMPLOYEE)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  role         Role     @default(EMPLOYEE)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  sessions Session[]
+  sessions     Session[]
+  activityLogs ActivityLog[]
 
   @@map("users")
 }
@@ -44,15 +45,16 @@ model Session {
   @@index([userId])
   @@map("sessions")
 }
+
 model FundingService {
   id          Int     @id @default(autoincrement())
   title       String
   description String? @db.Text
   data        Json
 
-  whoYouAre  Json?
-  territory   Json?
-  category    Json?
+  whoYouAre Json?
+  territory Json?
+  category  Json?
 
   startDate DateTime? @db.Date
   endDate   DateTime? @db.Date
@@ -83,4 +85,44 @@ model Application {
 
   @@index([fundingServiceId])
   @@map("applications")
+}
+
+model ActivityLog {
+  id Int @id @default(autoincrement())
+
+  // User information
+  userId   Int?
+  userName String?
+  userRole String?
+
+  // Activity information
+  action      String
+  module      String
+  description String @db.Text
+
+  // Affected record
+  entityId   String?
+  entityName String?
+
+  // Before and after values
+  oldValues Json?
+  newValues Json?
+
+  // Request details
+  ipAddress String?
+  userAgent String? @db.Text
+
+  // USER, SYSTEM, AUTOMATION
+  source String @default("USER")
+
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([module, createdAt])
+  @@index([action, createdAt])
+  @@index([entityId])
+  @@index([createdAt])
+  @@map("activity_logs")
 }

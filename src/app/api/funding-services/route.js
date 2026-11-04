@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { requireModifyPermission } from "@/lib/auth/requireAuth";
+import { logActivity } from "@/lib/activity-log";
 
 // =========================================================
 // HELPERS
@@ -387,23 +388,56 @@ export async function POST(request) {
         : cleanedData.Category
     );
 
-    // Create the funding service with dedicated date columns.
-    const fundingService = await prisma.fundingService.create({
-      data: {
-        title: fundingTitle,
-        description: fundingDescription,
-        data: cleanedData,
+    // Create the funding service and its audit log atomically.
+    const fundingService = await prisma.$transaction(async (tx) => {
+      const created = await tx.fundingService.create({
+        data: {
+          title: fundingTitle,
+          description: fundingDescription,
+          data: cleanedData,
 
-        whoYouAre: resolvedWhoYouAre,
-        territory: resolvedTerritory,
-        category: resolvedCategory,
+          whoYouAre: resolvedWhoYouAre,
+          territory: resolvedTerritory,
+          category: resolvedCategory,
 
-        startDate: normalizedStartDate,
-        endDate: normalizedEndDate,
+          startDate: normalizedStartDate,
+          endDate: normalizedEndDate,
 
-        isActive: true,
-        isFeatured,
-      },
+          isActive: true,
+          isFeatured,
+        },
+      });
+
+      await logActivity({
+        userId: user.id,
+        userName: user.name,
+        userRole: user.role,
+        action: "CREATE",
+        module: "FUNDING_SERVICE",
+        description: `Created funding program: ${created.title}`,
+        entityId: created.id,
+        entityName: created.title,
+        newValues: {
+          ...created,
+          startDate: created.startDate
+            ? created.startDate.toISOString()
+            : null,
+          endDate: created.endDate
+            ? created.endDate.toISOString()
+            : null,
+        },
+        ipAddress:
+          request.headers
+            .get("x-forwarded-for")
+            ?.split(",")[0]
+            ?.trim() ||
+          request.headers.get("x-real-ip") ||
+          null,
+        userAgent: request.headers.get("user-agent"),
+        db: tx,
+      });
+
+      return created;
     });
 
     console.log(

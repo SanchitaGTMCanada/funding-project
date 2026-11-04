@@ -1,3 +1,4 @@
+
 import { prisma } from "@/lib/prisma";
 import { comparePassword } from "@/lib/auth/password";
 import { cookies } from "next/headers";
@@ -18,9 +19,11 @@ export async function POST(request) {
       );
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+
     const user = await prisma.user.findUnique({
       where: {
-        email: email.toLowerCase().trim(),
+        email: normalizedEmail,
       },
     });
 
@@ -49,12 +52,12 @@ export async function POST(request) {
       );
     }
 
-    // Session expires in 7 days
+    // Session expires in 7 days.
     const expiresAt = new Date(
       Date.now() + 7 * 24 * 60 * 60 * 1000
     );
 
-    // Create session in database
+    // Create session.
     const session = await prisma.session.create({
       data: {
         userId: user.id,
@@ -62,7 +65,7 @@ export async function POST(request) {
       },
     });
 
-    // Set secure HTTP-only cookie
+    // Set secure HTTP-only cookie.
     const cookieStore = await cookies();
 
     cookieStore.set("session_token", session.id, {

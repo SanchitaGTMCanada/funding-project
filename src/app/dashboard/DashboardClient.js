@@ -219,6 +219,22 @@ const [dynamicColumnCount, setDynamicColumnCount] = useState(0);
 const isEmployee = user?.role === "EMPLOYEE";
 
   // =========================================================
+  // ACTIVITY LOGS (SUPER ADMIN ONLY)
+  // =========================================================
+  const [showActivityLogs, setShowActivityLogs] = useState(false);
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityError, setActivityError] = useState("");
+  const [activitySearch, setActivitySearch] = useState("");
+  const [activityModule, setActivityModule] = useState("");
+  const [activityAction, setActivityAction] = useState("");
+  const [activityPage, setActivityPage] = useState(1);
+  const [activityPagination, setActivityPagination] = useState({
+    page: 1, limit: 25, total: 0, totalPages: 0,
+  });
+
+
+  // =========================================================
   // FETCH FUNDING SERVICES
   // =========================================================
 
@@ -263,6 +279,51 @@ setDynamicColumnCount(result.dynamicColumnCount ?? 0);
   useEffect(() => {
     fetchFundingServices();
   }, []);
+
+  const fetchActivityLogs = async () => {
+    if (!isSuperAdmin) return;
+
+    try {
+      setActivityLoading(true);
+      setActivityError("");
+
+      const params = new URLSearchParams({
+        page: String(activityPage),
+        limit: "25",
+      });
+      if (activitySearch.trim()) params.set("search", activitySearch.trim());
+      if (activityModule) params.set("module", activityModule);
+      if (activityAction) params.set("action", activityAction);
+
+      const response = await fetch(`/api/activity-logs?${params.toString()}`, {
+        cache: "no-store",
+        credentials: "include",
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to load activity logs.");
+      }
+
+      setActivityLogs(result.activityLogs || []);
+      setActivityPagination(result.pagination || {
+        page: activityPage, limit: 25, total: 0, totalPages: 0,
+      });
+    } catch (error) {
+      console.error("Fetch activity logs error:", error);
+      setActivityError(error.message || "Failed to load activity logs.");
+    } finally {
+      setActivityLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isSuperAdmin || !showActivityLogs) return;
+    const timeout = window.setTimeout(() => {
+      fetchActivityLogs();
+    }, 250);
+    return () => window.clearTimeout(timeout);
+  }, [isSuperAdmin, showActivityLogs, activityPage, activitySearch, activityModule, activityAction]);
 
   // =========================================================
   // LOGOUT
@@ -1798,6 +1859,198 @@ const handleToggleStatus = async () => {
 
           </div>
         </div>
+
+        {isSuperAdmin && (
+          <div className="mb-7">
+            <button
+              type="button"
+              onClick={() => {
+                setShowActivityLogs((visible) => !visible);
+                setActivityPage(1);
+              }}
+              aria-expanded={showActivityLogs}
+              className="group inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-bold text-slate-800 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-lg hover:shadow-teal-900/10 focus:outline-none focus:ring-4 focus:ring-teal-100"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#087F8C] to-[#07566A] text-white shadow-md shadow-teal-900/20">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 19V5m0 14h16M8 15v-3m4 3V8m4 7v-5m4 5V6" />
+                </svg>
+              </span>
+              <span>{showActivityLogs ? "Hide Staff Activity Logs" : "View Staff Activity Logs"}</span>
+              <svg
+                className={`h-4 w-4 text-slate-400 transition-transform duration-200 group-hover:text-teal-700 ${showActivityLogs ? "rotate-180" : ""}`}
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.09 1.032l-4.25 4.51a.75.75 0 01-1.09 0l-4.25-4.51a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+              </svg>
+            </button>
+
+            {showActivityLogs && (
+          <section className="mt-5 overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-xl shadow-slate-900/[0.06] ring-1 ring-black/[0.02]">
+            <div className="relative overflow-hidden bg-gradient-to-r from-[#071D2B] via-[#073B49] to-[#07566A] px-5 py-6 sm:px-7 sm:py-7">
+              <div className="pointer-events-none absolute -right-10 -top-20 h-56 w-56 rounded-full bg-teal-300/10 blur-3xl" />
+              <div className="pointer-events-none absolute bottom-[-5rem] right-1/3 h-40 w-40 rounded-full bg-cyan-300/10 blur-2xl" />
+              <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex items-start gap-3.5">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-teal-100 shadow-inner backdrop-blur-sm">
+                    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l2.5 1.5M20 12a8 8 0 11-16 0 8 8 0 0116 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 3.5 3.5 5M19 3.5 20.5 5" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl">Staff Activity Logs</h2>
+                      <span className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-200">Super Admin</span>
+                    </div>
+                    <p className="mt-1.5 text-sm text-slate-300">Monitor changes and actions performed across the funding portal.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={fetchActivityLogs}
+                  disabled={activityLoading}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm backdrop-blur transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <svg className={`h-4 w-4 ${activityLoading ? "animate-spin" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M20 7v5h-5M4 17v-5h5"/><path strokeLinecap="round" strokeLinejoin="round" d="M5.6 9A7 7 0 0118 6l2 2M4 16l2 2a7 7 0 0012.4-3"/></svg>
+                  {activityLoading ? "Refreshing..." : "Refresh logs"}
+                </button>
+              </div>
+
+              </div>
+            <div className="bg-slate-50/90 px-5 py-5 sm:px-7">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Find an activity</p>
+                <p className="text-xs text-slate-400">Search and filter the audit trail</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <input
+                  value={activitySearch}
+                  onChange={(event) => {
+                    setActivitySearch(event.target.value);
+                    setActivityPage(1);
+                  }}
+                  placeholder="Search staff, description or record..."
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"
+                />
+                <select
+                  value={activityModule}
+                  onChange={(event) => {
+                    setActivityModule(event.target.value);
+                    setActivityPage(1);
+                  }}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm outline-none transition hover:border-slate-300 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"
+                >
+                  <option value="">All modules</option>
+                  {/* <option value="AUTH">Authentication</option> */}
+                  <option value="FUNDING_SERVICE">Funding services</option>
+                  <option value="APPLICATION">Applications</option>
+                  <option value="FUNDING_IMPORT">Bulk imports</option>
+                </select>
+                <select
+                  value={activityAction}
+                  onChange={(event) => {
+                    setActivityAction(event.target.value);
+                    setActivityPage(1);
+                  }}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm outline-none transition hover:border-slate-300 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"
+                >
+                  <option value="">All actions</option>
+                  <option value="CREATE">Create</option>
+                  <option value="UPDATE">Update</option>
+                  <option value="DELETE">Delete</option>
+                  <option value="BULK_IMPORT">Bulk import</option>
+                </select>
+              </div>
+            </div>
+
+            {activityError && (
+              <div className="m-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {activityError}
+              </div>
+            )}
+
+            <div className="overflow-x-auto px-3 pb-3 sm:px-5">
+              <table className="w-full min-w-[900px] border-separate border-spacing-0 text-left text-sm">
+                <thead className="bg-slate-50 text-[10px] uppercase tracking-[0.14em] text-slate-500">
+                  <tr>
+                    <th className="border-b border-slate-200 bg-slate-50 px-5 py-4 font-bold">Staff member</th>
+                    <th className="border-b border-slate-200 bg-slate-50 px-5 py-4 font-bold">Action</th>
+                    <th className="border-b border-slate-200 bg-slate-50 px-5 py-4 font-bold">Module</th>
+                    <th className="border-b border-slate-200 bg-slate-50 px-5 py-4 font-bold">Description</th>
+                    <th className="border-b border-slate-200 bg-slate-50 px-5 py-4 font-bold">IP address</th>
+                    <th className="border-b border-slate-200 bg-slate-50 px-5 py-4 font-bold">Date &amp; time</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {activityLoading && activityLogs.length === 0 ? (
+                    <tr><td colSpan={6} className="px-5 py-14 text-center text-sm font-medium text-slate-500"><span className="mx-auto mb-3 block h-7 w-7 animate-spin rounded-full border-2 border-teal-100 border-t-teal-600" />Loading activity logs...</td></tr>
+                  ) : activityLogs.length === 0 ? (
+                    <tr><td colSpan={6} className="px-5 py-14 text-center"><span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400"><svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8M8 12h8M8 17h5M5 3h14a1 1 0 011 1v16a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" /></svg></span><p className="text-sm font-semibold text-slate-700">No activity found</p><p className="mt-1 text-xs text-slate-400">Try changing your search or filters.</p></td></tr>
+                  ) : activityLogs.map((log) => (
+                    <tr key={log.id} className="align-top transition-colors hover:bg-teal-50/40">
+                      <td className="border-b border-slate-100 px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-100 to-cyan-100 text-xs font-extrabold uppercase text-teal-800 ring-1 ring-teal-200/70">{String(log.userName || "U").trim().charAt(0)}</span>
+                          <div><p className="font-semibold text-slate-800">{log.userName || "Unknown user"}</p>
+                        <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">{log.userRole || "—"}</p></div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className="inline-flex rounded-full border border-teal-100 bg-teal-50 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wide text-teal-800">{String(log.action || "Activity").replaceAll("_", " ")}</span>
+                      </td>
+                      <td className="border-b border-slate-100 px-5 py-4 text-slate-600">{log.module}</td>
+                      <td className="max-w-md whitespace-normal border-b border-slate-100 px-5 py-4 text-slate-700">
+                        <p>{log.description}</p>
+                        {log.entityName && <p className="mt-1 text-xs text-slate-500">Record: {log.entityName}{log.entityId ? ` (#${log.entityId})` : ""}</p>}
+                        {(log.oldValues || log.newValues) && (
+                          <details className="mt-2">
+                            <summary className="cursor-pointer text-xs font-semibold text-teal-700">View change details</summary>
+                            <pre className="mt-2 max-h-48 overflow-auto rounded-lg bg-slate-900 p-3 text-[11px] text-slate-100">
+                              {JSON.stringify({ oldValues: log.oldValues, newValues: log.newValues }, null, 2)}
+                            </pre>
+                          </details>
+                        )}
+                      </td>
+                      <td className="border-b border-slate-100 px-5 py-4 text-xs text-slate-500">{log.ipAddress || "—"}</td>
+                      <td className="whitespace-nowrap border-b border-slate-100 px-5 py-4 text-xs text-slate-600">
+                        {log.createdAt ? new Date(log.createdAt).toLocaleString() : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/80 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-slate-500">
+                {activityPagination.total} total records · Page {activityPagination.page} of {Math.max(activityPagination.totalPages, 1)}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActivityPage((page) => Math.max(1, page - 1))}
+                  disabled={activityPage <= 1 || activityLoading}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-teal-300 hover:text-teal-800 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActivityPage((page) => Math.min(activityPagination.totalPages, page + 1))}
+                  disabled={activityPage >= activityPagination.totalPages || activityLoading}
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </section>
+            )}
+          </div>
+        )}
 
         {/* =====================================================
             STATS
