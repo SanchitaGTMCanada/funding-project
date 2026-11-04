@@ -949,6 +949,7 @@ const toggleCategory = (categoryKey) => {
     setSelectedCategories([]);
     setTableSearch("");
     setSelectedStatistic("");
+    setCurrentPage(1);
   };
 
   const handleStatisticClick = (statisticKey) => {
@@ -2366,7 +2367,7 @@ const statistics = useMemo(() => {
             FUNDING TABLE
         =================================================== */}
 
-        {!loading && filteredServices.length > 0 && (
+        {!loading && (
           <div
             id="funding-table"
             className="mx-auto w-full max-w-[1900px] scroll-mt-28 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-900/[0.04]"
@@ -2482,21 +2483,28 @@ const statistics = useMemo(() => {
                     <tr>
                       <td
                         colSpan={CUSTOMER_COLUMNS.length + 2}
-                        className="px-6 py-14 text-center"
+                        className="p-0"
                       >
-                        <div className="text-sm font-bold text-slate-700">
-                          No matching funding programs
+                        {/* Keep the empty state centered in the visible viewport,
+                            not at the center of the 1900px-wide scrollable table. */}
+                        <div className="sticky left-0 flex min-h-[280px] w-[calc(100vw-2rem)] max-w-[1900px] flex-col items-center justify-center px-6 py-14 text-center">
+                          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-2xl text-slate-400">
+                            ⌕
+                          </div>
+                          <div className="text-base font-bold text-slate-800">
+                            No matching funding programs
+                          </div>
+                          <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
+                            No programs match your current search or filters. Try another search term or clear your filters.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={clearFilters}
+                            className="mt-4 rounded-xl bg-[#071a2d] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-teal-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
+                          >
+                            Clear Search &amp; Filters
+                          </button>
                         </div>
-                        <p className="mt-1 text-xs text-slate-500">
-                          Try a different search term or clear the search.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setTableSearch("")}
-                          className="mt-3 rounded-lg bg-[#071a2d] px-4 py-2 text-xs font-bold text-white transition hover:bg-teal-600"
-                        >
-                          Clear Search
-                        </button>
                       </td>
                     </tr>
                   ) : paginatedServices.map((service, serviceIndex) => {
@@ -2707,31 +2715,6 @@ const statistics = useMemo(() => {
           </div>
         )}
 
-        {/* EMPTY STATE */}
-
-        {!loading && filteredServices.length === 0 && (
-          <div className="mx-auto w-full max-w-[1900px] rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-20 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-2xl text-slate-400">
-              ⌕
-            </div>
-
-            <h3 className="mt-5 text-xl font-black text-slate-900">
-              No funding opportunities found
-            </h3>
-
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-              Try changing your search term or selecting another category.
-            </p>
-
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="mt-6 rounded-xl bg-[#071a2d] px-5 py-3 text-sm font-bold text-white transition hover:bg-teal-600"
-            >
-              Clear Filters
-            </button>
-          </div>
-        )}
       </section>
 
       {/* =====================================================

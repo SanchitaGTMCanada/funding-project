@@ -1760,6 +1760,36 @@ const handleToggleStatus = async () => {
     {/* User area */}
     <div className="flex shrink-0 items-center gap-2 sm:gap-3">
 
+      {/* Highlighted activity logs shortcut — super admin only */}
+      {isSuperAdmin && (
+        <button
+          type="button"
+          onClick={() => {
+            setShowActivityLogs((visible) => !visible);
+            setActivityPage(1);
+            window.setTimeout(() => {
+              document.getElementById("staff-activity-logs")?.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              });
+            }, 50);
+          }}
+          aria-expanded={showActivityLogs}
+          aria-controls="staff-activity-logs"
+          className={`group inline-flex items-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-extrabold shadow-lg transition duration-200 focus:outline-none focus:ring-4 focus:ring-teal-300/20 sm:px-4 sm:text-sm ${
+            showActivityLogs
+              ? "border-teal-200 bg-white text-[#07566A] shadow-teal-950/10"
+              : "border-teal-300/40 bg-gradient-to-r from-[#087F8C] to-[#07566A] text-white shadow-teal-950/30 hover:-translate-y-0.5 hover:from-[#0A98A5] hover:to-[#087F8C]"
+          }`}
+        >
+          <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 19V5m0 14h16M8 15v-3m4 3V8m4 7v-5m4 5V6" />
+          </svg>
+          <span className="hidden sm:inline">{showActivityLogs ? "Hide Logs" : "Activity Logs"}</span>
+          <span className="sm:hidden">Logs</span>
+        </button>
+      )}
+
       {/* Role badge */}
       <div
         className={`rounded-lg border px-2 py-2 text-[9px] font-extrabold tracking-wider sm:rounded-xl sm:px-3 sm:text-xs ${
@@ -1860,34 +1890,8 @@ const handleToggleStatus = async () => {
           </div>
         </div>
 
-        {isSuperAdmin && (
-          <div className="mb-7">
-            <button
-              type="button"
-              onClick={() => {
-                setShowActivityLogs((visible) => !visible);
-                setActivityPage(1);
-              }}
-              aria-expanded={showActivityLogs}
-              className="group inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-bold text-slate-800 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-lg hover:shadow-teal-900/10 focus:outline-none focus:ring-4 focus:ring-teal-100"
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#087F8C] to-[#07566A] text-white shadow-md shadow-teal-900/20">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 19V5m0 14h16M8 15v-3m4 3V8m4 7v-5m4 5V6" />
-                </svg>
-              </span>
-              <span>{showActivityLogs ? "Hide Staff Activity Logs" : "View Staff Activity Logs"}</span>
-              <svg
-                className={`h-4 w-4 text-slate-400 transition-transform duration-200 group-hover:text-teal-700 ${showActivityLogs ? "rotate-180" : ""}`}
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.09 1.032l-4.25 4.51a.75.75 0 01-1.09 0l-4.25-4.51a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-              </svg>
-            </button>
-
-            {showActivityLogs && (
+        {isSuperAdmin && showActivityLogs && (
+          <div className="mb-7" id="staff-activity-logs" style={{ scrollMarginTop: "100px" }}>
           <section className="mt-5 overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-xl shadow-slate-900/[0.06] ring-1 ring-black/[0.02]">
             <div className="relative overflow-hidden bg-gradient-to-r from-[#071D2B] via-[#073B49] to-[#07566A] px-5 py-6 sm:px-7 sm:py-7">
               <div className="pointer-events-none absolute -right-10 -top-20 h-56 w-56 rounded-full bg-teal-300/10 blur-3xl" />
@@ -1973,22 +1977,21 @@ const handleToggleStatus = async () => {
             )}
 
             <div className="overflow-x-auto px-3 pb-3 sm:px-5">
-              <table className="w-full min-w-[900px] border-separate border-spacing-0 text-left text-sm">
+              <table className="w-full min-w-[780px] border-separate border-spacing-0 text-left text-sm">
                 <thead className="bg-slate-50 text-[10px] uppercase tracking-[0.14em] text-slate-500">
                   <tr>
                     <th className="border-b border-slate-200 bg-slate-50 px-5 py-4 font-bold">Staff member</th>
                     <th className="border-b border-slate-200 bg-slate-50 px-5 py-4 font-bold">Action</th>
                     <th className="border-b border-slate-200 bg-slate-50 px-5 py-4 font-bold">Module</th>
                     <th className="border-b border-slate-200 bg-slate-50 px-5 py-4 font-bold">Description</th>
-                    <th className="border-b border-slate-200 bg-slate-50 px-5 py-4 font-bold">IP address</th>
                     <th className="border-b border-slate-200 bg-slate-50 px-5 py-4 font-bold">Date &amp; time</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {activityLoading && activityLogs.length === 0 ? (
-                    <tr><td colSpan={6} className="px-5 py-14 text-center text-sm font-medium text-slate-500"><span className="mx-auto mb-3 block h-7 w-7 animate-spin rounded-full border-2 border-teal-100 border-t-teal-600" />Loading activity logs...</td></tr>
+                    <tr><td colSpan={5} className="px-5 py-14 text-center text-sm font-medium text-slate-500"><span className="mx-auto mb-3 block h-7 w-7 animate-spin rounded-full border-2 border-teal-100 border-t-teal-600" />Loading activity logs...</td></tr>
                   ) : activityLogs.length === 0 ? (
-                    <tr><td colSpan={6} className="px-5 py-14 text-center"><span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400"><svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8M8 12h8M8 17h5M5 3h14a1 1 0 011 1v16a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" /></svg></span><p className="text-sm font-semibold text-slate-700">No activity found</p><p className="mt-1 text-xs text-slate-400">Try changing your search or filters.</p></td></tr>
+                    <tr><td colSpan={5} className="px-5 py-14 text-center"><span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400"><svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8M8 12h8M8 17h5M5 3h14a1 1 0 011 1v16a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" /></svg></span><p className="text-sm font-semibold text-slate-700">No activity found</p><p className="mt-1 text-xs text-slate-400">Try changing your search or filters.</p></td></tr>
                   ) : activityLogs.map((log) => (
                     <tr key={log.id} className="align-top transition-colors hover:bg-teal-50/40">
                       <td className="border-b border-slate-100 px-5 py-4">
@@ -2014,7 +2017,6 @@ const handleToggleStatus = async () => {
                           </details>
                         )}
                       </td>
-                      <td className="border-b border-slate-100 px-5 py-4 text-xs text-slate-500">{log.ipAddress || "—"}</td>
                       <td className="whitespace-nowrap border-b border-slate-100 px-5 py-4 text-xs text-slate-600">
                         {log.createdAt ? new Date(log.createdAt).toLocaleString() : "—"}
                       </td>
@@ -2048,7 +2050,6 @@ const handleToggleStatus = async () => {
               </div>
             </div>
           </section>
-            )}
           </div>
         )}
 
