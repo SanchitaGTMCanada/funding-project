@@ -419,6 +419,7 @@ export default function Home() {
 
   /* TABLE SEARCH + PAGINATION */
   const [tableSearch, setTableSearch] = useState("");
+  const [selectedStatistic, setSelectedStatistic] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -947,6 +948,26 @@ const toggleCategory = (categoryKey) => {
     setSelectedCommunity("");
     setSelectedCategories([]);
     setTableSearch("");
+    setSelectedStatistic("");
+  };
+
+  const handleStatisticClick = (statisticKey) => {
+    // A statistic card is a shortcut to its matching programs, so remove
+    // other filters/search terms to show the complete statistic result set.
+    setSelectedApplicantTypes([]);
+    setSelectedTerritory("");
+    setSelectedCommunity("");
+    setSelectedCategories([]);
+    setTableSearch("");
+    setSelectedStatistic(statisticKey);
+    setCurrentPage(1);
+
+    window.setTimeout(() => {
+      document.getElementById("funding-table")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 50);
   };
 
   useEffect(() => {
@@ -966,11 +987,65 @@ const toggleCategory = (categoryKey) => {
      ========================================================= */
 
   const searchedServices = useMemo(() => {
+    const now = new Date(currentTime);
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+    const weekStart = new Date(todayStart);
+    const daysSinceMonday = (todayStart.getDay() + 6) % 7;
+    weekStart.setDate(weekStart.getDate() - daysSinceMonday);
+
+    const nextWeekStart = new Date(weekStart);
+    nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+
+    const closingWindowEnd = new Date(todayStart);
+    closingWindowEnd.setDate(closingWindowEnd.getDate() + 15);
+
+    const statisticServices = !selectedStatistic
+      ? filteredServices
+      : filteredServices.filter((service) => {
+          const startDate = getServiceDate(service, "start");
+          const endDate = getServiceDate(service, "end");
+
+          if (selectedStatistic === "newThisWeek") {
+            return (
+              startDate !== null &&
+              startDate >= weekStart &&
+              startDate < nextWeekStart &&
+              (endDate === null || endDate >= todayStart)
+            );
+          }
+
+          if (selectedStatistic === "open") {
+            const hasStarted =
+              startDate === null || startDate < tomorrowStart;
+            const hasNotEnded =
+              endDate === null || endDate >= todayStart;
+
+            return hasStarted && hasNotEnded;
+          }
+
+          if (selectedStatistic === "closingIn14Days") {
+            return (
+              endDate !== null &&
+              endDate >= todayStart &&
+              endDate < closingWindowEnd
+            );
+          }
+
+          return true;
+        });
+
     const query = tableSearch.trim().toLowerCase();
 
     const matchingServices = !query
-      ? filteredServices
-      : filteredServices.filter((service) => {
+      ? statisticServices
+      : statisticServices.filter((service) => {
           const searchableValues = [
             service?.title,
             service?.description,
@@ -1001,7 +1076,7 @@ const toggleCategory = (categoryKey) => {
     return [...matchingServices].sort(
       (a, b) => Number(b.id) - Number(a.id)
     );
-  }, [filteredServices, tableSearch]);
+  }, [filteredServices, tableSearch, selectedStatistic, currentTime]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -1611,8 +1686,8 @@ const statistics = useMemo(() => {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
           {[
             {
+              key: "newThisWeek",
               value: statistics.newThisWeek,
-
               label: "New this week",
               icon: (
                 <svg
@@ -1634,6 +1709,7 @@ const statistics = useMemo(() => {
               border: "hover:border-[#2374A8]/50",
             },
             {
+              key: "open",
               value: statistics.open,
               label: "Open now",
               icon: (
@@ -1656,6 +1732,7 @@ const statistics = useMemo(() => {
               border: "hover:border-[#2374A8]/50",
             },
             {
+              key: "closingIn14Days",
               value: statistics.closingIn14Days,
               label: "Closing in 14 days",
               icon: (
@@ -1680,9 +1757,17 @@ const statistics = useMemo(() => {
               border: "hover:border-[#7DD3FC]",
             },
           ].map((stat) => (
-            <div
-              key={stat.label}
-              className={`group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_8px_25px_-12px_rgba(11,36,56,0.20)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg sm:p-4 ${stat.border}`}
+            <button
+              key={stat.key}
+              type="button"
+              onClick={() => handleStatisticClick(stat.key)}
+              aria-label={`Show ${stat.label} funding programs`}
+              aria-pressed={selectedStatistic === stat.key}
+              className={`group relative w-full overflow-hidden rounded-2xl border bg-white p-3 text-left shadow-[0_8px_25px_-12px_rgba(11,36,56,0.20)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2374A8] focus-visible:ring-offset-2 sm:p-4 ${stat.border} ${
+                selectedStatistic === stat.key
+                  ? "border-[#2374A8] ring-2 ring-[#2374A8]/20"
+                  : "border-slate-200/80"
+              }`}
             >
               <div
                 className={`absolute inset-x-0 top-0 h-1 ${stat.accent}`}
@@ -1717,7 +1802,7 @@ const statistics = useMemo(() => {
               <div
                 className={`absolute inset-x-4 bottom-0 h-[2px] ${stat.accent} opacity-80`}
               />
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -2260,7 +2345,9 @@ const statistics = useMemo(() => {
               : "programs match"}
           </p>
           <p className="mt-0.5 text-xs text-[#647785]">
-            Based on your selected filters
+            {selectedStatistic
+              ? `Filtered by ${selectedStatistic === "newThisWeek" ? "New this week" : selectedStatistic === "open" ? "Open now" : "Closing in 14 days"}`
+              : "Based on your selected filters"}
           </p>
         </div>
       </div>
@@ -2280,20 +2367,47 @@ const statistics = useMemo(() => {
         =================================================== */}
 
         {!loading && filteredServices.length > 0 && (
-          <div className="mx-auto w-full max-w-[1900px] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-900/[0.04]">
+          <div
+            id="funding-table"
+            className="mx-auto w-full max-w-[1900px] scroll-mt-28 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-900/[0.04]"
+          >
             {/* TABLE HEADER */}
 
             <div className="flex flex-col justify-between gap-3 bg-[#071a2d] px-4 py-4 sm:flex-row sm:items-center sm:px-5">
               <div>
                 <h3 className="text-sm font-black text-white">
-                  Available Funding Programs
+                  {selectedStatistic === "newThisWeek"
+                    ? "New This Week"
+                    : selectedStatistic === "open"
+                      ? "Open Now"
+                      : selectedStatistic === "closingIn14Days"
+                        ? "Closing in 14 Days"
+                        : "Available Funding Programs"}
                 </h3>
+                {selectedStatistic && (
+                  <p className="mt-1 text-xs text-slate-300">
+                    Showing programs that match the selected statistic.
+                  </p>
+                )}
                 {/* <p className="mt-1 text-xs text-slate-400">
                   Customer-approved funding information
                 </p> */}
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap">
+                {selectedStatistic && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedStatistic("");
+                      setCurrentPage(1);
+                    }}
+                    className="whitespace-nowrap rounded-lg border border-white/20 px-3 py-2 text-xs font-bold text-white transition hover:border-white/50 hover:bg-white/10"
+                  >
+                    Clear card selection
+                  </button>
+                )}
+
                 <label className="relative block w-full sm:w-64">
                   <span className="sr-only">Search funding programs</span>
                   <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400" aria-hidden="true">
