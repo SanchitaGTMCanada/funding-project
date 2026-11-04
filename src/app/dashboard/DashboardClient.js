@@ -1761,7 +1761,7 @@ const handleToggleStatus = async () => {
     <div className="flex shrink-0 items-center gap-2 sm:gap-3">
 
       {/* Highlighted activity logs shortcut — super admin only */}
-      {isSuperAdmin && (
+     
         <button
           type="button"
           onClick={() => {
@@ -1788,7 +1788,7 @@ const handleToggleStatus = async () => {
           <span className="hidden sm:inline">{showActivityLogs ? "Hide Logs" : "Activity Logs"}</span>
           <span className="sm:hidden">Logs</span>
         </button>
-      )}
+      
 
       {/* Role badge */}
       <div
@@ -1890,7 +1890,7 @@ const handleToggleStatus = async () => {
           </div>
         </div>
 
-        {isSuperAdmin && showActivityLogs && (
+        { showActivityLogs && (
           <div className="mb-7" id="staff-activity-logs" style={{ scrollMarginTop: "100px" }}>
           <section className="mt-5 overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-xl shadow-slate-900/[0.06] ring-1 ring-black/[0.02]">
             <div className="relative overflow-hidden bg-gradient-to-r from-[#071D2B] via-[#073B49] to-[#07566A] px-5 py-6 sm:px-7 sm:py-7">
