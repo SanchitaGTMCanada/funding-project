@@ -1897,7 +1897,7 @@ const handleToggleStatus = async () => {
               <div className="pointer-events-none absolute -right-10 -top-20 h-56 w-56 rounded-full bg-teal-300/10 blur-3xl" />
               <div className="pointer-events-none absolute bottom-[-5rem] right-1/3 h-40 w-40 rounded-full bg-cyan-300/10 blur-2xl" />
               <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex items-start gap-3.5">
+                <div className="flex items-center gap-3.5">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-teal-100 shadow-inner backdrop-blur-sm">
                     <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l2.5 1.5M20 12a8 8 0 11-16 0 8 8 0 0116 0z" />
@@ -1907,9 +1907,9 @@ const handleToggleStatus = async () => {
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl">Staff Activity Logs</h2>
-                      <span className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-200">Super Admin</span>
+                      
                     </div>
-                    <p className="mt-1.5 text-sm text-slate-300">Monitor changes and actions performed across the funding portal.</p>
+                   
                   </div>
                 </div>
                 <button
